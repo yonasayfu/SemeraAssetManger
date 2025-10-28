@@ -7,13 +7,18 @@ import { defineConfig } from 'vite';
 const enableWayfinder = false;
 
 export default defineConfig({
+    server: {
+        host: 'localhost', // Changed from '0.0.0.0' to 'localhost'
+        port: 5173,
+        strictPort: true,
+    },
     plugins: [
         laravel({
             input: ['resources/js/app.ts'],
             ssr: 'resources/js/ssr.ts',
             refresh: true,
         }),
-//        tailwindcss(),
+        tailwindcss(),
         ...(enableWayfinder
             ? [
                   wayfinder({
