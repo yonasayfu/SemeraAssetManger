@@ -323,7 +323,7 @@ const handleExport = async (format: string) => {
                                 :key="`${rowIndex}-${column}`"
                                 class="px-3 py-2 text-slate-600 dark:text-slate-300"
                             >
-                                {{ String(row[column] ?? row[column.toLowerCase()] ?? '—') }}
+                                {{ String(row[column] ?? row[column.toLowerCase()] ?? 'Â—') }}
                             </td>
                         </tr>
                     </tbody>

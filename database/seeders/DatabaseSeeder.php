@@ -145,5 +145,10 @@ class DatabaseSeeder extends Seeder
                 $admin->name
             ));
         }
+
+        // Seed sample domain data after users exist
+        $this->call([
+            SampleDataSeeder::class,
+        ]);
     }
 }

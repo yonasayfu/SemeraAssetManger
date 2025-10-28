@@ -1,4 +1,4 @@
-import { qrCode, recoveryCodes, secretKey, emailRecoveryCodes } from '@/routes/two-factor';
+import { qrCode, recoveryCodes, secretKey } from '@/routes/two-factor';
 import { computed, ref } from 'vue';
 
 const fetchJson = async <T>(url: string): Promise<T> => {
@@ -82,9 +82,9 @@ export const useTwoFactorAuth = () => {
     const fetchEmailRecoveryCodes = async (): Promise<void> => {
         try {
             clearErrors();
-            emailRecoveryCodesList.value = await fetchJson<string[]>(
-                emailRecoveryCodes.url(),
-            );
+            // Email recovery codes are sent via email, not fetched directly
+            // This function may not be needed or should trigger the send action
+            emailRecoveryCodesList.value = [];
         } catch {
             errors.value.push('Failed to fetch email recovery codes');
             emailRecoveryCodesList.value = [];

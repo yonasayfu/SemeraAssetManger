@@ -378,11 +378,9 @@ Route::middleware('auth')->group(function () {
             Route::get('changelog', StaticPageController::class)->name('changelog')->defaults('page', 'Changelog');
         });
 
-        // This is a dynamic sidebar route generation logic. Many of these dynamically
-        // generated routes will be overridden by the explicitly defined routes above.
-        // This dynamic generation is primarily for filling in placeholder routes or
-        // for when a route is truly generic placeholder, to ensure all sidebar links
-        // resolve to something, even if it's just a placeholder page.
+        // Sidebar menu metadata (left here for UI composition reference only).
+        // NOTE: We intentionally do NOT auto-generate placeholder routes from this metadata anymore.
+        // Only explicit routes defined above are active to avoid accidental placeholder pages.
         $sidebarGroups = [
             [
                 "id" => "main",
@@ -533,56 +531,7 @@ Route::middleware('auth')->group(function () {
             ],
         ];
 
-        // Dynamic loop for placeholder routes from sidebar, ensure these are at the end
-        // so explicit routes take precedence.
-        foreach ($sidebarGroups as $group) {
-            foreach ($group['items'] as $item) {
-                if (isset($item['children'])) {
-                    foreach ($item['children'] as $child) {
-                        // Check if a route with this URI already exists, to avoid conflicts
-                        $routeName = str_replace('/', '.', ltrim($child['href'], '/'));
-                        if (!Route::has($routeName) && !in_array($child['href'], [
-                            // Exclude asset operation select pages as they are explicitly defined
-                            '/assets/checkout-select',
-                            '/assets/checkin-select',
-                            '/assets/lease-select',
-                            '/assets/lease-return-select',
-                            '/assets/dispose-select',
-                            '/assets/maintenance-select',
-                            '/assets/move-select',
-                            '/assets/reserve-select',
-                            // Exclude explicit setup routes
-                            '/setup/companies', '/setup/sites', '/setup/locations', '/setup/categories', '/setup/departments', '/setup/manage-dashboard',
-                            // Exclude tools that are resources or explicitly defined
-                            '/tools/documents', '/tools/images', '/tools/audits',
-                            // Exclude advanced resources
-                            '/advanced/persons', '/advanced/customers',
-                            // Exclude help routes
-                            '/help/about', '/help/contact', '/help/terms', '/help/privacy', '/help/videos', '/help/reviews', '/help/changelog',
-                            // Exclude alerts and lists that are explicitly defined
-                            '/alerts',
-                            '/lists/assets', '/lists/assets/export',
-                            '/lists/audits', '/lists/audits/export',
-                            '/lists/maintenances', '/lists/maintenances/export',
-                            '/lists/warranties', '/lists/warranties/export',
-                            // Exclude assets base routes
-                            '/assets', '/assets/create', '/assets/store', '/assets/export', '/assets/import', '/assets/import.store',
-                        ])) {
-                            Route::get($child['href'], function () use ($child) {
-                                return Inertia::render('Placeholder', ['title' => $child['title']]);
-                            })->name($routeName);
-                        }
-                    }
-                } else {
-                    $routeName = str_replace('/', '.', ltrim($item['href'], '/'));
-                    if ($item['href'] !== '/dashboard' && !Route::has($routeName)) {
-                        Route::get($item['href'], function () use ($item) {
-                            return Inertia::render('Placeholder', ['title' => $item['title']]);
-                        })->name($routeName);
-                    }
-                }
-            }
-        }
+        // Removed: dynamic placeholder route generation
 
     }); // Closes Route::middleware(['verified', 'approved'])
 }); // Closes Route::middleware(['auth', 'verified', 'approved'])

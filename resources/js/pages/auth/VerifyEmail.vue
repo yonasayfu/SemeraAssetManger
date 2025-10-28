@@ -28,7 +28,8 @@ defineProps<{
         </div>
 
         <Form
-            v-bind="EmailVerificationNotificationController.store.form()"
+            :action="EmailVerificationNotificationController.store.url()"
+            method="post"
             class="space-y-6 text-center"
             v-slot="{ processing }"
         >
