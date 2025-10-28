@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
+
 import { send } from '@/routes/verification';
-import { Form, Head, Link, usePage } from '@inertiajs/vue3';
+import { Form, Head, Link, useForm, usePage } from '@inertiajs/vue3';
 
 import DeleteUser from '@/components/DeleteUser.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
@@ -29,6 +29,11 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
 const page = usePage();
 const user = page.props.auth.user;
+
+const form = useForm({
+    name: user.name,
+    email: user.email,
+});
 </script>
 
 <template>
@@ -43,17 +48,20 @@ const user = page.props.auth.user;
                 />
 
                 <Form
-                    v-bind="ProfileController.update.form()"
+                    @submit.prevent="form.post(route('profile.update'))"
+                    :options="{
+                        preserveScroll: true,
+                    }"
                     class="space-y-6"
                     v-slot="{ errors, processing, recentlySuccessful }"
-                >
-                    <div class="grid gap-2">
+                >                    <div class="grid gap-2">
                         <Label for="name">Name</Label>
                         <Input
                             id="name"
                             class="mt-1 block w-full"
                             name="name"
                             :default-value="user.name"
+                            v-model="form.name"
                             required
                             autocomplete="name"
                             placeholder="Full name"
@@ -69,6 +77,7 @@ const user = page.props.auth.user;
                             class="mt-1 block w-full"
                             name="email"
                             :default-value="user.email"
+                            v-model="form.email"
                             required
                             autocomplete="username"
                             placeholder="Email address"

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import DashboardCalendar from '@/components/DashboardCalendar.vue';
+import DashboardChart from '@/components/DashboardChart.vue';
+import DashboardWidget from '@/components/DashboardWidget.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import GlassCard from '@/components/GlassCard.vue';
 import MetricCard from '@/components/dashboard/MetricCard.vue';
@@ -15,6 +18,12 @@ import {
     ShieldCheck,
     Users,
     UserCheck,
+    Archive,
+    CheckCircle,
+    ArrowUpRight,
+    Calendar,
+    Wrench,
+    Trash2,
 } from 'lucide-vue-next';
 
 type Metric = {
@@ -36,11 +45,10 @@ const props = defineProps<{
         series: number[];
     };
     maintenance: Array<{
-        id: string;
+        id: number;
         title: string;
-        location?: string;
-        due_on: string;
-        priority: 'Low' | 'Medium' | 'High';
+        asset_tag: string;
+        scheduled_for: string;
         status: string;
     }>;
     recentExports: Array<{
@@ -58,6 +66,9 @@ const props = defineProps<{
         causer: string | null;
         occurred_at: string | null;
     }>;
+    calendarEvents: Array<any>;
+    assetValueByCategoryChartData: any;
+    fiscalYearData: any;
 }>();
 
 const breadcrumbs: BreadcrumbItemType[] = [
@@ -72,6 +83,12 @@ const iconRegistry = {
     UserCheck,
     ShieldCheck,
     Download: DownloadIcon,
+    Archive,
+    CheckCircle,
+    ArrowUpRight,
+    Calendar,
+    Wrench,
+    Trash2,
 } as const;
 
 const resolvedMetrics = computed(() =>
@@ -81,14 +98,16 @@ const resolvedMetrics = computed(() =>
     })),
 );
 
-const maintenanceTone = (priority: string) => {
-    switch (priority) {
-        case 'High':
+const maintenanceTone = (status: string) => {
+    switch (status) {
+        case 'Scheduled':
+            return 'text-blue-600 dark:text-blue-400';
+        case 'Open':
             return 'text-rose-600 dark:text-rose-400';
-        case 'Medium':
-            return 'text-amber-600 dark:text-amber-400';
-        default:
+        case 'Completed':
             return 'text-emerald-600 dark:text-emerald-400';
+        default:
+            return 'text-slate-600 dark:text-slate-400';
     }
 };
 </script>
@@ -99,15 +118,16 @@ const maintenanceTone = (priority: string) => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-1 flex-col gap-6 px-4 py-6 lg:px-8">
             <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <MetricCard
+                <DashboardWidget
                     v-for="metric in resolvedMetrics"
                     :key="metric.label"
-                    :label="metric.label"
-                    :value="metric.value"
-                    :description="metric.description"
-                    :change="metric.change"
-                    :icon="metric.icon ?? undefined"
+                    :metric="metric"
                 />
+            </div>
+
+            <div class="grid gap-4 lg:grid-cols-3">
+                <DashboardCalendar :events="calendarEvents" class="lg:col-span-1" />
+                <DashboardChart :chartData="assetValueByCategoryChartData" class="lg:col-span-2" />
             </div>
 
             <div class="grid gap-4 lg:grid-cols-3">
@@ -142,20 +162,17 @@ const maintenanceTone = (priority: string) => {
                                     <p class="font-semibold text-slate-800 dark:text-slate-100">
                                         {{ item.title }}
                                     </p>
-                                    <p v-if="item.location" class="text-xs text-slate-500 dark:text-slate-400">
-                                        {{ item.location }}
+                                    <p v-if="item.asset_tag" class="text-xs text-slate-500 dark:text-slate-400">
+                                        Asset: {{ item.asset_tag }}
                                     </p>
                                 </div>
                             </div>
                             <div class="flex flex-wrap items-center gap-2 text-xs">
                                 <span class="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                                     <Clock class="size-3.5" />
-                                    Due {{ item.due_on }}
+                                    Scheduled: {{ item.scheduled_for }}
                                 </span>
-                                <span class="rounded-full px-2 py-1 font-medium" :class="maintenanceTone(item.priority)">
-                                    {{ item.priority }} priority
-                                </span>
-                                <span class="rounded-full bg-indigo-500/10 px-2 py-1 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300">
+                                <span class="rounded-full px-2 py-1 font-medium" :class="maintenanceTone(item.status)">
                                     {{ item.status }}
                                 </span>
                             </div>
@@ -182,7 +199,7 @@ const maintenanceTone = (priority: string) => {
                                     <th class="px-5 py-3">Requested by</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-200/70 bg-white/80 dark:divide-slate-800/60 dark:bg-slate-900/60">
+                            <tbody class="divide-y divide-slate-200/70 bg-white/80 dark:divide-slate-900/60">
                                 <tr v-if="!recentExports.length">
                                     <td colspan="4" class="px-5 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
                                         No exports have been processed yet.

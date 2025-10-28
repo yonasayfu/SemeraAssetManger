@@ -2,135 +2,128 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ActivityLog;
-use App\Models\DataExport;
+use App\Models\Asset;
 use App\Models\Staff;
-use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function index(Request $request)
     {
-        $now = now();
-        $startOfMonth = $now->copy()->startOfMonth();
-        $previousMonthStart = $now->copy()->subMonth()->startOfMonth();
-        $previousMonthEnd = $previousMonthStart->copy()->endOfMonth();
+        $now = Carbon::now();
+        $user = Auth::user();
 
-        $totalStaff = Staff::count();
-        $activeStaff = Staff::where('status', 'active')->count();
-        $inactiveStaff = $totalStaff - $activeStaff;
-        $staffCreatedThisMonth = Staff::where('created_at', '>=', $startOfMonth)->count();
-        $staffCreatedLastMonth = Staff::whereBetween('created_at', [$previousMonthStart, $previousMonthEnd])->count();
-
-        $totalUsers = User::count();
-        $usersWithTwoFactor = User::whereNotNull('two_factor_secret')->count();
-
-        $completedExportsThisWeek = DataExport::where('status', DataExport::STATUS_COMPLETED)
-            ->where('completed_at', '>=', $now->copy()->startOfWeek())
-            ->count();
-
-        $metrics = [
-            [
-                'label' => 'Total Staff',
-                'value' => $totalStaff,
-                'change' => $this->formatChange($staffCreatedThisMonth, $staffCreatedLastMonth),
-                'description' => 'New hires compared to last month',
-                'icon' => 'Users',
+        return Inertia::render('Dashboard/Index', [
+            'stats' => [
+                'totalAssets' => Asset::count(),
+                'availableAssets' => Asset::where('status', 'Available')->count(),
+                'checkedOutAssets' => Asset::where('status', 'Checked Out')->count(),
+                'leasedAssets' => Asset::where('status', 'Leased')->count(),
+                'underRepairAssets' => Asset::where('status', 'Under Repair')->count(),
+                'disposedAssets' => Asset::whereIn('status', ['Disposed', 'Lost', 'Donated', 'Sold', 'Broken'])->count(),
+                'totalStaff' => Staff::count(),
+                'activeStaff' => Staff::where('status', 'active')->count(),
+                'newStaffThisMonth' => Staff::where('created_at', '>=', $now->copy()->startOfMonth())->count(),
+                'staffLastMonth' => Staff::whereBetween('created_at', [
+                    $now->copy()->subMonth()->startOfMonth(),
+                    $now->copy()->subMonth()->endOfMonth(),
+                ])->count(),
+                'totalUsers' => \App\Models\User::count(),
+                'twoFactorUsers' => \App\Models\User::whereNotNull('two_factor_secret')->count(),
+                'reportsGeneratedToday' => \App\Models\DataExport::where('status', 'completed')
+                    ->where('completed_at', '>=', $now->copy()->startOfDay())
+                    ->count(),
             ],
-            [
-                'label' => 'Active Staff',
-                'value' => $activeStaff,
-                'change' => null,
-                'description' => sprintf('%d inactive', max($inactiveStaff, 0)),
-                'icon' => 'UserCheck',
-            ],
-            [
-                'label' => 'System Users',
-                'value' => $totalUsers,
-                'change' => [
-                    'direction' => $totalUsers > 0 ? 'up' : 'flat',
-                    'percentage' => $totalUsers > 0 ? round(($usersWithTwoFactor / max($totalUsers, 1)) * 100, 1) : 0,
-                    'label' => '2FA coverage',
-                ],
-                'description' => sprintf('%d users with 2FA', $usersWithTwoFactor),
-                'icon' => 'ShieldCheck',
-            ],
-            [
-                'label' => 'Weekly Exports',
-                'value' => $completedExportsThisWeek,
-                'change' => null,
-                'description' => 'Completed downloads this week',
-                'icon' => 'Download',
-            ],
-        ];
-
-        $staffTrend = $this->buildStaffTrend($now);
-
-        $upcomingMaintenance = $this->sampleMaintenanceSchedule();
-
-        $recentExports = DataExport::with('user:id,name')
-            ->latest()
-            ->take(5)
-            ->get()
-            ->map(function (DataExport $export) {
-                return [
-                    'id' => $export->uuid,
-                    'name' => $export->name,
-                    'type' => ucfirst($export->type),
-                    'status' => ucfirst($export->status),
-                    'completed_at' => optional($export->completed_at)->toDateTimeString(),
-                    'requested_by' => optional($export->user)->name,
-                ];
-            });
-
-        $recentActivity = ActivityLog::with('causer:id,name')
-            ->latest()
-            ->take(6)
-            ->get()
-            ->map(function (ActivityLog $activity) {
-                return [
-                    'id' => $activity->id,
-                    'description' => $activity->description,
-                    'action' => $activity->action,
-                    'causer' => optional($activity->causer)->name,
-                    'occurred_at' => optional($activity->created_at)->toDateTimeString(),
-                ];
-            });
-
-        return Inertia::render('Dashboard', [
-            'metrics' => $metrics,
-            'staffTrend' => $staffTrend,
-            'maintenance' => $upcomingMaintenance,
-            'recentExports' => $recentExports,
-            'recentActivity' => $recentActivity,
+            'recentExports' => \App\Models\DataExport::orderBy('created_at', 'desc')->take(5)->get(),
+            'recentActivity' => \App\Models\ActivityLog::orderBy('created_at', 'desc')->take(6)->get(),
+            'upcomingEvents' => $this->getUpcomingEvents($now),
+            'assetValueByCategory' => $this->getAssetValueByCategoryChartData(),
+            'staffTrend' => $this->buildStaffTrend($now),
+            'fiscalYearData' => $this->getFiscalYearData($now),
         ]);
     }
 
-    private function formatChange(int $current, int $previous): ?array
+    private function getUpcomingEvents(Carbon $now): array
     {
-        if ($current === 0 && $previous === 0) {
-            return null;
-        }
+        $maintenance = \App\Models\Maintenance::with('asset')
+            ->where('status', 'Scheduled')
+            ->where('scheduled_for', '>=', $now)
+            ->orderBy('scheduled_for')
+            ->take(5)
+            ->get()
+            ->map(function (\App\Models\Maintenance $maintenance) {
+                return [
+                    'id' => $maintenance->id,
+                    'title' => 'Maintenance Scheduled',
+                    'asset_tag' => optional($maintenance->asset)->asset_tag,
+                    'date' => $maintenance->scheduled_for->toDateString(),
+                    'type' => 'maintenance',
+                ];
+            });
 
-        if ($previous === 0) {
-            return [
-                'direction' => 'up',
-                'percentage' => 100,
-                'label' => 'vs last month',
-            ];
-        }
+        $leases = \App\Models\Lease::with('asset')
+            ->where('end_at', '>=', $now)
+            ->orderBy('end_at')
+            ->take(5)
+            ->get()
+            ->map(function (\App\Models\Lease $lease) {
+                return [
+                    'id' => $lease->id,
+                    'title' => 'Lease Expiration',
+                    'asset_tag' => optional($lease->asset)->asset_tag,
+                    'date' => $lease->end_at->toDateString(),
+                    'type' => 'lease',
+                ];
+            });
 
-        $difference = (($current - $previous) / max($previous, 1)) * 100;
+        $warranties = \App\Models\Warranty::with('asset')
+            ->where('expiry_date', '>=', $now)
+            ->orderBy('expiry_date')
+            ->take(5)
+            ->get()
+            ->map(function (\App\Models\Warranty $warranty) {
+                return [
+                    'id' => $warranty->id,
+                    'title' => 'Warranty Expiration',
+                    'asset_tag' => optional($warranty->asset)->asset_tag,
+                    'date' => $warranty->expiry_date->toDateString(),
+                    'type' => 'warranty',
+                ];
+            });
+
+        return $maintenance->merge($leases)->merge($warranties)->sortBy('date')->values()->toArray();
+    }
+
+    private function getAssetValueByCategoryChartData(): array
+    {
+        $data = Asset::query()
+            ->selectRaw('categories.name as category, SUM(assets.purchase_price) as value')
+            ->join('categories', 'assets.category_id', '=', 'categories.id')
+            ->groupBy('categories.name')
+            ->pluck('value', 'category');
 
         return [
-            'direction' => $difference === 0 ? 'flat' : ($difference > 0 ? 'up' : 'down'),
-            'percentage' => round(abs($difference), 1),
-            'label' => 'vs last month',
+            'labels' => $data->keys(),
+            'series' => $data->values(),
+        ];
+    }
+
+    private function getFiscalYearData(Carbon $now): array
+    {
+        $startOfYear = $now->copy()->startOfYear();
+        $endOfYear = $now->copy()->endOfYear();
+
+        $totalAssets = Asset::whereBetween('created_at', [$startOfYear, $endOfYear])->count();
+        $checkedOutAssets = Asset::where('status', 'Checked Out')->whereBetween('created_at', [$startOfYear, $endOfYear])->count();
+        $leasedAssets = Asset::where('status', 'Leased')->whereBetween('created_at', [$startOfYear, $endOfYear])->count();
+
+        return [
+            'totalAssets' => $totalAssets,
+            'checkedOutAssets' => $checkedOutAssets,
+            'leasedAssets' => $leasedAssets,
         ];
     }
 
@@ -162,46 +155,5 @@ class DashboardController extends Controller
             'labels' => $labels,
             'series' => $series,
         ];
-    }
-
-    /**
-     * Provide sample maintenance events until asset modules are implemented.
-     */
-    private function sampleMaintenanceSchedule(): Collection
-    {
-        return collect([
-            [
-                'id' => 'mnt-1',
-                'title' => 'Calibrate HVAC Sensors',
-                'location' => 'Headquarters',
-                'due_on' => now()->addDays(3)->toDateString(),
-                'priority' => 'High',
-                'status' => 'Scheduled',
-            ],
-            [
-                'id' => 'mnt-2',
-                'title' => 'Fire Extinguisher Audit',
-                'location' => 'Warehouse B',
-                'due_on' => now()->addDays(5)->toDateString(),
-                'priority' => 'Medium',
-                'status' => 'Awaiting Parts',
-            ],
-            [
-                'id' => 'mnt-3',
-                'title' => 'Vehicle Fleet Inspection',
-                'location' => 'Logistics Yard',
-                'due_on' => now()->addWeek()->toDateString(),
-                'priority' => 'High',
-                'status' => 'Assigned',
-            ],
-            [
-                'id' => 'mnt-4',
-                'title' => 'IT Asset Firmware Updates',
-                'location' => 'All Offices',
-                'due_on' => now()->addDays(10)->toDateString(),
-                'priority' => 'Low',
-                'status' => 'Planned',
-            ],
-        ]);
     }
 }

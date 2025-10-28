@@ -42,7 +42,6 @@ const showAppCodeInput = computed(() => challengeType.value === 'app_code');
 const showRecoveryCodeInput = computed(() => challengeType.value === 'recovery_code');
 const showEmailRecoveryCodeInput = computed(() => challengeType.value === 'email_recovery_code');
 </script>
-</script>
 
 <template>
     <AuthLayout title="Two Factor Challenge" description="Please confirm access to your account by entering the authentication code provided by your authenticator application.">

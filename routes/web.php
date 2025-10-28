@@ -1,29 +1,110 @@
 <?php
 
-use App\Http\Controllers\GlobalSearchController;
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\AssetController;
+use App\Http\Controllers\AssetCheckoutController;
+use App\Http\Controllers\AssetCheckinController;
+use App\Http\Controllers\AssetDisposeController;
+use App\Http\Controllers\AssetImportController;
+use App\Http\Controllers\AssetLeaseController;
+use App\Http\Controllers\AssetLeaseReturnController;
+use App\Http\Controllers\AssetMaintenanceController;
+use App\Http\Controllers\AssetMoveController;
+use App\Http\Controllers\AssetListController;
+use App\Http\Controllers\AssetOperationController;
+use App\Http\Controllers\AssetReserveController;
+use App\Http\Controllers\AuditController;
+use App\Http\Controllers\AuditListController;
+use App\Http\Controllers\AuditReportController;
+use App\Http\Controllers\AuditScanController;
+use App\Http\Controllers\AuditWizardController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataExportController;
-use App\Http\Controllers\StaffController;
-use App\Http\Controllers\UserManagementController;
-use App\Http\Controllers\RoleManagementController;
-use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DocumentGalleryController;
+use App\Http\Controllers\GlobalSearchController;
+use App\Http\Controllers\ImageGalleryController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Mailbox\MailpitWebhookController;
 use App\Http\Controllers\MailboxController;
+use App\Http\Controllers\MaintenanceController;
+use App\Http\Controllers\MaintenanceListController;
+use App\Http\Controllers\ManageDashboardController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NotificationPreferenceController;
-use App\Http\Controllers\ActivityLogController;
-use App\Http\Controllers\TwoFactorEmailRecoveryController;
 use App\Http\Controllers\PendingApprovalController;
+use App\Http\Controllers\PersonController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\Report\AssetReportController;
+use App\Http\Controllers\Report\AuditReportController as AuditReportListController;
+use App\Http\Controllers\Report\AutomatedReportController;
+use App\Http\Controllers\Report\CheckoutReportController;
+use App\Http\Controllers\Report\CustomReportController;
+use App\Http\Controllers\Report\LeasedAssetReportController;
+use App\Http\Controllers\Report\MaintenanceReportController;
+use App\Http\Controllers\Report\RunReportController;
+use App\Http\Controllers\Report\ReservationReportController;
+use App\Http\Controllers\Report\OtherReportController;
+use App\Http\Controllers\Report\StatusReportController;
+use App\Http\Controllers\Report\TransactionReportController;
+use App\Http\Controllers\RoleManagementController;
+use App\Http\Controllers\StaffController;
+use App\Http\Controllers\StaticPageController;
+use App\Http\Controllers\StoreAssetCheckoutController;
+use App\Http\Controllers\StoreAssetCheckinController;
+use App\Http\Controllers\StoreAssetDisposeController;
+use App\Http\Controllers\StoreAssetImportController;
+use App\Http\Controllers\StoreAssetLeaseController;
+use App\Http\Controllers\StoreAssetLeaseReturnController;
+use App\Http\Controllers\StoreAssetMoveController;
+use App\Http\Controllers\StoreAssetReserveController;
+use App\Http\Controllers\PersonImportController;
+use App\Http\Controllers\SiteImportController;
+use App\Http\Controllers\LocationImportController;
+use App\Http\Controllers\CategoryImportController;
+use App\Http\Controllers\DepartmentImportController;
+use App\Http\Controllers\MaintenanceImportController;
+use App\Http\Controllers\WarrantyImportController;
+use App\Http\Controllers\ToolsController;
+use App\Http\Controllers\TwoFactorEmailRecoveryController;
+use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\WarrantyController;
+use App\Http\Controllers\WarrantyListController;
+use App\Http\Controllers\Alert\AssetsDueController;
+use App\Http\Controllers\Alert\AssetsPastDueController;
+use App\Http\Controllers\Alert\LeasesExpiringController;
+use App\Http\Controllers\Alert\MaintenanceDueController;
+use App\Http\Controllers\Alert\MaintenanceOverdueController;
+use App\Http\Controllers\Alert\WarrantiesExpiringController;
+use App\Http\Controllers\AlertController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
+
+// Home page
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
+// Impersonation routes (if not in console)
 if (! app()->runningInConsole()) {
     Route::impersonate();
 }
 
+// Mailpit webhook for local environment
 if (app()->environment('local')) {
     Route::post('mailpit/webhook', MailpitWebhookController::class)
         ->middleware(['mailpit.signature'])
@@ -31,103 +112,95 @@ if (app()->environment('local')) {
         ->name('mailpit.webhook');
 }
 
+// Routes requiring authentication
 Route::middleware('auth')->group(function () {
+
+    // Onboarding pending approval
     Route::get('onboarding/pending-approval', PendingApprovalController::class)->name('onboarding.pending');
 
+    // Routes requiring verified email and approval
     Route::middleware(['verified', 'approved'])->group(function () {
-        Route::get('global-search', GlobalSearchController::class)->name('global-search');
-        Route::get('dashboard', DashboardController::class)->name('dashboard');
 
+        // Dashboard and global search
+        Route::get('global-search', GlobalSearchController::class)->name('global-search');
+        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        // Two-factor authentication profile settings
         Route::get('/user/two-factor-authentication', function () {
             return Inertia::render('Profile/TwoFactorAuthentication');
         })->name('profile.two-factor-authentication');
 
-        // Notification Preferences Routes
+        // Notification Preferences
         Route::get('/profile/notification-preferences', [NotificationPreferenceController::class, 'index'])
             ->name('profile.notification-preferences.index');
         Route::post('/profile/notification-preferences', [NotificationPreferenceController::class, 'update'])
             ->name('profile.notification-preferences.update');
 
+        // Mailbox for local environment
         if (app()->environment('local')) {
-            Route::get('mailbox', [MailboxController::class, 'index'])
-                ->name('mailbox.index')
-                ->middleware('permission:mailbox.view');
-
-            Route::get('mailbox/{message}', [MailboxController::class, 'show'])
-                ->name('mailbox.show')
-                ->middleware('permission:mailbox.view');
-
-            Route::post('mailbox/{message}/process', [MailboxController::class, 'process'])
-                ->name('mailbox.process')
-                ->middleware('permission:mailbox.process');
+            Route::prefix('mailbox')->name('mailbox.')->middleware('permission:mailbox.view')->group(function () {
+                Route::get('/', [MailboxController::class, 'index'])->name('index');
+                Route::get('/{message}', [MailboxController::class, 'show'])->name('show');
+                Route::post('/{message}/process', [MailboxController::class, 'process'])->name('process')
+                    ->middleware('permission:mailbox.process');
+            });
         }
 
-        Route::get('exports', [DataExportController::class, 'index'])->name('exports.index');
-        Route::get('exports/{export}', [DataExportController::class, 'download'])->name('exports.download');
-        Route::delete('exports/{export}', [DataExportController::class, 'destroy'])->name('exports.destroy');
+        // Data Exports
+        Route::prefix('exports')->name('exports.')->group(function () {
+            Route::get('/', [DataExportController::class, 'index'])->name('index');
+            Route::get('/{export}', [DataExportController::class, 'download'])->name('download');
+            Route::delete('/{export}', [DataExportController::class, 'destroy'])->name('destroy');
+        });
 
         // Notifications
-        Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
-        Route::get('notifications/unread', [NotificationController::class, 'getUnread'])->name('notifications.unread');
-        Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
-        Route::post('notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', [NotificationController::class, 'index'])->name('index');
+            Route::get('/unread', [NotificationController::class, 'getUnread'])->name('unread');
+            Route::post('/{notification}/read', [NotificationController::class, 'markAsRead'])->name('markAsRead');
+            Route::post('/read-all', [NotificationController::class, 'markAllRead'])->name('markAllRead');
+        });
 
+        // Activity Logs
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
 
+        // Two-factor email recovery
         Route::post('/two-factor-email-recovery/send', [TwoFactorEmailRecoveryController::class, 'sendRecoveryCode'])->name('two-factor-email-recovery.send');
         Route::post('/two-factor-email-recovery/verify', [TwoFactorEmailRecoveryController::class, 'verifyRecoveryCode'])->name('two-factor-email-recovery.verify');
 
-        Route::middleware('permission:staff.view')->group(function () {
-            Route::get('staff', [StaffController::class, 'index'])->name('staff.index');
-            Route::get('staff/export', [StaffController::class, 'export'])->name('staff.export');
+        // Staff Management
+        Route::prefix('staff')->name('staff.')->group(function () {
+            Route::middleware('permission:staff.view')->group(function () {
+                Route::get('/', [StaffController::class, 'index'])->name('index');
+                Route::get('/export', [StaffController::class, 'export'])->name('export');
+                Route::get('/{staff}', [StaffController::class, 'show'])->name('show');
+            });
+
+            Route::get('/create', [StaffController::class, 'create'])->name('create')->middleware('permission:staff.create');
+            Route::post('/', [StaffController::class, 'store'])->name('store')->middleware('permission:staff.create');
+            Route::get('/{staff}/edit', [StaffController::class, 'edit'])->name('edit')->middleware('permission:staff.update');
+            Route::put('/{staff}', [StaffController::class, 'update'])->name('update')->middleware('permission:staff.update');
+            Route::delete('/{staff}', [StaffController::class, 'destroy'])->name('destroy')->middleware('permission:staff.delete');
         });
 
-        Route::get('staff/create', [StaffController::class, 'create'])
-            ->name('staff.create')
-            ->middleware('permission:staff.create');
-
-        Route::post('staff', [StaffController::class, 'store'])
-            ->name('staff.store')
-            ->middleware('permission:staff.create');
-
-        Route::get('staff/{staff}', [StaffController::class, 'show'])
-            ->name('staff.show')
-            ->middleware('permission:staff.view');
-
-        Route::get('staff/{staff}/edit', [StaffController::class, 'edit'])
-            ->name('staff.edit')
-            ->middleware('permission:staff.update');
-
-        Route::put('staff/{staff}', [StaffController::class, 'update'])
-            ->name('staff.update')
-            ->middleware('permission:staff.update');
-
-        Route::delete('staff/{staff}', [StaffController::class, 'destroy'])
-            ->name('staff.destroy')
-            ->middleware('permission:staff.delete');
-
-        Route::middleware('permission:users.manage')->group(function () {
-            Route::get('users/export', [UserManagementController::class, 'export'])->name('users.export');
-            Route::get('users', [UserManagementController::class, 'index'])->name('users.index');
-            Route::get('users/create', [UserManagementController::class, 'create'])->name('users.create');
-            Route::post('users', [UserManagementController::class, 'store'])->name('users.store');
-            Route::get('users/{user}', [UserManagementController::class, 'show'])->name('users.show');
-            Route::get('users/{user}/edit', [UserManagementController::class, 'edit'])->name('users.edit');
-            Route::put('users/{user}', [UserManagementController::class, 'update'])->name('users.update');
-            Route::delete('users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
+        // User Management
+        Route::prefix('users')->name('users.')->middleware('permission:users.manage')->group(function () {
+            Route::get('/', [UserManagementController::class, 'index'])->name('index');
+            Route::get('/export', [UserManagementController::class, 'export'])->name('export');
+            Route::get('/create', [UserManagementController::class, 'create'])->name('create');
+            Route::post('/', [UserManagementController::class, 'store'])->name('store');
+            Route::get('/{user}', [UserManagementController::class, 'show'])->name('show');
+            Route::get('/{user}/edit', [UserManagementController::class, 'edit'])->name('edit');
+            Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
+            Route::delete('/{user}', [UserManagementController::class, 'destroy'])->name('destroy');
         });
 
-        Route::middleware('permission:roles.manage|users.manage')->group(function () {
-            Route::resource('roles', RoleManagementController::class)->only([
-                'index',
-                'create',
-                'store',
-                'edit',
-                'update',
-                'destroy',
-            ]);
-        });
+        // Role Management
+        Route::resource('roles', RoleManagementController::class)
+            ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
+            ->middleware('permission:roles.manage|users.manage');
 
+        // Sample Pages
         Route::prefix('samples')->name('samples.')->group(function () {
             Route::get('/', function () {
                 return Inertia::render('samples/Index');
@@ -149,10 +222,372 @@ Route::middleware('auth')->group(function () {
                 return Inertia::render('samples/SampleExternalPage');
             })->middleware('role:External|ReadOnly')->name('external');
         });
-    });
-});
 
-require __DIR__.'/settings.php';
+        // Setup Module
+        Route::prefix('setup')->name('setup.')->group(function () {
+            Route::resource('companies', CompanyController::class);
+            Route::resource('sites', SiteController::class);
+            Route::resource('locations', LocationController::class);
+            Route::resource('categories', CategoryController::class);
+            Route::resource('departments', DepartmentController::class);
+            Route::get('manage-dashboard', ManageDashboardController::class)->name('manage-dashboard.index');
+            Route::post('manage-dashboard', [ManageDashboardController::class, 'store'])->name('manage-dashboard.store');
+        });
+
+        // Asset Base Routes
+        Route::prefix('assets')->name('assets.')->group(function () {
+            Route::get('/', [AssetController::class, 'index'])->name('index');
+            Route::get('/create', [AssetController::class, 'create'])->name('create');
+            Route::post('/', [AssetController::class, 'store'])->name('store');
+            Route::get('/export', [AssetController::class, 'export'])->name('export');
+            Route::get('/import', AssetImportController::class)->name('import');
+            Route::post('/import', StoreAssetImportController::class)->name('import.store');
+
+            // Asset Operation Select Pages
+            Route::get('checkout-select', [AssetOperationController::class, 'select'])->name('checkout.select')->defaults('operation', 'checkout');
+            Route::get('checkin-select', [AssetOperationController::class, 'select'])->name('checkin.select')->defaults('operation', 'checkin');
+            Route::get('lease-select', [AssetOperationController::class, 'select'])->name('lease.select')->defaults('operation', 'lease');
+            Route::get('lease-return-select', [AssetOperationController::class, 'select'])->name('lease-return.select')->defaults('operation', 'lease-return');
+            Route::get('dispose-select', [AssetOperationController::class, 'select'])->name('dispose.select')->defaults('operation', 'dispose');
+            Route::get('maintenance-select', [AssetOperationController::class, 'select'])->name('maintenance.select')->defaults('operation', 'maintenance');
+            Route::get('move-select', [AssetOperationController::class, 'select'])->name('move.select')->defaults('operation', 'move');
+            Route::get('reserve-select', [AssetOperationController::class, 'select'])->name('reserve.select')->defaults('operation', 'reserve');
+        });
+
+        // Asset Specific Routes (requiring {asset} parameter)
+        Route::prefix('assets/{asset}')->group(function () {
+            Route::get('/', [AssetController::class, 'show'])->name('show');
+            Route::get('/edit', [AssetController::class, 'edit'])->name('edit');
+            Route::put('/', [AssetController::class, 'update'])->name('update');
+            Route::delete('/', [AssetController::class, 'destroy'])->name('destroy');
+
+            Route::get('checkout', [AssetCheckoutController::class, 'create'])->name('checkout.create');
+            Route::post('checkout', [StoreAssetCheckoutController::class, 'store'])->name('checkout.store');
+            Route::get('checkin', [AssetCheckinController::class, 'create'])->name('checkin.create');
+            Route::post('checkin', [StoreAssetCheckinController::class, 'store'])->name('checkin.store');
+            Route::get('lease', [AssetLeaseController::class, 'create'])->name('lease.create');
+            Route::post('lease', [StoreAssetLeaseController::class, 'store'])->name('lease.store');
+            Route::get('lease-return', [AssetLeaseReturnController::class, 'create'])->name('lease-return.create');
+            Route::post('lease-return', [StoreAssetLeaseReturnController::class, 'store'])->name('lease-return.store');
+            Route::get('dispose', [AssetDisposeController::class, 'create'])->name('dispose.create');
+            Route::post('dispose', [StoreAssetDisposeController::class, 'store'])->name('dispose.store');
+            Route::get('move', [AssetMoveController::class, 'create'])->name('move.create');
+            Route::post('move', [StoreAssetMoveController::class, 'store'])->name('move.store');
+            Route::get('reserve', [AssetReserveController::class, 'create'])->name('reserve.create');
+            Route::post('reserve', [StoreAssetReserveController::class, 'store'])->name('reserve.store');
+            Route::resource('maintenance', AssetMaintenanceController::class)->except(['index', 'create', 'store']); // Resource routes for asset-specific maintenance
+
+            Route::prefix('tabs')->name('tabs.')->group(function () {
+                Route::get('details', [AssetController::class, 'details'])->name('details');
+                Route::get('history', [AssetController::class, 'history'])->name('history');
+                Route::get('photos', [AssetController::class, 'photos'])->name('photos');
+                Route::get('documents', [AssetController::class, 'documents'])->name('documents');
+                Route::get('warranty', [AssetController::class, 'warranty'])->name('warranty');
+                Route::get('maintenance', [AssetController::class, 'maintenance'])->name('maintenance');
+                Route::get('reservations', [AssetController::class, 'reservations'])->name('reservations');
+                Route::get('audits', [AssetController::class, 'audits'])->name('audits');
+                Route::get('activity', [AssetController::class, 'activity'])->name('activity');
+            });
+        });
+
+        Route::resource('maintenance', MaintenanceController::class);
+        Route::resource('warranties', WarrantyController::class);
+
+        // Alerts Module (Base Index)
+        Route::prefix('alerts')->name('alerts.')->group(function () {
+            Route::get('/', App\Http\Controllers\AlertController::class)->name('index');
+            Route::get('assets-due', AssetsDueController::class)->name('assets-due');
+            Route::get('assets-past-due', AssetsPastDueController::class)->name('assets-past-due');
+            Route::get('leases-expiring', LeasesExpiringController::class)->name('leases-expiring');
+            Route::get('maintenance-due', MaintenanceDueController::class)->name('maintenance-due');
+            Route::get('maintenance-overdue', MaintenanceOverdueController::class)->name('maintenance-overdue');
+            Route::get('warranties-expiring', WarrantiesExpiringController::class)->name('warranties-expiring');
+        });
+
+        // Lists Module
+        Route::prefix('lists')->name('lists.')->group(function () {
+            Route::get('assets', [AssetListController::class, 'index'])->name('assets');
+            Route::get('assets/export', [AssetListController::class, 'export'])->name('assets.export');
+            Route::get('audits', [AuditListController::class, 'index'])->name('audits');
+            Route::get('audits/export', [AuditListController::class, 'export'])->name('audits.export');
+            Route::get('maintenances', [MaintenanceListController::class, 'index'])->name('maintenances');
+            Route::get('maintenances/export', [MaintenanceListController::class, 'export'])->name('maintenances.export');
+            Route::get('warranties', [WarrantyListController::class, 'index'])->name('warranties');
+            Route::get('warranties/export', [WarrantyListController::class, 'export'])->name('warranties.export');
+        });
+
+        Route::prefix('audits')->name('audits.')->group(function () {
+            Route::get('wizard', [AuditWizardController::class, 'create'])->name('wizard');
+            Route::post('wizard', [AuditWizardController::class, 'store'])->name('wizard.store');
+            Route::get('{audit}/scan', [AuditScanController::class, 'show'])->name('scan');
+            Route::post('{audit}/scan/assets/{auditAsset}', [AuditScanController::class, 'update'])->name('scan.assets.update');
+            Route::post('{audit}/scan/complete', [AuditScanController::class, 'complete'])->name('scan.complete');
+            Route::get('{audit}/scan/search', [AuditScanController::class, 'search'])->name('scan.search');
+            Route::get('{audit}/report', [Report\AuditReportController::class, 'show'])->name('report');
+            Route::get('{audit}/report/export', [Report\AuditReportController::class, 'export'])->name('report.export');
+        });
+
+        // Reports Module (Placeholder routes for now, to be implemented)
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::get('/', ReportController::class)->name('index');
+            Route::get('automated', AutomatedReportController::class)->name('automated');
+            Route::get('custom', CustomReportController::class)->name('custom');
+            Route::get('assets', AssetReportController::class)->name('assets');
+            Route::get('audits', AuditReportListController::class)->name('audits');
+            Route::get('checkout', CheckoutReportController::class)->name('checkout');
+            Route::get('leased-assets', LeasedAssetReportController::class)->name('leased-assets');
+            Route::get('maintenance', MaintenanceReportController::class)->name('maintenance');
+            Route::get('reservations', ReservationReportController::class)->name('reservations');
+            Route::get('status', StatusReportController::class)->name('status');
+            Route::get('transactions', TransactionReportController::class)->name('transactions');
+            Route::get('others', \App\Http\Controllers\Report\OtherReportController::class)->name('others');
+            Route::post('preview', [RunReportController::class, 'preview'])->name('preview');
+            Route::post('export', [RunReportController::class, 'export'])->name('export');
+        });
+
+        // Tools Module
+        Route::prefix('tools')->name('tools.')->group(function () {
+            Route::get('import', [ToolsController::class, 'import'])->name('import');
+            Route::get('export', [ToolsController::class, 'export'])->name('export');
+            Route::post('import/persons', PersonImportController::class)->name('import.persons');
+            Route::post('import/sites', SiteImportController::class)->name('import.sites');
+            Route::post('import/locations', LocationImportController::class)->name('import.locations');
+            Route::post('import/categories', CategoryImportController::class)->name('import.categories');
+            Route::post('import/departments', DepartmentImportController::class)->name('import.departments');
+            Route::post('import/maintenances', MaintenanceImportController::class)->name('import.maintenances');
+            Route::post('import/warranties', WarrantyImportController::class)->name('import.warranties');
+            Route::get('documents', DocumentGalleryController::class)->name('documents');
+            Route::get('images', ImageGalleryController::class)->name('images');
+            Route::resource('audits', AuditController::class);
+        });
+
+        // Advanced Module
+        Route::prefix('advanced')->name('advanced.')->group(function () {
+            Route::resource('persons', PersonController::class);
+            Route::resource('customers', CustomerController::class);
+        });
+
+        // Help & Support Module
+        Route::prefix('help')->name('help.')->group(function () {
+            Route::get('about', StaticPageController::class)->name('about')->defaults('page', 'About Us');
+            Route::get('contact', StaticPageController::class)->name('contact')->defaults('page', 'Contact Us');
+            Route::get('terms', StaticPageController::class)->name('terms')->defaults('page', 'Terms of Service');
+            Route::get('privacy', StaticPageController::class)->name('privacy')->defaults('page', 'Privacy Policy');
+            Route::get('videos', StaticPageController::class)->name('videos')->defaults('page', 'Videos');
+            Route::get('reviews', StaticPageController::class)->name('reviews')->defaults('page', 'User Reviews');
+            Route::get('changelog', StaticPageController::class)->name('changelog')->defaults('page', 'Changelog');
+        });
+
+        // This is a dynamic sidebar route generation logic. Many of these dynamically
+        // generated routes will be overridden by the explicitly defined routes above.
+        // This dynamic generation is primarily for filling in placeholder routes or
+        // for when a route is truly generic placeholder, to ensure all sidebar links
+        // resolve to something, even if it's just a placeholder page.
+        $sidebarGroups = [
+            [
+                "id" => "main",
+                "label" => "Main",
+                "items" => [
+                    [
+                        "title" => "Alerts",
+                        "href" => "/alerts",
+                        "children" => [
+                            ["title" => "Assets Due", "href" => "/alerts/assets-due"],
+                            ["title" => "Assets Past Due", "href" => "/alerts/assets-past-due"],
+                            ["title" => "Leases Expiring", "href" => "/alerts/leases-expiring"],
+                            ["title" => "Maintenance Due", "href" => "/alerts/maintenance-due"],
+                            ["title" => "Maintenance Overdue", "href" => "/alerts/maintenance-overdue"],
+                            ["title" => "Warranties Expiring", "href" => "/alerts/warranties-expiring"],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                "id" => "assets",
+                "label" => "Assets",
+                "items" => [
+                    [
+                        "title" => "Assets",
+                        "href" => "/assets",
+                        "children" => [
+                            // "List of Assets" is handled by assets.index
+                            ["title" => "Add an Asset", "href" => "/assets/create"],
+                            ["title" => "Check Out", "href" => "/assets/checkout-select"],
+                            ["title" => "Check In", "href" => "/assets/checkin-select"],
+                            ["title" => "Lease", "href" => "/assets/lease-select"],
+                            ["title" => "Lease Return", "href" => "/assets/lease-return-select"],
+                            ["title" => "Dispose", "href" => "/assets/dispose-select"],
+                            ["title" => "Maintenance", "href" => "/assets/maintenance-select"],
+                            ["title" => "Move", "href" => "/assets/move-select"],
+                            ["title" => "Reserve", "href" => "/assets/reserve-select"],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                "id" => "lists",
+                "label" => "Lists",
+                "items" => [
+                    [
+                        "title" => "Lists",
+                        "href" => "/lists",
+                        "children" => [
+                            ["title" => "List of Assets", "href" => "/lists/assets"], // To be implemented
+                            ["title" => "List of Maintenances", "href" => "/lists/maintenances"],
+                            ["title" => "List of Warranties", "href" => "/lists/warranties"],
+                            ["title" => "List of Audits", "href" => "/lists/audits"],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                "id" => "reports",
+                "label" => "Reports",
+                "items" => [
+                    [
+                        "title" => "Reports",
+                        "href" => "/reports",
+                        "children" => [
+                            ["title" => "Automated Reports", "href" => "/reports/automated"],
+                            ["title" => "Custom Reports", "href" => "/reports/custom"],
+                            ["title" => "Asset Reports", "href" => "/reports/assets"],
+                            ["title" => "Audit Reports", "href" => "/reports/audits"],
+                            ["title" => "Check-Out Reports", "href" => "/reports/checkout"],
+                            ["title" => "Leased Asset Reports", "href" => "/reports/leased-assets"],
+                            ["title" => "Maintenance Reports", "href" => "/reports/maintenance"],
+                            ["title" => "Reservation Reports", "href" => "/reports/reservations"],
+                            ["title" => "Status Reports", "href" => "/reports/status"],
+                            ["title" => "Transaction Reports", "href" => "/reports/transactions"],
+                            ["title" => "Other Reports", "href" => "/reports/others"],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                "id" => "tools",
+                "label" => "Tools",
+                "items" => [
+                    [
+                        "title" => "Tools",
+                        "href" => "/tools",
+                        "children" => [
+                            ["title" => "Import", "href" => "/tools/import"], // To be implemented
+                            ["title" => "Export", "href" => "/tools/export"], // To be implemented
+                            ["title" => "Documents Gallery", "href" => "/tools/documents"],
+                            ["title" => "Image Gallery", "href" => "/tools/images"],
+                            ["title" => "Audit", "href" => "/tools/audit"], // To be implemented, currently part of resource audits
+                        ],
+                    ],
+                ],
+            ],
+            [
+                "id" => "advanced",
+                "label" => "Advanced",
+                "items" => [
+                    [
+                        "title" => "Advanced",
+                        "href" => "/advanced",
+                        "children" => [
+                            ["title" => "Persons / Employees", "href" => "/advanced/persons"],
+                            ["title" => "Customers", "href" => "/advanced/customers"],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                "id" => "setup",
+                "label" => "Setup",
+                "items" => [
+                    [
+                        "title" => "Setup",
+                        "href" => "/setup",
+                        "children" => [
+                            ["title" => "Company Info", "href" => "/setup/companies"],
+                            ["title" => "Sites", "href" => "/setup/sites"],
+                            ["title" => "Locations", "href" => "/setup/locations"],
+                            ["title" => "Categories", "href" => "/setup/categories"],
+                            ["title" => "Departments", "href" => "/setup/departments"],
+                            ["title" => "Manage Dashboard", "href" => "/setup/manage-dashboard"],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                "id" => "help",
+                "label" => "Help & Support",
+                "items" => [
+                    [
+                        "title" => "Help / Support",
+                        "href" => "/help",
+                        "children" => [
+                            ["title" => "About Us", "href" => "/help/about"],
+                            ["title" => "Contact Us", "href" => "/help/contact"],
+                            ["title" => "Terms of Service", "href" => "/help/terms"],
+                            ["title" => "Privacy Policy", "href" => "/help/privacy"],
+                            ["title" => "Videos", "href" => "/help/videos"],
+                            ["title" => "User Reviews", "href" => "/help/reviews"],
+                            ["title" => "Changelog", "href" => "/help/changelog"],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        // Dynamic loop for placeholder routes from sidebar, ensure these are at the end
+        // so explicit routes take precedence.
+        foreach ($sidebarGroups as $group) {
+            foreach ($group['items'] as $item) {
+                if (isset($item['children'])) {
+                    foreach ($item['children'] as $child) {
+                        // Check if a route with this URI already exists, to avoid conflicts
+                        $routeName = str_replace('/', '.', ltrim($child['href'], '/'));
+                        if (!Route::has($routeName) && !in_array($child['href'], [
+                            // Exclude asset operation select pages as they are explicitly defined
+                            '/assets/checkout-select',
+                            '/assets/checkin-select',
+                            '/assets/lease-select',
+                            '/assets/lease-return-select',
+                            '/assets/dispose-select',
+                            '/assets/maintenance-select',
+                            '/assets/move-select',
+                            '/assets/reserve-select',
+                            // Exclude explicit setup routes
+                            '/setup/companies', '/setup/sites', '/setup/locations', '/setup/categories', '/setup/departments', '/setup/manage-dashboard',
+                            // Exclude tools that are resources or explicitly defined
+                            '/tools/documents', '/tools/images', '/tools/audits',
+                            // Exclude advanced resources
+                            '/advanced/persons', '/advanced/customers',
+                            // Exclude help routes
+                            '/help/about', '/help/contact', '/help/terms', '/help/privacy', '/help/videos', '/help/reviews', '/help/changelog',
+                            // Exclude alerts and lists that are explicitly defined
+                            '/alerts',
+                            '/lists/assets', '/lists/assets/export',
+                            '/lists/audits', '/lists/audits/export',
+                            '/lists/maintenances', '/lists/maintenances/export',
+                            '/lists/warranties', '/lists/warranties/export',
+                            // Exclude assets base routes
+                            '/assets', '/assets/create', '/assets/store', '/assets/export', '/assets/import', '/assets/import.store',
+                        ])) {
+                            Route::get($child['href'], function () use ($child) {
+                                return Inertia::render('Placeholder', ['title' => $child['title']]);
+                            })->name($routeName);
+                        }
+                    }
+                } else {
+                    $routeName = str_replace('/', '.', ltrim($item['href'], '/'));
+                    if ($item['href'] !== '/dashboard' && !Route::has($routeName)) {
+                        Route::get($item['href'], function () use ($item) {
+                            return Inertia::render('Placeholder', ['title' => $item['title']]);
+                        })->name($routeName);
+                    }
+                }
+            }
+        }
+
+    }); // Closes Route::middleware(['verified', 'approved'])
+}); // Closes Route::middleware(['auth', 'verified', 'approved'])
+
+
+// Authentication routes
 require __DIR__.'/auth.php';
-
 

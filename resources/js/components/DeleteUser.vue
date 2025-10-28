@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import { Form } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 // Components
@@ -21,6 +20,32 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 const passwordInput = ref<InstanceType<typeof Input> | null>(null);
+const password = ref('');
+const processing = ref(false);
+const errors = ref<{ password?: string }>({});
+
+const submit = () => {
+    processing.value = true;
+    errors.value = {};
+
+    router.delete('/settings/profile', {
+        data: {
+            password: password.value,
+        },
+        preserveScroll: true,
+        onSuccess: () => {
+            processing.value = false;
+        },
+        onError: (err) => {
+            processing.value = false;
+            errors.value = err;
+            passwordInput.value?.$el?.focus();
+        },
+        onFinish: () => {
+            processing.value = false;
+        },
+    });
+};
 </script>
 
 <template>
@@ -45,16 +70,7 @@ const passwordInput = ref<InstanceType<typeof Input> | null>(null);
                     >
                 </DialogTrigger>
                 <DialogContent>
-                    <Form
-                        v-bind="ProfileController.destroy.form()"
-                        reset-on-success
-                        @error="() => passwordInput?.$el?.focus()"
-                        :options="{
-                            preserveScroll: true,
-                        }"
-                        class="space-y-6"
-                        v-slot="{ errors, processing, reset, clearErrors }"
-                    >
+                    <form @submit.prevent="submit" class="space-y-6">
                         <DialogHeader class="space-y-3">
                             <DialogTitle
                                 >Are you sure you want to delete your
@@ -79,6 +95,8 @@ const passwordInput = ref<InstanceType<typeof Input> | null>(null);
                                 name="password"
                                 ref="passwordInput"
                                 placeholder="Password"
+                                v-model="password"
+                                :disabled="processing"
                             />
                             <InputError :message="errors.password" />
                         </div>
@@ -87,10 +105,11 @@ const passwordInput = ref<InstanceType<typeof Input> | null>(null);
                             <DialogClose as-child>
                                 <Button
                                     variant="secondary"
+                                    type="button"
                                     @click="
                                         () => {
-                                            clearErrors();
-                                            reset();
+                                            password = '';
+                                            errors = {};
                                         }
                                     "
                                 >
@@ -107,7 +126,7 @@ const passwordInput = ref<InstanceType<typeof Input> | null>(null);
                                 Delete account
                             </Button>
                         </DialogFooter>
-                    </Form>
+                    </form>
                 </DialogContent>
             </Dialog>
         </div>

@@ -8,4 +8,5 @@ export interface NavItem {
     badge?: string
     isActive?: boolean
     permission?: string | null
+    children?: NavItem[]
 }

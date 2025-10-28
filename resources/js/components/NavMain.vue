@@ -19,9 +19,41 @@ const props = defineProps<{
 
 const page = usePage();
 
-const availableGroups = computed(() =>
-    (props.groups ?? []).filter((group) => group.items && group.items.length > 0),
-);
+// Check if user has a specific permission
+const userCan = (permission: string | undefined | null): boolean => {
+    if (!permission) return true;
+    
+    const userPermissions = page.props.auth?.permissions || [];
+    return userPermissions.includes(permission);
+};
+
+// Filter groups and items based on user permissions
+const availableGroups = computed(() => {
+    return (props.groups ?? [])
+        .map(group => {
+            // Filter items based on permissions
+            const filteredItems = group.items
+                ?.map(item => {
+                    // If item has children, filter them too
+                    if (item.children) {
+                        const filteredChildren = item.children.filter(child => userCan(child.permission));
+                        return {
+                            ...item,
+                            children: filteredChildren.length > 0 ? filteredChildren : undefined
+                        };
+                    }
+                    return item;
+                })
+                .filter(item => userCan(item.permission) && 
+                    (!item.children || item.children.length > 0));
+            
+            return {
+                ...group,
+                items: filteredItems
+            };
+        })
+        .filter(group => group.items && group.items.length > 0);
+});
 
 const openGroupId = ref<string | null>(null);
 const closingGroupId = ref<string | null>(null);
@@ -155,6 +187,27 @@ const groupTitle = (group: SidebarGroupConfig, index: number) =>
                                     <span class="truncate">{{ item.title }}</span>
                                 </Link>
                             </SidebarMenuButton>
+                            
+                            <!-- Render children if they exist -->
+                            <div v-if="item.children && item.children.length > 0" class="ml-4 mt-1 space-y-1">
+                                <SidebarMenuItem v-for="child in item.children" :key="child.title">
+                                    <SidebarMenuButton
+                                        as-child
+                                        :is-active="urlIsActive(child.href, page.url)"
+                                        :tooltip="child.title"
+                                        class="w-full justify-start gap-2 px-2 py-1 text-xs"
+                                    >
+                                        <Link :href="child.href">
+                                            <component
+                                                v-if="child.icon"
+                                                :is="child.icon"
+                                                class="h-3 w-3 flex-shrink-0"
+                                            />
+                                            <span class="truncate">{{ child.title }}</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            </div>
                         </SidebarMenuItem>
                     </SidebarMenu>
                 </div>
