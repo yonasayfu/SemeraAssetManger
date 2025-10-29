@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { Audit } from '@/types';
 
@@ -6,6 +7,7 @@ defineProps<{ audits: Audit[] }>();
 </script>
 
 <template>
+    <AppLayout :breadcrumbs="[{ title: 'Tools', href: '/tools' }, { title: 'Audits', href: '/tools/audits' }]">
     <Head title="Audits" />
     <div class="p-4">
         <h1 class="text-2xl font-bold">Audits</h1>
@@ -31,7 +33,7 @@ defineProps<{ audits: Audit[] }>();
                         <td class="py-2 px-4 border-b">{{ audit.started_at }}</td>
                         <td class="py-2 px-4 border-b">{{ audit.completed_at }}</td>
                         <td class="py-2 px-4 border-b">
-                            <Link :href="route('tools.audits.show', audit.id)" class="text-blue-500">View</Link>
+                            <Link :href="`/tools/audits/${audit.id}`" class="text-blue-500">View</Link>
                         </td>
                     </tr>
                 </tbody>
@@ -41,4 +43,5 @@ defineProps<{ audits: Audit[] }>();
             <p>No audits found.</p>
         </div>
     </div>
+    </AppLayout>
 </template>

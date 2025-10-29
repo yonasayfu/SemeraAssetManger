@@ -19,7 +19,7 @@ const form = useForm({
 
 const submit = () => {
     if (challengeType.value === 'email_recovery_code') {
-        form.post(route('two-factor-email-recovery.verify'), {
+        form.post('/two-factor-email-recovery/verify', {
             onFinish: () => form.reset('email_recovery_code'),
         });
     } else {
@@ -31,7 +31,7 @@ const submit = () => {
 
 const sendEmailRecoveryCode = async () => {
     try {
-        await axios.post(route('two-factor-email-recovery.send'));
+        await axios.post('/two-factor-email-recovery/send');
         emailRecoveryCodeSent.value = true;
     } catch (error) {
         console.error('Error sending email recovery codes:', error);

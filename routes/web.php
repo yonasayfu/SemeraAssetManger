@@ -123,7 +123,9 @@ Route::middleware('auth')->group(function () {
 
         // Dashboard and global search
         Route::get('global-search', GlobalSearchController::class)->name('global-search');
-        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('dashboard', [DashboardController::class, 'index'])
+            ->middleware('permission:dashboard.view')
+            ->name('dashboard');
 
         // Two-factor authentication profile settings
         Route::get('/user/two-factor-authentication', function () {
@@ -162,7 +164,9 @@ Route::middleware('auth')->group(function () {
         });
 
         // Activity Logs
-        Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::get('activity-logs', [ActivityLogController::class, 'index'])
+            ->middleware('permission:activity-logs.view')
+            ->name('activity-logs.index');
 
         // Two-factor email recovery
         Route::post('/two-factor-email-recovery/send', [TwoFactorEmailRecoveryController::class, 'sendRecoveryCode'])->name('two-factor-email-recovery.send');
@@ -224,7 +228,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Setup Module
-        Route::prefix('setup')->name('setup.')->group(function () {
+        Route::prefix('setup')->name('setup.')->middleware('permission:setup.manage')->group(function () {
             Route::resource('companies', CompanyController::class);
             Route::resource('sites', SiteController::class);
             Route::resource('locations', LocationController::class);
@@ -234,11 +238,16 @@ Route::middleware('auth')->group(function () {
             Route::post('manage-dashboard', [ManageDashboardController::class, 'store'])->name('manage-dashboard.store');
         });
 
+        // Setup root should not 404; send to a sensible default
+        Route::get('/setup', function () {
+            return redirect()->route('setup.companies.index');
+        })->name('setup.index');
+
         // Asset Base Routes
-        Route::prefix('assets')->name('assets.')->group(function () {
+        Route::prefix('assets')->name('assets.')->middleware('permission:assets.view')->group(function () {
             Route::get('/', [AssetController::class, 'index'])->name('index');
-            Route::get('/create', [AssetController::class, 'create'])->name('create');
-            Route::post('/', [AssetController::class, 'store'])->name('store');
+            Route::get('/create', [AssetController::class, 'create'])->middleware('permission:assets.create')->name('create');
+            Route::post('/', [AssetController::class, 'store'])->middleware('permission:assets.create')->name('store');
             Route::get('/export', [AssetController::class, 'export'])->name('export');
             Route::get('/import', AssetImportController::class)->name('import');
             Route::post('/import', StoreAssetImportController::class)->name('import.store');
@@ -255,11 +264,11 @@ Route::middleware('auth')->group(function () {
         });
 
         // Asset Specific Routes (requiring {asset} parameter)
-        Route::prefix('assets/{asset}')->group(function () {
+        Route::prefix('assets/{asset}')->middleware('permission:assets.view')->group(function () {
             Route::get('/', [AssetController::class, 'show'])->name('show');
-            Route::get('/edit', [AssetController::class, 'edit'])->name('edit');
-            Route::put('/', [AssetController::class, 'update'])->name('update');
-            Route::delete('/', [AssetController::class, 'destroy'])->name('destroy');
+            Route::get('/edit', [AssetController::class, 'edit'])->middleware('permission:assets.update')->name('edit');
+            Route::put('/', [AssetController::class, 'update'])->middleware('permission:assets.update')->name('update');
+            Route::delete('/', [AssetController::class, 'destroy'])->middleware('permission:assets.delete')->name('destroy');
 
             Route::get('checkout', [AssetCheckoutController::class, 'create'])->name('checkout.create');
             Route::post('checkout', [StoreAssetCheckoutController::class, 'store'])->name('checkout.store');
@@ -290,11 +299,11 @@ Route::middleware('auth')->group(function () {
             });
         });
 
-        Route::resource('maintenance', MaintenanceController::class);
-        Route::resource('warranties', WarrantyController::class);
+        Route::resource('maintenance', MaintenanceController::class)->middleware('permission:maintenance.view');
+        Route::resource('warranties', WarrantyController::class)->middleware('permission:warranty.view');
 
         // Alerts Module (Base Index)
-        Route::prefix('alerts')->name('alerts.')->group(function () {
+        Route::prefix('alerts')->name('alerts.')->middleware('permission:alerts.view')->group(function () {
             Route::get('/', App\Http\Controllers\AlertController::class)->name('index');
             Route::get('assets-due', AssetsDueController::class)->name('assets-due');
             Route::get('assets-past-due', AssetsPastDueController::class)->name('assets-past-due');
@@ -305,7 +314,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Lists Module
-        Route::prefix('lists')->name('lists.')->group(function () {
+        Route::prefix('lists')->name('lists.')->middleware('permission:lists.view')->group(function () {
             Route::get('assets', [AssetListController::class, 'index'])->name('assets');
             Route::get('assets/export', [AssetListController::class, 'export'])->name('assets.export');
             Route::get('audits', [AuditListController::class, 'index'])->name('audits');
@@ -327,8 +336,8 @@ Route::middleware('auth')->group(function () {
             Route::get('{audit}/report/export', [Report\AuditReportController::class, 'export'])->name('report.export');
         });
 
-        // Reports Module (Placeholder routes for now, to be implemented)
-        Route::prefix('reports')->name('reports.')->group(function () {
+        // Reports Module
+        Route::prefix('reports')->name('reports.')->middleware('permission:reports.view')->group(function () {
             Route::get('/', ReportController::class)->name('index');
             Route::get('automated', AutomatedReportController::class)->name('automated');
             Route::get('custom', CustomReportController::class)->name('custom');
@@ -346,7 +355,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Tools Module
-        Route::prefix('tools')->name('tools.')->group(function () {
+        Route::prefix('tools')->name('tools.')->middleware('permission:tools.view')->group(function () {
             Route::get('import', [ToolsController::class, 'import'])->name('import');
             Route::get('export', [ToolsController::class, 'export'])->name('export');
             Route::post('import/persons', PersonImportController::class)->name('import.persons');
@@ -361,11 +370,21 @@ Route::middleware('auth')->group(function () {
             Route::resource('audits', AuditController::class);
         });
 
+        // Tools root should not 404; send to import landing by default
+        Route::get('/tools', function () {
+            return redirect()->route('tools.import');
+        })->name('tools.index');
+
         // Advanced Module
-        Route::prefix('advanced')->name('advanced.')->group(function () {
+        Route::prefix('advanced')->name('advanced.')->middleware('permission:advanced.view')->group(function () {
             Route::resource('persons', PersonController::class);
             Route::resource('customers', CustomerController::class);
         });
+
+        // Advanced root should not 404; send to default list
+        Route::get('/advanced', function () {
+            return redirect()->route('advanced.persons.index');
+        })->name('advanced.index');
 
         // Help & Support Module
         Route::prefix('help')->name('help.')->group(function () {

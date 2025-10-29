@@ -380,13 +380,13 @@
 - [x] Add authorize checks in controllers (for `ReportController`)
 - [x] Add authorize checks in controllers (for `SiteController`)
 - [x] Add authorize checks in controllers (for `LocationController`)
-- [ ] Add authorize checks in controllers
-- [ ] Update `PermissionSeeder` with all permissions
+- [x] Add authorize checks in controllers
+- [x] Update `PermissionSeeder` with all permissions
 
 ### Frontend
 
-- [ ] Add role-based sidebar filtering in `AppSidebar.vue`
-- [ ] Add permission checks in views (`@can` equivalents)
+- [x] Add role-based sidebar filtering in `AppSidebar.vue`
+- [x] Add permission checks in views (`@can` equivalents)
 
 ---
 
@@ -403,12 +403,12 @@
 
 ### Performance
 
-- [ ] Add database indexes
-    - [ ] Assets table (asset_tag, status, site_id, location_id, category_id)
-    - [ ] Checkouts table (asset_id, due_at, status)
-    - [ ] Leases table (asset_id, end_at, status)
-    - [ ] Maintenances table (asset_id, scheduled_for, status)
-    - [ ] Alerts table (type, due_date, sent)
+- [x] Add database indexes
+    - [x] Assets table (asset_tag, status, site_id, location_id, category_id)
+    - [x] Checkouts table (asset_id, due_at, status)
+    - [x] Leases table (asset_id, end_at, status)
+    - [x] Maintenances table (asset_id, scheduled_for, status)
+    - [x] Alerts table (type, due_date, sent)
 - [ ] Fix N+1 queries
 - [ ] Add eager loading where needed
 - [ ] Add caching for dashboard/reports
@@ -484,3 +484,66 @@
 
 
 
+
+
+
+
+# Executing final sweep now
+
+I’ll finish the remaining conversions in one go:
+- Setup CRUD pages (Company, Sites, Locations, Departments, Manage Dashboard)
+- Assets aux pages (Lease, LeaseReturn, Move, Reserve)
+- Tools/Import (done)
+- Settings/Profile null-guard, Settings/TwoFactor breadcrumb URL
+- Audits/Wizard, Profile/NotificationPreferences
+- Convert any remaining “Actions” to icons + confirm + toasts
+- Remove all remaining route() helper usages
+
+# What’s already done in this phase
+
+- **Sidebar**
+  - Team + Account Settings groups added, with correct icons and RBAC gates.
+
+- **Advanced/Persons**
+  - Actions converted to icons (Eye, Edit3, Trash2) with confirm + toasts.
+
+- **Settings/Auth**
+  - Profile submits to `/settings/profile`.
+  - Password (breadcrumb + submit) uses explicit paths.
+  - TwoFactorChallenge uses explicit paths.
+  - ForgotPassword uses `/forgot-password`.
+  - TwoFactor page pending breadcrumb fix to `/settings/two-factor` (will apply now).
+
+- **Assets**
+  - Import wrapped with AppLayout, breadcrumbs; `POST /assets/import` with forceFormData.
+
+- **Tools**
+  - Import wrapped with AppLayout, breadcrumbs; `POST /tools/import/{entity}` with forceFormData.
+
+- **Setup**
+  - Categories/Create wrapped with AppLayout; `POST /setup/categories`.
+
+# Next actions being applied
+
+- Setup CRUD (Company, Sites, Locations, Departments, Manage Dashboard)
+  - Replace route() in Create/Edit/Index pages.
+  - AppLayout + breadcrumbs.
+  - Index action buttons -> icons (Eye/Edit3/Trash2) with confirm delete + toasts.
+  - Forms -> explicit REST endpoints.
+
+- Assets aux (Lease, LeaseReturn, Move, Reserve)
+  - Replace route() and add AppLayout + breadcrumbs consistently.
+
+- Settings
+  - TwoFactor.vue breadcrumb to `/settings/two-factor`.
+  - Profile.vue guard `user` null (use safe defaults or optional chaining).
+
+- Others
+  - Audits/Wizard.vue and Profile/NotificationPreferences.vue: replace route() with explicit endpoints.
+
+# Tracking
+
+- Setup CRUD: in progress
+- Final route() sweep: in progress
+
+I’ll report back once all these are pushed and the route() usage count is zero, and CRUD pages show consistent icon actions and AppLayout/breadcrumbs.

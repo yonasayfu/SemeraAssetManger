@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { Asset } from '@/types';
 
@@ -10,11 +11,12 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.post(route('assets.dispose.store', props.asset.id));
+    form.post(`/assets/${props.asset.id}/dispose`);
 };
 </script>
 
 <template>
+    <AppLayout :breadcrumbs="[{ title: 'Assets', href: '/assets' }, { title: asset.asset_tag, href: `/assets/${asset.id}` }, { title: 'Dispose', href: `/assets/${asset.id}/dispose` }]">
     <Head :title="`Dispose ${asset.asset_tag}`" />
     <div class="p-4">
         <h1 class="text-2xl font-bold">Dispose Asset: {{ asset.asset_tag }}</h1>
@@ -38,4 +40,5 @@ const submit = () => {
             </div>
         </form>
     </div>
+    </AppLayout>
 </template>

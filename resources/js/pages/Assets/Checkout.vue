@@ -1,22 +1,26 @@
 <script setup lang="ts">
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { Asset, Person } from '@/types';
+import { Asset } from '@/types';
 
-const props = defineProps<{ asset: Asset; people: Person[] }>();
+interface PersonOption { id: number; name: string }
+
+const props = defineProps<{ asset: Asset; people: PersonOption[] }>();
 
 const form = useForm({
-    assignee_id: null,
+    assignee_id: null as number | null,
     assignee_type: 'person',
     due_at: '',
     notes: '',
 });
 
 const submit = () => {
-    form.post(route('assets.checkout.store', props.asset.id));
+    form.post(`/assets/${props.asset.id}/checkout`);
 };
 </script>
 
 <template>
+    <AppLayout :breadcrumbs="[{ title: 'Assets', href: '/assets' }, { title: asset.asset_tag, href: `/assets/${asset.id}` }, { title: 'Checkout', href: `/assets/${asset.id}/checkout` }]">
     <Head :title="`Checkout ${asset.asset_tag}`" />
     <div class="p-4">
         <h1 class="text-2xl font-bold">Checkout Asset: {{ asset.asset_tag }}</h1>
@@ -41,4 +45,5 @@ const submit = () => {
             </div>
         </form>
     </div>
+    </AppLayout>
 </template>

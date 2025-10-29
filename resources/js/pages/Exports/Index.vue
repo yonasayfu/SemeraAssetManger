@@ -5,6 +5,8 @@ import GlassCard from '@/components/GlassCard.vue';
 import Pagination from '@/components/Pagination.vue';
 import ResourceToolbar from '@/components/ResourceToolbar.vue';
 import { useTableFilters } from '@/composables/useTableFilters';
+import { confirmDialog } from '@/lib/confirm';
+import { useToast } from '@/composables/useToast';
 import { Head, router } from '@inertiajs/vue3';
 import { Download, Trash2 } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -52,9 +54,22 @@ const exportsList = computed(() => props.exports?.data ?? []);
 const paginationLinks = computed(() => props.exports?.links ?? []);
 const hasResults = computed(() => exportsList.value.length > 0);
 
-const destroy = (item: ExportResource) => {
+const { show } = useToast();
+
+const destroy = async (item: ExportResource) => {
+    const accepted = await confirmDialog({
+        title: 'Delete export?',
+        message: `This will remove ${item.name} from the download center.`,
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+    });
+
+    if (!accepted) return;
+
     router.delete(`/exports/${item.uuid}`, {
         preserveScroll: true,
+        onSuccess: () => show('Export removed from download center.', 'danger'),
+        onError: () => show('Failed to remove export.', 'danger'),
     });
 };
 

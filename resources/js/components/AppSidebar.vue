@@ -65,6 +65,8 @@ import {
     Shield,
     BookOpen,
     Folder,
+    KeyRound,
+    Palette,
 } from 'lucide-vue-next';
 import { ref } from 'vue';
 import AppLogo from './AppLogo.vue';
@@ -83,12 +85,12 @@ const sidebarGroups = ref([
     label: "Main",
     icon: LayoutDashboard,
     items: [
-      { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null },
+      { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: 'dashboard.view' },
       {
         title: "Alerts",
         href: "/alerts",
         icon: AlertTriangle,
-        permission: null,
+        permission: 'alerts.view',
         children: [
           { title: "Assets Due", href: "/alerts/assets-due", icon: Clock, permission: null },
           { title: "Assets Past Due", href: "/alerts/assets-past-due", icon: AlertCircle, permission: null },
@@ -96,6 +98,27 @@ const sidebarGroups = ref([
           { title: "Maintenance Due", href: "/alerts/maintenance-due", icon: Wrench, permission: null },
           { title: "Maintenance Overdue", href: "/alerts/maintenance-overdue", icon: Wrench, permission: null },
           { title: "Warranties Expiring", href: "/alerts/warranties-expiring", icon: BadgeCheck, permission: null }
+        ]
+      },
+      { title: "Activity Logs", href: "/activity-logs", icon: ClipboardList, permission: 'activity-logs.view' },
+      { title: "Mailbox (Dev)", href: "/mailbox", icon: Mail, permission: 'mailbox.view' }
+    ]
+  },
+  {
+    id: 'account',
+    label: "Account Settings",
+    icon: Settings2,
+    items: [
+      {
+        title: "Settings",
+        href: "/settings",
+        icon: Settings2,
+        permission: null,
+        children: [
+          { title: "Profile", href: "/settings/profile", icon: SquareUser, permission: null },
+          { title: "Password", href: "/settings/password", icon: KeyRound, permission: null },
+          { title: "Two-Factor", href: "/settings/two-factor", icon: Shield, permission: null },
+          { title: "Appearance", href: "/settings/appearance", icon: Palette, permission: null }
         ]
       }
     ]
@@ -109,7 +132,7 @@ const sidebarGroups = ref([
         title: "Assets",
         href: "/assets",
         icon: Box,
-        permission: null,
+        permission: 'assets.view',
         children: [
           { title: "Add an Asset", href: "/assets/create", icon: PlusCircle, permission: null },
           { title: "Check Out", href: "/assets/checkout-select", icon: LogOut, permission: null },
@@ -122,9 +145,9 @@ const sidebarGroups = ref([
           { title: "Reserve", href: "/assets/reserve-select", icon: CalendarPlus, permission: null }
         ]
       },
-      { title: "Maintenance Board", href: "/maintenance", icon: Wrench, permission: null },
-      { title: "Warranty Center", href: "/warranties", icon: BadgeCheck, permission: null },
-      { title: "List of Assets", href: "/assets", icon: List, permission: null }
+      { title: "Maintenance Board", href: "/maintenance", icon: Wrench, permission: 'maintenance.view' },
+      { title: "Warranty Center", href: "/warranties", icon: BadgeCheck, permission: 'warranty.view' },
+      { title: "List of Assets", href: "/assets", icon: List, permission: 'assets.view' }
     ]
   },
   {
@@ -136,7 +159,7 @@ const sidebarGroups = ref([
         title: "Lists",
         href: "/lists",
         icon: ScrollText,
-        permission: null,
+        permission: 'lists.view',
         children: [
           { title: "List of Assets", href: "/lists/assets", icon: ListChecks, permission: null },
           { title: "List of Maintenances", href: "/lists/maintenances", icon: Wrench, permission: null },
@@ -155,7 +178,7 @@ const sidebarGroups = ref([
         title: "Reports",
         href: "/reports",
         icon: BarChart3,
-        permission: null,
+        permission: 'reports.view',
         children: [
           { title: "Automated Reports", href: "/reports/automated", icon: Clock, permission: null },
           { title: "Custom Reports", href: "/reports/custom", icon: Settings2, permission: null },
@@ -181,13 +204,31 @@ const sidebarGroups = ref([
         title: "Tools",
         href: "/tools",
         icon: Wrench,
-        permission: null,
+        permission: 'tools.view',
         children: [
           { title: "Import", href: "/tools/import", icon: Upload, permission: null },
           { title: "Export", href: "/tools/export", icon: Download, permission: null },
           { title: "Documents Gallery", href: "/tools/documents", icon: FileStack, permission: null },
           { title: "Image Gallery", href: "/tools/images", icon: Images, permission: null },
-          { title: "Audit", href: "/tools/audit", icon: ClipboardList, permission: null }
+          { title: "Audit", href: "/tools/audits", icon: ClipboardList, permission: null }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'team',
+    label: "Team",
+    icon: Users,
+    items: [
+      {
+        title: "Team",
+        href: "/team",
+        icon: Users,
+        permission: null,
+        children: [
+          { title: "Staff", href: "/staff", icon: Users, permission: 'staff.view' },
+          { title: "Users", href: "/users", icon: SquareUser, permission: 'users.view' },
+          { title: "Roles & Permissions", href: "/roles", icon: Shield, permission: 'roles.view' },
         ]
       }
     ]
@@ -201,7 +242,7 @@ const sidebarGroups = ref([
         title: "Advanced",
         href: "/advanced",
         icon: Layers,
-        permission: null,
+        permission: 'advanced.view',
         children: [
           { title: "Persons / Employees", href: "/advanced/persons", icon: Users, permission: null },
           { title: "Customers", href: "/advanced/customers", icon: SquareUser, permission: null }
@@ -218,9 +259,9 @@ const sidebarGroups = ref([
         title: "Setup",
         href: "/setup",
         icon: Settings,
-        permission: null,
+        permission: 'setup.manage',
         children: [
-          { title: "Company Info", href: "/setup/company", icon: Building2, permission: null },
+          { title: "Company Info", href: "/setup/companies", icon: Building2, permission: null },
           { title: "Sites", href: "/setup/sites", icon: MapPinHouse, permission: null },
           { title: "Locations", href: "/setup/locations", icon: MapPin, permission: null },
           { title: "Categories", href: "/setup/categories", icon: Tags, permission: null },

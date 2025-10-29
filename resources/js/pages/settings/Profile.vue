@@ -48,7 +48,7 @@ const form = useForm({
                 />
 
                 <Form
-                    @submit.prevent="form.post(route('profile.update'))"
+                    @submit.prevent="form.post('/settings/profile')"
                     :options="{
                         preserveScroll: true,
                     }"

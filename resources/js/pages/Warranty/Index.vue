@@ -4,7 +4,7 @@ import GlassCard from '@/components/GlassCard.vue';
 import ResourceToolbar from '@/components/ResourceToolbar.vue';
 import Pagination from '@/components/Pagination.vue';
 import { useTableFilters } from '@/composables/useTableFilters';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 
 type Tone = 'primary' | 'success' | 'warning' | 'muted';
@@ -99,6 +99,10 @@ const tableFilters = useTableFilters({
     }),
 });
 
+const page = usePage();
+const userPermissions = computed<string[]>(() => (page.props as any).auth?.permissions || []);
+const can = (perm: string) => userPermissions.value.includes(perm);
+
 watch([assetFilter, providerFilter, statusFilter], () => {
     tableFilters.apply();
 });
@@ -155,8 +159,9 @@ const resetFilters = () => {
             <ResourceToolbar
                 title="Warranties"
                 description="Track warranty coverage, expiry dates, and renewal opportunities."
-                :create-route="route('warranties.create')"
+                create-route="/warranties/create"
                 create-text="Add Warranty"
+                :show-create="can('warranty.view')"
                 :show-export="false"
                 :show-print="false"
             />
@@ -320,13 +325,14 @@ const resetFilters = () => {
                                     <td class="px-4 py-3 text-right text-sm">
                                         <div class="flex justify-end gap-2">
                                             <Link
-                                                :href="route('warranties.edit', warranty.id)"
+                                                :href="`/warranties/${warranty.id}/edit`"
                                                 class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
+                                                v-if="can('warranty.view')"
                                             >
                                                 Edit
                                             </Link>
                                             <Link
-                                                :href="route('warranties.show', warranty.id)"
+                                                :href="`/warranties/${warranty.id}`"
                                                 class="rounded-lg border border-indigo-500 px-3 py-1.5 text-xs font-medium text-indigo-600 transition hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
                                             >
                                                 Details

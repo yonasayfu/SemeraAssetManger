@@ -14,16 +14,28 @@ class RolePermissionSeeder extends Seeder
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $permissions = collect([
-            'staff.view',
-            'staff.create',
-            'staff.update',
-            'staff.delete',
-            'users.manage',
-            'roles.manage',
-            'mailbox.view',
-            'mailbox.process',
-            'activity-logs.view',
-            'users.impersonate',
+            // Core management
+            'staff.view', 'staff.create', 'staff.update', 'staff.delete',
+            'users.manage', 'roles.manage',
+            'activity-logs.view', 'users.impersonate',
+            'mailbox.view', 'mailbox.process',
+
+            // Modules - high level
+            'dashboard.view',
+            'alerts.view',
+            'assets.view', 'assets.create', 'assets.update', 'assets.delete',
+            'lists.view',
+            'lists.export',
+            'reports.view',
+            'reports.export',
+            'tools.view',
+            'tools.import',
+            'tools.export',
+            'advanced.view',
+            'setup.manage',
+            'maintenance.view',
+            'warranty.view',
+            'audits.view',
         ])->map(function (string $name) {
             return Permission::firstOrCreate(
                 ['name' => $name, 'guard_name' => 'web'],
@@ -37,23 +49,58 @@ class RolePermissionSeeder extends Seeder
 
         $roles = [
             'Manager' => [
-                'staff.view',
-                'staff.create',
-                'staff.update',
+                'dashboard.view',
+                'alerts.view',
+                'assets.view', 'assets.create', 'assets.update',
+                'lists.view', 'lists.export',
+                'reports.view', 'reports.export',
+                'tools.view', 'tools.export',
+                'advanced.view',
+                'maintenance.view',
+                'warranty.view',
+                'audits.view',
+                'staff.view', 'staff.create', 'staff.update',
             ],
             'Technician' => [
+                'dashboard.view',
+                'alerts.view',
+                'assets.view',
+                'lists.view', 'lists.export',
+                'tools.view', 'tools.import',
+                'advanced.view',
+                'maintenance.view',
+                'warranty.view',
+                'audits.view',
                 'staff.view',
             ],
             'Staff' => [
+                'dashboard.view',
+                'assets.view',
+                'lists.view',
+                'reports.view',
+                'advanced.view',
                 'staff.view',
             ],
             'Auditor' => [
+                'dashboard.view',
+                'assets.view',
+                'lists.view', 'lists.export',
+                'reports.view', 'reports.export',
+                'audits.view',
+                'advanced.view',
                 'staff.view',
             ],
             'ReadOnly' => [
+                'dashboard.view',
+                'assets.view',
+                'lists.view',
+                'reports.view',
+                'advanced.view',
                 'staff.view',
             ],
-            'External' => [],
+            'External' => [
+                'dashboard.view',
+            ],
         ];
 
         foreach ($roles as $roleName => $rolePermissions) {

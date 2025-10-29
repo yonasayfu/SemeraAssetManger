@@ -1,14 +1,28 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { useToast } from '@/composables/useToast';
+import { useAsyncAction } from '@/composables/useAsyncAction';
 
 const form = useForm({
   entity: 'persons',
   format: 'csv',
 });
 
-const submit = () => {
+const { show } = useToast();
+
+const doSubmit = () => {
   // Logic to trigger export
+  show('Export started. You can track it in Download Center.', 'info');
+  // When backend call completes successfully, you can show success
+  // show('Export generated successfully.', 'success');
 };
+
+const { run: submit, loading } = useAsyncAction(doSubmit);
+
+const page = usePage();
+const userPermissions = computed<string[]>(() => (page.props as any).auth?.permissions || []);
+const can = (perm: string) => userPermissions.value.includes(perm);
 </script>
 
 <template>
@@ -36,7 +50,15 @@ const submit = () => {
                     <option value="pdf">PDF</option>
                 </select>
             </div>
-            <button type="submit">Export</button>
+            <button
+                v-if="can('tools.export')"
+                type="submit"
+                :disabled="loading"
+                class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+                <span v-if="loading">Exporting...</span>
+                <span v-else>Export</span>
+            </button>
         </form>
     </div>
 </template>

@@ -4,7 +4,8 @@ import GlassCard from '@/components/GlassCard.vue';
 import ResourceToolbar from '@/components/ResourceToolbar.vue';
 import Pagination from '@/components/Pagination.vue';
 import { useTableFilters } from '@/composables/useTableFilters';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Edit3, Eye } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 
 type Tone = 'primary' | 'success' | 'warning' | 'muted';
@@ -112,6 +113,10 @@ const tableFilters = useTableFilters({
     }),
 });
 
+const page = usePage();
+const userPermissions = computed<string[]>(() => (page.props as any).auth?.permissions || []);
+const can = (perm: string) => userPermissions.value.includes(perm);
+
 watch([statusFilter, typeFilter, assetFilter, siteFilter, recurrenceFilter], () => {
     tableFilters.apply();
 });
@@ -176,8 +181,9 @@ const resetFilters = () => {
             <ResourceToolbar
                 title="Maintenance"
                 description="Manage upcoming, in-progress, and completed maintenance tasks."
-                :create-route="route('maintenance.create')"
+                create-route="/maintenance/create"
                 create-text="Add Maintenance"
+                :show-create="can('maintenance.view')"
                 :show-export="false"
                 :show-print="false"
             />
@@ -349,7 +355,7 @@ const resetFilters = () => {
                                     class="transition hover:bg-slate-50/70 dark:hover:bg-slate-800/40"
                                 >
                                     <td class="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                                        <Link :href="route('maintenance.show', maintenance.id)" class="hover:text-indigo-600 dark:hover:text-indigo-300">
+                                        <Link :href="`/maintenance/${maintenance.id}`" class="hover:text-indigo-600 dark:hover:text-indigo-300">
                                             {{ maintenance.title }}
                                         </Link>
                                         <p v-if="maintenance.asset?.description" class="text-xs font-normal text-slate-500 dark:text-slate-400">
@@ -407,16 +413,21 @@ const resetFilters = () => {
                                     <td class="px-4 py-3 text-right text-sm">
                                         <div class="flex justify-end gap-2">
                                             <Link
-                                                :href="route('maintenance.edit', maintenance.id)"
-                                                class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
+                                                :href="`/maintenance/${maintenance.id}`"
+                                                class="inline-flex items-center rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-indigo-300"
+                                                title="View details"
                                             >
-                                                Edit
+                                                <Eye class="size-4" />
+                                                <span class="sr-only">View</span>
                                             </Link>
                                             <Link
-                                                :href="route('maintenance.show', maintenance.id)"
-                                                class="rounded-lg border border-indigo-500 px-3 py-1.5 text-xs font-medium text-indigo-600 transition hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
+                                                v-if="can('maintenance.view')"
+                                                :href="`/maintenance/${maintenance.id}/edit`"
+                                                class="inline-flex items-center rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-indigo-300"
+                                                title="Edit maintenance"
                                             >
-                                                Details
+                                                <Edit3 class="size-4" />
+                                                <span class="sr-only">Edit</span>
                                             </Link>
                                         </div>
                                     </td>

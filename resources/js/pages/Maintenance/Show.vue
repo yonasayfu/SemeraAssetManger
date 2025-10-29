@@ -98,7 +98,7 @@ const statusTone = computed(() => {
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <Link
-                        :href="route('maintenance.index')"
+                        href="/maintenance"
                         class="inline-flex items-center text-sm font-medium text-indigo-600 transition hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200"
                     >
                         ← Back to maintenance
@@ -119,7 +119,7 @@ const statusTone = computed(() => {
                         {{ maintenance.status }}
                     </span>
                     <Link
-                        :href="route('maintenance.edit', maintenance.id)"
+                        :href="`/maintenance/${maintenance.id}/edit`"
                         class="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/70 focus:ring-offset-2"
                     >
                         Edit Maintenance

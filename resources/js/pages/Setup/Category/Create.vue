@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { Category } from '@/types';
 
@@ -7,15 +8,16 @@ defineProps<{ categories: Category[] }>();
 const form = useForm({
     name: '',
     description: '',
-    parent_id: null,
+    parent_id: null as number | null,
 });
 
 const submit = () => {
-    form.post(route('categories.store'));
+    form.post('/setup/categories');
 };
 </script>
 
 <template>
+    <AppLayout :breadcrumbs="[{ title: 'Setup', href: '/setup' }, { title: 'Categories', href: '/setup/categories' }, { title: 'Create', href: '/setup/categories/create' }]">
     <Head title="Create Category" />
     <div class="p-4">
         <h1 class="text-2xl font-bold">Create Category</h1>
@@ -40,4 +42,5 @@ const submit = () => {
             </div>
         </form>
     </div>
+    </AppLayout>
 </template>

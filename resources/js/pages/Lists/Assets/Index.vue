@@ -6,8 +6,9 @@ import ResourceToolbar from '@/components/ResourceToolbar.vue';
 import ListFilterPanel from '@/components/lists/ListFilterPanel.vue';
 import ListColumnPicker from '@/components/lists/ListColumnPicker.vue';
 import BulkActionsBar from '@/components/lists/BulkActionsBar.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import { useTableFilters } from '@/composables/useTableFilters';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Search } from 'lucide-vue-next';
 
@@ -131,6 +132,10 @@ const tableFilters = useTableFilters({
 
 const { search, sort, direction, perPage, toggleSort } = tableFilters;
 
+const page = usePage();
+const userPermissions = computed<string[]>(() => (page.props as any).auth?.permissions || []);
+const can = (perm: string) => userPermissions.value.includes(perm);
+
 const assetsRows = computed(() => props.assets.data ?? []);
 
 const selected = ref<number[]>([]);
@@ -253,7 +258,7 @@ const buildQueryString = (
 
     if (sort.value) {
         params.set('sort', sort.value);
-        params.set('direction', direction.value);
+        params.set('direction', direction.value || 'asc');
     }
 
     params.set('per_page', String(perPage.value));
@@ -381,6 +386,8 @@ const statusTone = (status: string) => {
             title="Asset Inventory"
             description="Search, filter, and export your entire asset catalog."
             :show-create="false"
+            :show-export="can('lists.view')"
+            :show-print="can('lists.view')"
             @export="exportCsv"
             @print="() => openWindow('/lists/assets', buildQueryString({ print: 1 }))"
         />
@@ -529,7 +536,10 @@ const statusTone = (status: string) => {
                     </div>
                 </div>
 
-                <div class="overflow-x-auto rounded-lg border border-slate-200/60 dark:border-slate-700/60">
+                <div v-if="!assetsRows.length" class="rounded-lg border border-slate-200/60 dark:border-slate-700/60 bg-white/60 dark:bg-slate-900/60">
+                    <EmptyState title="No assets found" description="Try adjusting your filters or import assets to get started." />
+                </div>
+                <div v-else class="overflow-x-auto rounded-lg border border-slate-200/60 dark:border-slate-700/60">
                     <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700 print-table">
                         <thead class="bg-slate-50 dark:bg-slate-800/60">
                             <tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
@@ -661,7 +671,7 @@ const statusTone = (status: string) => {
                                 </td>
                                 <td class="px-5 py-4 text-right text-sm print:hidden">
                                     <Link
-                                        :href="/assets/"
+                                        :href="`/assets/${asset.id}`"
                                         class="inline-flex items-center rounded-md px-3 py-1 text-indigo-600 transition hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-500/20"
                                     >
                                         View

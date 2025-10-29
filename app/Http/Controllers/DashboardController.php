@@ -7,6 +7,7 @@ use App\Models\Staff;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
@@ -16,8 +17,8 @@ class DashboardController extends Controller
         $now = Carbon::now();
         $user = Auth::user();
 
-        return Inertia::render('Dashboard', [
-            'metrics' => [
+        $metrics = Cache::remember('dashboard.metrics', 300, function () {
+            return [
                 [
                     'label' => 'Total Assets',
                     'value' => Asset::count(),
@@ -38,7 +39,11 @@ class DashboardController extends Controller
                     'value' => Asset::where('status', 'Under Repair')->count(),
                     'icon' => 'Wrench',
                 ],
-            ],
+            ];
+        });
+
+        return Inertia::render('Dashboard', [
+            'metrics' => $metrics,
             'maintenance' => $this->getUpcomingMaintenanceList($now),
             'calendarEvents' => $this->getUpcomingEvents($now),
             'recentExports' => \App\Models\DataExport::orderBy('created_at', 'desc')
@@ -146,16 +151,18 @@ class DashboardController extends Controller
 
     private function getAssetValueByCategoryChartData(): array
     {
-        $data = Asset::query()
-            ->selectRaw('categories.name as category, SUM(assets.cost) as value')
-            ->join('categories', 'assets.category_id', '=', 'categories.id')
-            ->groupBy('categories.name')
-            ->pluck('value', 'category');
+        return Cache::remember('dashboard.asset_value_by_category', 300, function () {
+            $data = Asset::query()
+                ->selectRaw('categories.name as category, SUM(assets.cost) as value')
+                ->join('categories', 'assets.category_id', '=', 'categories.id')
+                ->groupBy('categories.name')
+                ->pluck('value', 'category');
 
-        return [
-            'labels' => $data->keys(),
-            'series' => $data->values(),
-        ];
+            return [
+                'labels' => $data->keys(),
+                'series' => $data->values(),
+            ];
+        });
     }
 
     private function getFiscalYearData(Carbon $now): array

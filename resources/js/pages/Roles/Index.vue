@@ -3,6 +3,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import GlassButton from '@/components/GlassButton.vue';
 import GlassCard from '@/components/GlassCard.vue';
 import { confirmDialog } from '@/lib/confirm';
+import { useToast } from '@/composables/useToast';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
@@ -24,6 +25,7 @@ const props = defineProps<{
 
 const roles = computed(() => props.roles ?? []);
 const permissions = computed(() => props.permissions ?? []);
+const { show } = useToast();
 
 const remove = async (role: RoleSummary) => {
     if (!(await confirmDialog({
@@ -35,7 +37,10 @@ const remove = async (role: RoleSummary) => {
         return;
     }
 
-    router.delete(`/roles/${role.id}`);
+    router.delete(`/roles/${role.id}`, {
+        onSuccess: () => show('Role deleted successfully.', 'danger'),
+        onError: () => show('Failed to delete role.', 'danger'),
+    });
 };
 </script>
 

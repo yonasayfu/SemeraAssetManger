@@ -1,13 +1,17 @@
 <script setup lang="ts">
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { Site, Location, Category, Department, Person } from '@/types';
+import { useToast } from '@/composables/useToast';
+import { Site, Location, Category, Department } from '@/types';
+
+interface PersonOption { id: number; name: string }
 
 const props = defineProps<{
     sites: Site[];
     locations: Location[];
     categories: Category[];
     departments: Department[];
-    people: Person[];
+    people: PersonOption[];
 }>();
 
 const form = useForm({
@@ -32,12 +36,27 @@ const form = useForm({
     created_by: 1, // TODO: Replace with actual user ID
 });
 
+const { show } = useToast();
+
+const onPhoto = (e: Event) => {
+    const target = e.target as HTMLInputElement | null;
+    if (target && target.files && target.files.length > 0) {
+        // @ts-expect-error inertia form typing allows File
+        form.photo = target.files[0];
+    }
+};
+
 const submit = () => {
-    form.post(route('assets.store'));
+    form.post('/assets', {
+        forceFormData: true,
+        onSuccess: () => show('Asset created successfully.', 'success'),
+        onError: () => show('Failed to create asset.', 'danger'),
+    });
 };
 </script>
 
 <template>
+    <AppLayout :breadcrumbs="[{ title: 'Assets', href: '/assets' }, { title: 'Add', href: '/assets/create' }]">
     <Head title="Add Asset" />
     <div class="p-4">
         <h1 class="text-2xl font-bold">Add Asset</h1>
@@ -144,11 +163,12 @@ const submit = () => {
             </div>
             <div>
                 <label for="photo">Photo</label>
-                <input id="photo" type="file" @input="form.photo = $event.target.files[0]" class="w-full" />
+                <input id="photo" type="file" @input="onPhoto" class="w-full" />
             </div>
             <div>
-                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Add Asset</button>
+                <button type="submit" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Add Asset</button>
             </div>
         </form>
     </div>
+    </AppLayout>
 </template>

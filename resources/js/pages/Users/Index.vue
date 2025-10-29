@@ -4,6 +4,7 @@ import GlassCard from '@/components/GlassCard.vue';
 import Pagination from '@/components/Pagination.vue';
 import ResourceToolbar from '@/components/ResourceToolbar.vue';
 import { confirmDialog } from '@/lib/confirm';
+import { useToast } from '@/composables/useToast';
 import { useTableFilters } from '@/composables/useTableFilters';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Edit3, Eye, Search, Trash2, UserCog } from 'lucide-vue-next';
@@ -192,6 +193,8 @@ const printCurrent = () => {
     triggerPrint();
 };
 
+const { show } = useToast();
+
 const destroy = async (user: UserSummary) => {
     const accepted = await confirmDialog({
         title: 'Delete user?',
@@ -204,7 +207,12 @@ const destroy = async (user: UserSummary) => {
         return;
     }
 
-    router.delete(`/users/${user.id}`);
+    router.delete(`/users/${user.id}`,
+        {
+            onSuccess: () => show('User deleted successfully.', 'danger'),
+            onError: () => show('Failed to delete user.', 'danger'),
+        },
+    );
 };
 
 const statTone = (tone?: string) => {

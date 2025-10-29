@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { ref, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { debounce } from 'lodash';
@@ -17,7 +17,7 @@ const selectAsset = (assetId: number) => {
 };
 
 watch(searchTerm, debounce(() => {
-    router.get(route(`assets.${props.operation}.select`), { search: searchTerm.value }, {
+    router.get(`/assets/${props.operation}/select`, { search: searchTerm.value }, {
         preserveState: true,
         replace: true,
     });

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Link } from '@inertiajs/vue3';
 
 const props = defineProps<{
@@ -28,7 +28,7 @@ const props = defineProps<{
                                     <p class="text-sm text-gray-500">Asset: {{ alert.asset.asset_tag }} - {{ alert.asset.description }}</p>
                                     <p class="text-sm text-gray-500">Expires On: {{ alert.due_date }}</p>
                                 </div>
-                                <Link :href="route('assets.show', alert.asset.id)" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                                <Link :href="`/assets/${alert.asset.id}`" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
                                     View Asset
                                 </Link>
                             </li>

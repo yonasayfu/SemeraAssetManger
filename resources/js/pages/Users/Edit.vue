@@ -4,6 +4,7 @@ import ActivityTimeline from '@/components/ActivityTimeline.vue';
 import GlassButton from '@/components/GlassButton.vue';
 import GlassCard from '@/components/GlassCard.vue';
 import { confirmDialog } from '@/lib/confirm';
+import { useToast } from '@/composables/useToast';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import UserForm from './Partials/UserForm.vue';
@@ -85,8 +86,13 @@ const form = useForm({
 
 const canSubmit = computed(() => !form.processing);
 
+const { show } = useToast();
+
 const submit = () => {
-    form.put(`/users/${props.user.id}`);
+    form.put(`/users/${props.user.id}` , {
+        onSuccess: () => show('User updated successfully.', 'success'),
+        onError: () => show('Failed to update user.', 'danger'),
+    });
 };
 
 const approvalSummary = computed(() => {
@@ -112,7 +118,10 @@ const destroyUser = async () => {
         return;
     }
 
-    router.delete(`/users/${props.user.id}`);
+    router.delete(`/users/${props.user.id}`, {
+        onSuccess: () => show('User deleted successfully.', 'danger'),
+        onError: () => show('Failed to delete user.', 'danger'),
+    });
 };
 </script>
 

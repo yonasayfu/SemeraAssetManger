@@ -1,4 +1,4 @@
-﻿# ðŸš€ ASSET MANAGEMENT SYSTEM - IMPLEMENTATION ROADMAP
+# ðŸš€ ASSET MANAGEMENT SYSTEM - IMPLEMENTATION ROADMAP
 
 ## ðŸ“Š PROJECT STATUS OVERVIEW
 
@@ -636,12 +636,12 @@ protected function schedule(Schedule $schedule)
    - In routes: middleware
 
 3. âœ… Role-Based Sidebar
-   - Filter sidebar items by permissions
-   - Hide unavailable features
+   - Filter sidebar items by permissions (Done)
+   - Hide unavailable features (Done)
 
 4. âœ… Permission Seeder
-   - Define all permissions
-   - Assign to default roles (Admin, Manager, Technician, Staff, Read-Only)
+   - Define all permissions (Done)
+   - Assign to default roles (Admin, Manager, Technician, Staff, Read-Only) (Done)
 
 **Acceptance Criteria:**
 - Access control enforced
@@ -661,7 +661,7 @@ protected function schedule(Schedule $schedule)
    - Empty states
 
 2. âœ… Performance Optimization
-   - Database indexes
+   - Database indexes (Added across assets, checkouts, leases, maintenances, alerts)
    - N+1 query fixes
    - Eager loading
    - Caching where appropriate

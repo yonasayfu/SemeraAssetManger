@@ -15,7 +15,7 @@ import { type BreadcrumbItem } from '@/types';
 const breadcrumbItems: BreadcrumbItem[] = [
     {
         title: 'Password settings',
-        href: route('password.edit'),
+        href: '/settings/password',
     },
 ];
 
@@ -41,7 +41,7 @@ const currentPasswordInput = ref<HTMLInputElement | null>(null);
                 />
 
                 <Form
-                    @submit.prevent="form.put(route('password.update'))"
+                    @submit.prevent="form.put('/settings/password')"
                     :options="{
                         preserveScroll: true,
                     }"

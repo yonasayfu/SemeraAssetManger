@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { Asset, Maintenance } from '@/types';
 
@@ -6,10 +7,11 @@ const props = defineProps<{ asset: Asset; maintenances: Maintenance[] }>();
 </script>
 
 <template>
+    <AppLayout :breadcrumbs="[{ title: 'Assets', href: '/assets' }, { title: asset.asset_tag, href: `/assets/${asset.id}` }, { title: 'Maintenance', href: `/assets/${asset.id}/maintenance` }]">
     <Head :title="`Maintenance for ${asset.asset_tag}`" />
     <div class="p-4">
         <h1 class="text-2xl font-bold">Maintenance for Asset: {{ asset.asset_tag }}</h1>
-        <Link :href="route('assets.maintenance.create', asset.id)" class="px-4 py-2 bg-blue-500 text-white rounded">Add Maintenance</Link>
+        <Link :href="`/assets/${asset.id}/maintenance/create`" class="px-4 py-2 bg-blue-500 text-white rounded">Add Maintenance</Link>
 
         <div v-if="maintenances.length" class="mt-4">
             <table class="min-w-full bg-white">
@@ -37,4 +39,5 @@ const props = defineProps<{ asset: Asset; maintenances: Maintenance[] }>();
             <p>No maintenance records found for this asset.</p>
         </div>
     </div>
+    </AppLayout>
 </template>

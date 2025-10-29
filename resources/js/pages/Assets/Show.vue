@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import AppLayout from '@/layouts/AppLayout.vue';
 import axios from 'axios';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Edit3 } from 'lucide-vue-next';
 import { computed, reactive, ref } from 'vue';
 import AssetDetailsTab from './Tabs/AssetDetailsTab.vue';
 import AssetEventsTab from './Tabs/AssetEventsTab.vue';
@@ -11,8 +13,6 @@ import AssetMaintenanceTab from './Tabs/AssetMaintenanceTab.vue';
 import AssetReservationsTab from './Tabs/AssetReservationsTab.vue';
 import AssetAuditHistoryTab from './Tabs/AssetAuditHistoryTab.vue';
 import AssetActivityLogTab from './Tabs/AssetActivityLogTab.vue';
-
-declare const route: (name: string, params?: Record<string, unknown>) => string;
 
 type TabKey =
     | 'details'
@@ -75,6 +75,10 @@ const tabState = reactive<Record<TabKey, TabState>>({
 
 const activeTab = ref<TabKey>('details');
 
+const page = usePage();
+const userPermissions = computed<string[]>(() => (page.props as any).auth?.permissions || []);
+const can = (perm: string) => userPermissions.value.includes(perm);
+
 const currentTab = computed(() => tabs.find((tab) => tab.key === activeTab.value) ?? tabs[0]);
 const currentComponent = computed(() => currentTab.value.component);
 const currentData = computed(() => tabState[activeTab.value]?.data ?? null);
@@ -90,7 +94,7 @@ const fetchTab = async (key: TabKey) => {
 
     state.loading = true;
     try {
-        const response = await axios.get(route(`assets.tabs.${key}`, { asset: props.asset.id }));
+        const response = await axios.get(`/assets/${props.asset.id}/tabs/${key}`);
         state.data = response.data;
         state.loaded = true;
     } catch (error) {
@@ -108,6 +112,7 @@ const setActiveTab = async (key: TabKey) => {
 </script>
 
 <template>
+    <AppLayout :breadcrumbs="[{ title: 'Assets', href: '/assets' }, { title: asset.asset_tag, href: `/assets/${asset.id}` }]">
     <Head :title="`Asset · ${asset.asset_tag}`" />
 
     <div class="space-y-6 p-4 sm:p-6 lg:p-8">
@@ -130,12 +135,15 @@ const setActiveTab = async (key: TabKey) => {
                         {{ asset.description ?? 'No description provided.' }}
                     </p>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
                     <Link
-                        :href="route('assets.edit', asset.id)"
-                        class="inline-flex items-center rounded-full bg-indigo-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                        v-if="can('assets.update')"
+                        :href="`/assets/${asset.id}/edit`"
+                        class="inline-flex items-center rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-indigo-300"
+                        title="Edit asset"
                     >
-                        Edit Asset
+                        <Edit3 class="size-4" />
+                        <span class="sr-only">Edit</span>
                     </Link>
                     <img
                         v-if="asset.photo"
@@ -176,4 +184,5 @@ const setActiveTab = async (key: TabKey) => {
             <component :is="currentComponent" :data="currentData" :loading="currentLoading" />
         </section>
     </div>
+    </AppLayout>
 </template>

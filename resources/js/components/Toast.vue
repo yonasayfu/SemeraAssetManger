@@ -2,20 +2,21 @@
 import GlassButton from '@/components/GlassButton.vue';
 import GlassCard from '@/components/GlassCard.vue';
 import { usePage } from '@inertiajs/vue3';
-import { computed, onMounted, ref, watch } from 'vue';
+import { eventBus } from '@/lib/eventBus';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 type FlashPayload = {
     banner?: string;
     bannerStyle?: 'success' | 'danger' | 'warning' | 'info';
 };
 
-const page = usePage<{ flash?: FlashPayload }>();
+const page = usePage();
 
 const show = ref(false);
 const hideTimer = ref<number | null>(null);
 
-const style = computed<FlashPayload['bannerStyle']>(() => page.props.flash?.bannerStyle ?? 'success');
-const message = computed(() => page.props.flash?.banner ?? '');
+const style = ref<FlashPayload['bannerStyle']>('success');
+const message = ref('');
 
 const clearTimer = () => {
     if (hideTimer.value) {
@@ -67,13 +68,33 @@ const resume = () => {
     }, 3000);
 };
 
-onMounted(startTimer);
+const applyFlash = () => {
+    const flash = (page.props as any)?.flash ?? {};
+    style.value = flash.bannerStyle ?? 'success';
+    message.value = flash.banner ?? '';
+    startTimer();
+};
+
+const handleToastEvent = (payload: { message: string; style?: FlashPayload['bannerStyle'] }) => {
+    style.value = payload.style ?? 'success';
+    message.value = payload.message ?? '';
+    startTimer();
+};
+
+onMounted(() => {
+    applyFlash();
+    (eventBus as any).on('toast:show', handleToastEvent);
+});
 
 watch(
     () => page.props.flash,
-    () => startTimer(),
+    () => applyFlash(),
     { deep: true },
 );
+
+onUnmounted(() => {
+    (eventBus as any).off('toast:show', handleToastEvent);
+});
 
 const styleClasses = computed(() => {
     switch (style.value) {

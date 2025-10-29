@@ -33,19 +33,19 @@ export default {
   },
   methods: {
     searchAssets() {
-      this.$inertia.get(route('audits.scan.search', { audit: this.audit.id, query: this.search }), {}, { preserveState: true, replace: true });
+      this.$inertia.get(`/audits/${this.audit.id}/scan/search`, { query: this.search }, { preserveState: true, replace: true });
     },
     markAsFound(asset) {
-      this.$inertia.post(route('audits.scan.assets.update', { audit: this.audit.id, auditAsset: asset.id }), { found: true }, { preserveState: true, replace: true });
+      this.$inertia.post(`/audits/${this.audit.id}/scan/assets/${asset.id}`, { found: true }, { preserveState: true, replace: true });
     },
     markAsMissing(asset) {
-      this.$inertia.post(route('audits.scan.assets.update', { audit: this.audit.id, auditAsset: asset.id }), { found: false }, { preserveState: true, replace: true });
+      this.$inertia.post(`/audits/${this.audit.id}/scan/assets/${asset.id}`, { found: false }, { preserveState: true, replace: true });
     },
     updateNotes(asset) {
-      this.$inertia.post(route('audits.scan.assets.update', { audit: this.audit.id, auditAsset: asset.id }), { notes: asset.notes }, { preserveState: true, replace: true });
+      this.$inertia.post(`/audits/${this.audit.id}/scan/assets/${asset.id}`, { notes: asset.notes }, { preserveState: true, replace: true });
     },
     completeAudit() {
-      this.$inertia.post(route('audits.scan.complete', { audit: this.audit.id }));
+      this.$inertia.post(`/audits/${this.audit.id}/scan/complete`);
     },
   },
 };

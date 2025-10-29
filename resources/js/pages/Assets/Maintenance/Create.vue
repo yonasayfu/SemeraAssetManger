@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { Asset } from '@/types';
 
@@ -9,16 +10,17 @@ const form = useForm({
     description: '',
     maintenance_type: '',
     scheduled_for: '',
-    cost: null,
+    cost: null as number | null,
     vendor: '',
 });
 
 const submit = () => {
-    form.post(route('assets.maintenance.store', props.asset.id));
+    form.post(`/assets/${props.asset.id}/maintenance`);
 };
 </script>
 
 <template>
+    <AppLayout :breadcrumbs="[{ title: 'Assets', href: '/assets' }, { title: asset.asset_tag, href: `/assets/${asset.id}` }, { title: 'Maintenance', href: `/assets/${asset.id}/maintenance` }, { title: 'Add', href: `/assets/${asset.id}/maintenance/create` }]">
     <Head :title="`Add Maintenance for ${asset.asset_tag}`" />
     <div class="p-4">
         <h1 class="text-2xl font-bold">Add Maintenance for Asset: {{ asset.asset_tag }}</h1>
@@ -56,4 +58,5 @@ const submit = () => {
             </div>
         </form>
     </div>
+    </AppLayout>
 </template>

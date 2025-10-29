@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { Asset, Site, Location, Category, Department, Person } from '@/types';
+import { useToast } from '@/composables/useToast';
+import { Asset, Site, Location, Category, Department } from '@/types';
+
+interface PersonOption { id: number; name: string }
 
 const props = defineProps<{
     asset: Asset;
@@ -8,7 +12,7 @@ const props = defineProps<{
     locations: Location[];
     categories: Category[];
     departments: Department[];
-    people: Person[];
+    people: PersonOption[];
 }>();
 
 const form = useForm({
@@ -32,15 +36,28 @@ const form = useForm({
     photo: null,
 });
 
+const { show } = useToast();
+
+const onPhoto = (e: Event) => {
+    const target = e.target as HTMLInputElement | null;
+    if (target && target.files && target.files.length > 0) {
+        // @ts-expect-error inertia form typing allows File
+        form.photo = target.files[0];
+    }
+};
+
 const submit = () => {
-    form.post(route('assets.update', props.asset.id), {
+    form.post(`/assets/${props.asset.id}`, {
         forceFormData: true,
         method: 'put',
+        onSuccess: () => show('Asset updated successfully.', 'success'),
+        onError: () => show('Failed to update asset.', 'danger'),
     });
 };
 </script>
 
 <template>
+    <AppLayout :breadcrumbs="[{ title: 'Assets', href: '/assets' }, { title: asset.asset_tag, href: `/assets/${asset.id}` }, { title: 'Edit', href: `/assets/${asset.id}/edit` }]">
     <Head title="Edit Asset" />
     <div class="p-4">
         <h1 class="text-2xl font-bold">Edit Asset</h1>
@@ -147,11 +164,12 @@ const submit = () => {
             </div>
             <div>
                 <label for="photo">Photo</label>
-                <input id="photo" type="file" @input="form.photo = $event.target.files[0]" class="w-full" />
+                <input id="photo" type="file" @input="onPhoto" class="w-full" />
             </div>
             <div>
-                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Update Asset</button>
+                <button type="submit" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Update Asset</button>
             </div>
         </form>
     </div>
+    </AppLayout>
 </template>

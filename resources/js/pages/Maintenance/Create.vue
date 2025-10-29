@@ -3,7 +3,10 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import GlassCard from '@/components/GlassCard.vue';
 import InputError from '@/components/InputError.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { useToast } from '@/composables/useToast';
 import { computed, watch } from 'vue';
+
+declare const route: any;
 
 interface AssetOption {
     id: number;
@@ -72,6 +75,8 @@ watch(
     },
 );
 
+const { show } = useToast();
+
 const submit = () => {
     form.transform((data) => ({
         ...data,
@@ -86,6 +91,8 @@ const submit = () => {
     })).post(route('maintenance.store'), {
         preserveScroll: true,
         onFinish: () => form.transform((data) => data),
+        onSuccess: () => show('Maintenance created successfully.', 'success'),
+        onError: () => show('Failed to create maintenance.', 'danger'),
     });
 };
 </script>
@@ -97,7 +104,7 @@ const submit = () => {
         <div class="space-y-6 p-6">
             <div>
                 <Link
-                    :href="route('maintenance.index')"
+                    href="/maintenance"
                     class="inline-flex items-center text-sm font-medium text-indigo-600 transition hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200"
                 >
                     ← Back to maintenance
@@ -341,7 +348,7 @@ const submit = () => {
 
                     <div class="flex justify-end gap-3">
                         <Link
-                            :href="route('maintenance.index')"
+                            href="/maintenance"
                             class="inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
                         >
                             Cancel

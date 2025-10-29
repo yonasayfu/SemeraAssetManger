@@ -5,6 +5,7 @@ import Pagination from '@/components/Pagination.vue';
 import ResourceToolbar from '@/components/ResourceToolbar.vue';
 import { confirmDialog } from '@/lib/confirm';
 import { useTableFilters } from '@/composables/useTableFilters';
+import { useToast } from '@/composables/useToast';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Edit3, Eye, Search, Trash2 } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
@@ -184,6 +185,8 @@ const hasResults = computed<boolean>(() => staffMembers.value.length > 0);
 const paginationLinks = computed(() => props.staff?.links ?? []);
 const paginationFrom = computed(() => props.staff?.meta?.from ?? 1);
 
+const { show } = useToast();
+
 const destroy = async (staffMember: StaffSummary) => {
     const accepted = await confirmDialog({
         title: 'Remove staff member?',
@@ -198,6 +201,8 @@ const destroy = async (staffMember: StaffSummary) => {
 
     router.delete(`/staff/${staffMember.id}`, {
         preserveScroll: true,
+        onSuccess: () => show('Staff member removed.', 'danger'),
+        onError: () => show('Failed to remove staff member.', 'danger'),
     });
 };
 

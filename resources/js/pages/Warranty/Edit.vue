@@ -3,7 +3,10 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import GlassCard from '@/components/GlassCard.vue';
 import InputError from '@/components/InputError.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { useToast } from '@/composables/useToast';
 import { computed } from 'vue';
+
+declare const route: any;
 
 interface AssetOption {
     id: number;
@@ -39,14 +42,18 @@ const form = useForm({
     notes: props.warranty.notes ?? '',
 });
 
+const { show } = useToast();
+
 const submit = () => {
     form.transform((data) => ({
         ...data,
         asset_id: data.asset_id ? Number(data.asset_id) : data.asset_id,
         expiry_date: data.expiry_date || null,
-    })).put(route('warranties.update', props.warranty.id), {
+    })).put(`/warranties/${props.warranty.id}`, {
         preserveScroll: true,
         onFinish: () => form.transform((data) => data),
+        onSuccess: () => show('Warranty updated successfully.', 'success'),
+        onError: () => show('Failed to update warranty.', 'danger'),
     });
 };
 </script>
@@ -58,13 +65,13 @@ const submit = () => {
         <div class="space-y-6 p-6">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <Link
-                    :href="route('warranties.index')"
+                    href="/warranties"
                     class="inline-flex items-center text-sm font-medium text-indigo-600 transition hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200"
                 >
                     ← Back to warranties
                 </Link>
                 <Link
-                    :href="route('warranties.show', warranty.id)"
+                    :href="`/warranties/${warranty.id}`"
                     class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
                 >
                     View details
@@ -187,7 +194,7 @@ const submit = () => {
 
                     <div class="flex justify-end gap-3">
                         <Link
-                            :href="route('warranties.show', warranty.id)"
+                            :href="`/warranties/${warranty.id}`"
                             class="inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
                         >
                             Cancel
