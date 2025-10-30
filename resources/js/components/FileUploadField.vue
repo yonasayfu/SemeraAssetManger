@@ -65,10 +65,6 @@ onBeforeUnmount(() => {
     revokePreview();
 });
 
-const handleBrowse = () => {
-    fileInput.value?.click();
-};
-
 const handleFileChange = (event: Event) => {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
@@ -132,15 +128,16 @@ const closePreview = () => {
             {{ label }}
         </label>
 
-        <div
+        <label
+            for="file-upload-input"
             class="relative flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white/70 px-5 py-8 text-center transition hover:border-indigo-400 hover:bg-indigo-50/60 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-indigo-300/70 dark:hover:bg-slate-900/60"
             :class="dragging ? 'border-indigo-500 bg-indigo-50/80 dark:border-indigo-300/80' : ''"
-            @click.prevent="handleBrowse"
             @dragover="handleDragOver"
             @dragleave="handleDragLeave"
             @drop="handleDrop"
         >
             <input
+                id="file-upload-input"
                 ref="fileInput"
                 type="file"
                 class="absolute inset-0 cursor-pointer opacity-0"
@@ -159,7 +156,7 @@ const closePreview = () => {
                     {{ hint || 'Files are stored under module specific folders in storage/app/public.' }}
                 </p>
             </div>
-        </div>
+        </label>
 
         <div v-if="fileLabel" class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white py-3 px-4 text-sm text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
             <div class="flex flex-col">

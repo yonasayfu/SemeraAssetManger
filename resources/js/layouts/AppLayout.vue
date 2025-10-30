@@ -55,7 +55,7 @@ onUnmounted(() => {
 <template>
     <AppLayout :breadcrumbs="props.breadcrumbs">
         <Toast />
-        <slot />
+        <slot :key="$page.url" />
         <ConfirmModal
             :open="confirmOpen"
             :title="confirmTitle"

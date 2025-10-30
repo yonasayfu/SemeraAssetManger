@@ -35,6 +35,22 @@ watch(searchTerm, debounce(() => {
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
+                    <div v-if="operation === 'lease'" class="mb-4 p-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700">
+                        <p>Please select an asset to initiate a new lease agreement.</p>
+                    </div>
+                    <div v-else-if="operation === 'dispose'" class="mb-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700">
+                        <p>Select an asset to mark it for disposal. This action cannot be undone.</p>
+                    </div>
+                    <div v-else-if="operation === 'maintenance'" class="mb-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
+                        <p>Choose an asset to schedule or record maintenance activities.</p>
+                    </div>
+                    <div v-else-if="operation === 'reserve'" class="mb-4 p-4 bg-green-100 border-l-4 border-green-500 text-green-700">
+                        <p>Select an asset to reserve it for future use.</p>
+                    </div>
+                    <div v-else-if="operation === 'lease-return'" class="mb-4 p-4 bg-purple-100 border-l-4 border-purple-500 text-purple-700">
+                        <p>Select an asset to process its lease return.</p>
+                    </div>
+
                     <div class="mb-4">
                         <input
                             type="text"

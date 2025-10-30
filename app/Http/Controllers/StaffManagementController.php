@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\UserStoreRequest;
-use App\Http\Requests\UserUpdateRequest;
+use App\Http\Requests\StaffStoreRequest;
+use App\Http\Requests\StaffUpdateRequest;
 use App\Http\Resources\ActivityLogResource;
 use App\Models\ActivityLog;
 use App\Models\Staff;
-use App\Models\User;
 use App\Support\Exports\ExportConfig;
 use App\Support\Exports\HandlesDataExport;
 use App\Support\Users\SyncsStaffAssignment;
@@ -21,13 +20,13 @@ use Inertia\Response;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
-class UserManagementController extends Controller
+class StaffManagementController extends Controller
 {
     use HandlesDataExport;
     use SyncsStaffAssignment;
     public function index(Request $request): Response
     {
-        $this->ensureCanManageUsers();
+        $this->ensureCanManageStaff();
 
         $search = trim((string) $request->query('search', ''));
         $allowedPerPage = [5, 10, 25, 50, 100];
@@ -38,7 +37,7 @@ class UserManagementController extends Controller
         $sort = $this->resolveSort($request);
         $direction = $request->query('direction', 'asc') === 'desc' ? 'desc' : 'asc';
 
-        $query = User::query()->with([
+        $query = Staff::query()->with([
             'roles:id,name',
             'permissions:id,name',
             'staff:id,first_name,last_name,email,status,user_id',
@@ -51,35 +50,35 @@ class UserManagementController extends Controller
         $users = $query
             ->paginate($perPage)
             ->withQueryString()
-            ->through(function (User $user) {
+            ->through(function (Staff $staff) {
                 return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'account_status' => $user->account_status,
-                    'account_type' => $user->account_type,
-                    'approved_at' => optional($user->approved_at)->toIso8601String(),
-                    'approved_by' => $user->approver?->name,
-                    'is_pending' => $user->account_status === User::STATUS_PENDING,
-                    'roles' => $user->roles->pluck('name')->values(),
-                    'permissions' => $user->getAllPermissions()->pluck('name')->values(),
-                    'has_two_factor' => ! is_null($user->two_factor_secret),
-                    'staff' => $user->staff ? [
-                        'id' => $user->staff->id,
-                        'full_name' => $user->staff->full_name,
-                        'status' => $user->staff->status,
+                    'id' => $staff->id,
+                    'name' => $staff->name,
+                    'email' => $staff->email,
+                    'account_status' => $staff->account_status,
+                    'account_type' => $staff->account_type,
+                    'approved_at' => optional($staff->approved_at)->toIso8601String(),
+                    'approved_by' => $staff->approver?->name,
+                    'is_pending' => $staff->account_status === Staff::STATUS_PENDING,
+                    'roles' => $staff->roles->pluck('name')->values(),
+                    'permissions' => $staff->getAllPermissions()->pluck('name')->values(),
+                    'has_two_factor' => ! is_null($staff->two_factor_secret),
+                    'staff' => $staff->staff ? [
+                        'id' => $staff->staff->id,
+                        'full_name' => $staff->staff->full_name,
+                        'status' => $staff->staff->status,
                     ] : null,
                 ];
             });
 
         $staffLinkedCount = Staff::whereNotNull('user_id')->count();
-        $pendingCount = User::where('account_status', User::STATUS_PENDING)->count();
+        $pendingCount = Staff::where('account_status', Staff::STATUS_PENDING)->count();
 
-        return Inertia::render('Users/Index', [
+        return Inertia::render('Staff/Index', [
             'users' => $users,
             'stats' => [
                 [
-                    'label' => 'Total Users',
+                    'label' => 'Total Staff',
                     'value' => $users->total(),
                     'tone' => 'primary',
                 ],
@@ -112,7 +111,7 @@ class UserManagementController extends Controller
                 'impersonate' => $request->user()->can('users.impersonate'),
             ],
             'breadcrumbs' => [
-                ['title' => 'Users', 'href' => route('users.index')],
+                ['title' => 'Staff', 'href' => route('staff.index')],
             ],
             'print' => (bool) $request->boolean('print'),
         ]);
@@ -120,86 +119,86 @@ class UserManagementController extends Controller
 
     public function export(Request $request)
     {
-        $this->ensureCanManageUsers();
+        $this->ensureCanManageStaff();
 
-        return $this->handleExport($request, User::class, ExportConfig::users(), [
-            'label' => 'User Roster',
-            'type' => 'users',
+        return $this->handleExport($request, Staff::class, ExportConfig::staff(), [
+            'label' => 'Staff Roster',
+            'type' => 'staff',
         ]);
     }
 
     public function create(): Response
     {
-        $this->ensureCanManageUsers();
+        $this->ensureCanManageStaff();
 
-        return Inertia::render('Users/Create', [
+        return Inertia::render('Staff/Create', [
             'roles' => $this->availableRoles(),
             'permissions' => $this->availablePermissions(),
             'staff' => $this->availableStaff(),
             'breadcrumbs' => [
-                ['title' => 'Users', 'href' => route('users.index')],
-                ['title' => 'Create', 'href' => route('users.create')],
+                ['title' => 'Staff', 'href' => route('staff.index')],
+                ['title' => 'Create', 'href' => route('staff.create')],
             ],
         ]);
     }
 
-    public function show(Request $request, User $user): Response
+    public function show(Request $request, Staff $staff): Response
     {
-        $this->ensureCanManageUsers();
+        $this->ensureCanManageStaff();
 
-        $user->load([
+        $staff->load([
             'roles:id,name',
             'permissions:id,name',
             'staff:id,first_name,last_name,status,user_id',
             'approver:id,name',
         ]);
 
-        $activity = $user->activityLogs()
+        $activity = $staff->activityLogs()
             ->with('causer')
             ->latest()
             ->take(20)
             ->get();
 
-        return Inertia::render('Users/Show', [
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'account_status' => $user->account_status,
-                'account_type' => $user->account_type,
-                'approved_at' => optional($user->approved_at)->toIso8601String(),
-                'approved_by' => $user->approver?->name,
-                'roles' => $user->roles->pluck('name')->values(),
-                'permissions' => $user->getAllPermissions()->pluck('name')->values(),
-                'has_two_factor' => ! is_null($user->two_factor_secret),
-                'staff' => $user->staff ? [
-                    'id' => $user->staff->id,
-                    'full_name' => $user->staff->full_name,
-                    'status' => $user->staff->status,
+        return Inertia::render('Staff/Show', [
+            'staff' => [
+                'id' => $staff->id,
+                'name' => $staff->name,
+                'email' => $staff->email,
+                'account_status' => $staff->account_status,
+                'account_type' => $staff->account_type,
+                'approved_at' => optional($staff->approved_at)->toIso8601String(),
+                'approved_by' => $staff->approver?->name,
+                'roles' => $staff->roles->pluck('name')->values(),
+                'permissions' => $staff->getAllPermissions()->pluck('name')->values(),
+                'has_two_factor' => ! is_null($staff->two_factor_secret),
+                'staff' => $staff->staff ? [
+                    'id' => $staff->staff->id,
+                    'full_name' => $staff->staff->full_name,
+                    'status' => $staff->staff->status,
                 ] : null,
-                'created_at' => optional($user->created_at)->toDateTimeString(),
-                'updated_at' => optional($user->updated_at)->toDateTimeString(),
+                'created_at' => optional($staff->created_at)->toDateTimeString(),
+                'updated_at' => optional($staff->updated_at)->toDateTimeString(),
             ],
             'activity' => ActivityLogResource::collection($activity),
             'breadcrumbs' => [
-                ['title' => 'Users', 'href' => route('users.index')],
-                ['title' => $user->name, 'href' => route('users.show', $user)],
+                ['title' => 'Staff', 'href' => route('staff.index')],
+                ['title' => $staff->name, 'href' => route('staff.show', $staff)],
             ],
             'print' => (bool) $request->boolean('print'),
         ]);
     }
 
-    public function store(UserStoreRequest $request): RedirectResponse
+    public function store(StaffStoreRequest $request): RedirectResponse
     {
-        $this->ensureCanManageUsers();
+        $this->ensureCanManageStaff();
 
         DB::transaction(function () use ($request) {
             $data = $request->validated();
             $status = $data['account_status'];
             $accountType = $data['account_type'];
-            $isActive = $status === User::STATUS_ACTIVE;
+            $isActive = $status === Staff::STATUS_ACTIVE;
 
-            $user = User::create([
+            $staff = Staff::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
@@ -210,63 +209,63 @@ class UserManagementController extends Controller
                 'approved_by' => $isActive ? $request->user()->id : null,
             ]);
 
-            $user->syncRoles($data['roles'] ?? []);
-            $user->syncPermissions($data['permissions'] ?? []);
+            $staff->syncRoles($data['roles'] ?? []);
+            $staff->syncPermissions($data['permissions'] ?? []);
 
-            $this->syncStaffAssignment($user, $data['staff_id'] ?? null);
+            $this->syncStaffAssignment($staff, $data['staff_id'] ?? null);
         });
 
         return redirect()
-            ->route('users.index')
+            ->route('staff.index')
             ->with('bannerStyle', 'success')
-            ->with('banner', 'User created successfully.');
+            ->with('banner', 'Staff created successfully.');
     }
 
-    public function edit(User $user): Response
+    public function edit(Staff $staff): Response
     {
-        $this->ensureCanManageUsers();
+        $this->ensureCanManageStaff();
 
-        $user->load(['roles:id,name', 'permissions:id,name', 'staff:id', 'approver:id,name']);
+        $staff->load(['roles:id,name', 'permissions:id,name', 'staff:id', 'approver:id,name']);
 
-        $activity = $user->activityLogs()
+        $activity = $staff->activityLogs()
             ->with('causer')
             ->latest()
             ->take(20)
             ->get();
 
-        return Inertia::render('Users/Edit', [
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'account_status' => $user->account_status,
-                'account_type' => $user->account_type,
-                'approved_at' => optional($user->approved_at)->toIso8601String(),
-                'approved_by' => $user->approver?->name,
-                'roles' => $user->roles->pluck('name')->values(),
-                'permissions' => $user->getAllPermissions()->pluck('name')->values(),
-                'staff_id' => $user->staff?->id,
+        return Inertia::render('Staff/Edit', [
+            'staff' => [
+                'id' => $staff->id,
+                'name' => $staff->name,
+                'email' => $staff->email,
+                'account_status' => $staff->account_status,
+                'account_type' => $staff->account_type,
+                'approved_at' => optional($staff->approved_at)->toIso8601String(),
+                'approved_by' => $staff->approver?->name,
+                'roles' => $staff->roles->pluck('name')->values(),
+                'permissions' => $staff->getAllPermissions()->pluck('name')->values(),
+                'staff_id' => $staff->staff?->id,
             ],
             'roles' => $this->availableRoles(),
             'permissions' => $this->availablePermissions(),
-            'staff' => $this->availableStaff($user),
+            'staff' => $this->availableStaff($staff),
             'activity' => ActivityLogResource::collection($activity),
             'breadcrumbs' => [
-                ['title' => 'Users', 'href' => route('users.index')],
-                ['title' => $user->name, 'href' => route('users.edit', $user)],
+                ['title' => 'Staff', 'href' => route('staff.index')],
+                ['title' => $staff->name, 'href' => route('staff.edit', $staff)],
             ],
         ]);
     }
 
-    public function update(UserUpdateRequest $request, User $user): RedirectResponse
+    public function update(StaffUpdateRequest $request, Staff $staff): RedirectResponse
     {
-        $this->ensureCanManageUsers();
+        $this->ensureCanManageStaff();
 
-        $oldRoles = $user->roles->pluck('name')->sort()->values()->toArray();
-        $oldPermissions = $user->getAllPermissions()->pluck('name')->sort()->values()->toArray();
-        $oldStatus = $user->account_status;
-        $oldType = $user->account_type;
-        $oldApprovedAt = $user->approved_at;
+        $oldRoles = $staff->roles->pluck('name')->sort()->values()->toArray();
+        $oldPermissions = $staff->getAllPermissions()->pluck('name')->sort()->values()->toArray();
+        $oldStatus = $staff->account_status;
+        $oldType = $staff->account_type;
+        $oldApprovedAt = $staff->approved_at;
 
         $newRoles = $oldRoles;
         $newPermissions = $oldPermissions;
@@ -274,7 +273,7 @@ class UserManagementController extends Controller
         $newType = $oldType;
         $newApprovedAt = $oldApprovedAt;
 
-        DB::transaction(function () use ($request, $user, &$newRoles, &$newPermissions, &$newStatus, &$newType, &$newApprovedAt) {
+        DB::transaction(function () use ($request, $staff, &$newRoles, &$newPermissions, &$newStatus, &$newType, &$newApprovedAt) {
             $data = $request->validated();
             $status = $data['account_status'];
             $accountType = $data['account_type'];
@@ -290,8 +289,8 @@ class UserManagementController extends Controller
                 $payload['password'] = Hash::make($data['password']);
             }
 
-            if ($user->account_status !== $status) {
-                if ($status === User::STATUS_ACTIVE) {
+            if ($staff->account_status !== $status) {
+                if ($status === Staff::STATUS_ACTIVE) {
                     $payload['approved_at'] = now();
                     $payload['approved_by'] = $request->user()->id;
                 } else {
@@ -300,25 +299,25 @@ class UserManagementController extends Controller
                 }
             }
 
-            $user->update($payload);
+            $staff->update($payload);
 
-            $user->syncRoles($data['roles'] ?? []);
-            $user->syncPermissions($data['permissions'] ?? []);
+            $staff->syncRoles($data['roles'] ?? []);
+            $staff->syncPermissions($data['permissions'] ?? []);
 
-            $this->syncStaffAssignment($user, $data['staff_id'] ?? null);
+            $this->syncStaffAssignment($staff, $data['staff_id'] ?? null);
 
-            $user->refresh()->load('roles');
-            $newRoles = $user->roles->pluck('name')->sort()->values()->toArray();
-            $newPermissions = $user->getAllPermissions()->pluck('name')->sort()->values()->toArray();
-            $newStatus = $user->account_status;
-            $newType = $user->account_type;
-            $newApprovedAt = $user->approved_at;
+            $staff->refresh()->load('roles');
+            $newRoles = $staff->roles->pluck('name')->sort()->values()->toArray();
+            $newPermissions = $staff->getAllPermissions()->pluck('name')->sort()->values()->toArray();
+            $newStatus = $staff->account_status;
+            $newType = $staff->account_type;
+            $newApprovedAt = $staff->approved_at;
         });
 
         if ($oldRoles !== $newRoles || $oldPermissions !== $newPermissions) {
             ActivityLog::record(
                 auth()->id(),
-                $user->fresh(),
+                $staff->fresh(),
                 'roles.updated',
                 'Roles or permissions updated',
                 [
@@ -337,8 +336,8 @@ class UserManagementController extends Controller
         if ($oldStatus !== $newStatus || $oldType !== $newType) {
             ActivityLog::record(
                 auth()->id(),
-                $user->fresh(),
-                'user.account_status.updated',
+                $staff->fresh(),
+                'staff.account_status.updated',
                 'Account status updated',
                 [
                     'before' => [
@@ -356,30 +355,30 @@ class UserManagementController extends Controller
         }
 
         return redirect()
-            ->route('users.index')
+            ->route('staff.index')
             ->with('bannerStyle', 'success')
-            ->with('banner', 'User updated successfully.');
+            ->with('banner', 'Staff updated successfully.');
     }
 
-    public function destroy(Request $request, User $user): RedirectResponse
+    public function destroy(Request $request, Staff $staff): RedirectResponse
     {
-        $this->ensureCanManageUsers();
+        $this->ensureCanManageStaff();
 
-        if ($request->user()->is($user)) {
+        if ($request->user()->is($staff)) {
             return back()
                 ->with('bannerStyle', 'warning')
                 ->with('banner', 'You cannot delete your own account.');
         }
 
-        DB::transaction(function () use ($user) {
-            $this->syncStaffAssignment($user, null);
-            $user->delete();
+        DB::transaction(function () use ($staff) {
+            $this->syncStaffAssignment($staff, null);
+            $staff->delete();
         });
 
         return redirect()
-            ->route('users.index')
+            ->route('staff.index')
             ->with('bannerStyle', 'info')
-            ->with('banner', 'User removed.');
+            ->with('banner', 'Staff removed.');
     }
 
     protected function applySearch(Builder $query, ?string $search): void
@@ -437,26 +436,26 @@ class UserManagementController extends Controller
             ->toArray();
     }
 
-    protected function availableStaff(?User $user = null): array
+    protected function availableStaff(?Staff $staffModel = null): array
     {
         return Staff::orderBy('last_name')
             ->orderBy('first_name')
             ->get()
-            ->map(function (Staff $staff) use ($user) {
+            ->map(function (Staff $staff) use ($staffModel) {
                 return [
                     'id' => $staff->id,
                     'label' => $staff->full_name,
                     'status' => $staff->status,
                     'linked_user_id' => $staff->user_id,
-                    'linked_to_current_user' => $user ? $staff->user_id === $user->id : false,
+                    'linked_to_current_user' => $staffModel ? $staff->user_id === $staffModel->id : false,
                 ];
             })
             ->values()
             ->toArray();
     }
 
-    protected function ensureCanManageUsers(): void
+    protected function ensureCanManageStaff(): void
     {
-        abort_unless(auth()->user()?->can('users.manage'), 403);
+        abort_unless(auth()->user()?->can('staff.manage'), 403);
     }
 }

@@ -11,7 +11,7 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.put(route('categories.update', props.category.id));
+    form.put(`/setup/categories/${props.category.id}`);
 };
 </script>
 

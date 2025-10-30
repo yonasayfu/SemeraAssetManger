@@ -24,7 +24,7 @@
 | Messaging & collaboration | `MESSAGING_SYSTEM_DOCUMENTATION.md`, task delegation docs | Evaluate need for in-app messaging/tasks; port modular messaging store/services and task assignment once core modules are in place. |
 | Activity tracking | audit logs referenced in architecture docs | Reapply activity log traits for CRUD history (asset movements, maintenance updates). |
 | File handling | `STORAGE.md`, document upload flows | Reuse folder structure, upload components, document preview modals for asset documents/images. |
-| Global search | GlobalSearch modal pattern | Integrate global search overlay with asset-aware sources (assets, people, maintenance tickets). |
+| Global search | GlobalSearch modal pattern | Integrate global search overlay with asset-aware sources (assets, staff, maintenance tickets). |
 | Dashboard widgets | KPI cards, chart components, alert calendar from dashboard module | Repurpose widget system for asset KPIs (total assets, value, expiring warranties) and align with roadmap day-13 deliverables. |
 | API scaffolding | `MOBILE_API.md`, service serialization patterns | Use API resource patterns to keep future mobile integration easy; expose REST endpoints for assets and operations. |
 

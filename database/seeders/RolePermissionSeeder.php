@@ -16,9 +16,8 @@ class RolePermissionSeeder extends Seeder
         $permissions = collect([
             // Core management
             'staff.view', 'staff.create', 'staff.update', 'staff.delete',
-            'users.manage', 'roles.manage',
-            'activity-logs.view', 'users.impersonate',
-            'mailbox.view', 'mailbox.process',
+            'roles.manage',
+            'activity-logs.view', 'mailbox.view', 'mailbox.process',
 
             // Modules - high level
             'dashboard.view',

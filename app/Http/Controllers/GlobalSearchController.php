@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Asset;
 use App\Models\Staff;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class GlobalSearchController extends Controller
 {
     public function __invoke(Request $request)
     {
-        if (! $request->user()?->can('users.manage') && ! $request->user()?->can('staff.view')) {
+        if (!$request->user()?->can('users.manage') && !$request->user()?->can('staff.view')) {
             abort(403);
         }
 
@@ -70,19 +72,50 @@ class GlobalSearchController extends Controller
             }));
         }
 
+        // Asset Search Integration
+        if ($request->user()->can('assets.view')) {
+            $assetQuery = Asset::query()
+                ->where(function ($query) use ($term) {
+                    $query
+                        ->where('asset_tag', 'like', "%" . $term . "%")
+                        ->orWhere('description', 'like', "%" . $term . "%")
+                        ->orWhere('serial_no', 'like', "%" . $term . "%");
+                });
+
+            // Log the SQL query and bindings
+            \Illuminate\Support\Facades\Log::info('Asset Search SQL: ' . $assetQuery->toSql());
+            \Illuminate\Support\Facades\Log::info('Asset Search Bindings: ', $assetQuery->getBindings());
+
+            $assetMatches = $assetQuery
+                ->orderBy('asset_tag')
+                ->limit(5)
+                ->get();
+
+            \Illuminate\Support\Facades\Log::info('Asset Search Term: ' . $term . ', Matches: ' . $assetMatches->count());
+
+            $results = $results->merge($assetMatches->map(function (Asset $asset) {
+                return [
+                    'type' => 'Asset',
+                    'category' => 'Inventory',
+                    'title' => $asset->asset_tag,
+                    'description' => $asset->description,
+                    'url' => route('assets.show', $asset->id),
+                    'icon' => 'box',
+                ];
+            }));
+        }
+
         if ($results->isEmpty()) {
             $results->push([
-                'type' => 'Assets',
-                'category' => 'Coming Soon',
-                'title' => 'Asset search will arrive with Phase 7 modules.',
-                'description' => 'Use the Assets module filters once the domain modules are in place.',
-                'url' => route('dashboard'),
-                'icon' => 'package',
+                'type' => 'No Results',
+                'category' => 'Search',
+                'title' => 'No results found.',
+                'description' => 'Try a different search term.',
+                'url' => '#',
+                'icon' => 'search',
             ]);
         }
 
         return response()->json($results->take(15)->values());
     }
 }
-
-

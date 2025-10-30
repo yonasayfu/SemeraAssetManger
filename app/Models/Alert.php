@@ -11,7 +11,11 @@ class Alert extends Model
 
     protected $fillable = [
         'type',
+        'user_id',
         'asset_id',
+        'source_id',
+        'source_type',
+        'message',
         'due_date',
         'sent',
         'sent_at',
@@ -27,4 +31,13 @@ class Alert extends Model
         return $this->belongsTo(Asset::class);
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function source()
+    {
+        return $this->morphTo();
+    }
 }

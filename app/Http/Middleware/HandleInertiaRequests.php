@@ -48,7 +48,7 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
-                'user' => $request->user(),
+                'staff' => $request->user(),
                 'roles' => $request->user()
                     ? $request->user()->getRoleNames()->values()->toArray()
                     : [],
@@ -57,9 +57,9 @@ class HandleInertiaRequests extends Middleware
                     : [],
                 'can' => [
                     'viewStaff' => $request->user()?->can('staff.view') ?? false,
-                    'manageUsers' => $request->user()?->can('users.manage') ?? false,
+                    'manageStaff' => $request->user()?->can('staff.manage') ?? false,
                     'manageRoles' => $request->user()
-                        ? ($request->user()->can('roles.manage') || $request->user()->can('users.manage'))
+                        ? ($request->user()->can('roles.manage') || $request->user()->can('staff.manage'))
                         : false,
                 ],
             ],

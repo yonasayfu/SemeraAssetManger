@@ -49,7 +49,7 @@ const toggleEmailRecoveryCodesVisibility = async () => {
 
 const sendEmailRecoveryCodes = async () => {
     try {
-        await axios.post(route('two-factor-email-recovery.send'));
+        await axios.post('/two-factor-email-recovery/send');
         // Optionally, show a success message
     } catch (error) {
         console.error('Error sending email recovery codes:', error);

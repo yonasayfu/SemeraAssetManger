@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Support\Users;
+namespace App\Support\Staff;
 
 use App\Models\ActivityLog;
 use App\Models\Staff;
-use App\Models\User;
 
 trait SyncsStaffAssignment
 {
-    protected function syncStaffAssignment(User $user, ?int $staffId): void
+    protected function syncStaffAssignment(Staff $user, ?int $staffId): void
     {
         $previousStaff = $user->staff;
         $previousStaffId = $previousStaff?->id;
@@ -40,11 +39,11 @@ trait SyncsStaffAssignment
                     ActivityLog::record(
                         auth()->id(),
                         $currentStaff,
-                        'user_link.updated',
-                        'User link updated',
+                        'staff_profile_link.updated',
+                        'Staff profile link updated',
                         [
-                            'before' => ['user_id' => $originalUserId],
-                            'after' => ['user_id' => $user->id],
+                            'before' => ['staff_id' => $originalUserId],
+                            'after' => ['staff_id' => $user->id],
                         ]
                     );
                 }
@@ -54,12 +53,12 @@ trait SyncsStaffAssignment
         if ($previousStaff && $previousStaffId !== $staffId) {
             ActivityLog::record(
                 auth()->id(),
-                $previousStaff,
-                'user_link.updated',
-                'User link removed',
+                $user,
+                'staff_profile_link.removed',
+                'Staff profile link removed',
                 [
-                    'before' => ['user_id' => $user->id],
-                    'after' => ['user_id' => null],
+                    'before' => ['staff_id' => $user->id],
+                    'after' => ['staff_id' => null],
                 ]
             );
         }

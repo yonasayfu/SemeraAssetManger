@@ -93,6 +93,11 @@ class Asset extends Model
         return $this->hasMany(AuditAsset::class);
     }
 
+    public function alerts(): HasMany
+    {
+        return $this->hasMany(Alert::class);
+    }
+
     public function activityLogs(): HasMany
     {
         return $this->hasMany(ActivityLog::class, 'subject_id')
@@ -121,6 +126,6 @@ class Asset extends Model
 
     public function assignee(): BelongsTo
     {
-        return $this->belongsTo(Person::class, 'assigned_to');
+        return $this->belongsTo(Staff::class, 'assigned_to');
     }
 }

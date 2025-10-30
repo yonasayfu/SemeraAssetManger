@@ -71,7 +71,7 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected string $activityLogLabel = 'User';
+    protected string $activityLogLabel = 'Staff';
 
     protected array $activityLogAttributes = [
         'name',
@@ -145,7 +145,7 @@ class User extends Authenticatable
 
     public function notificationPreferences(): HasMany
     {
-        return $this->hasMany(UserNotificationPreference::class);
+        return $this->hasMany(StaffNotificationPreference::class);
     }
 
     public function approver(): BelongsTo

@@ -13,7 +13,7 @@ The Asset Management boilerplate ships with a production-ready RBAC model, Sanct
 | 1 | `cp .env.example .env` | Configure environment |
 | 2 | `composer install && npm install` | Install dependencies |
 | 3 | `php artisan key:generate` | Set app key |
-| 4 | `php artisan migrate --seed` | Create schema + seed roles/users |
+| 4 | `php artisan migrate --seed` | Create schema + seed roles/staff |
 | 5 | `npm run dev` | Build frontend assets |
 | 6 | `php artisan serve` | Start the HTTP server |
 
@@ -23,14 +23,14 @@ The Asset Management boilerplate ships with a production-ready RBAC model, Sanct
 
 | Role | Email | Password | Notes |
 | --- | --- | --- | --- |
-| Admin | `admin@example.com` | `password` | Full control (users, roles, staff, impersonation) |
+| Admin | `admin@example.com` | `password` | Full control (roles, staff, impersonation) |
 | Manager | `manager@example.com` | `password` | Staff CRUD only |
 | Technician | `technician@example.com` | `password` | Staff read-only |
 | Staff | `staff@example.com` | `password` | Mirrors Technician permissions |
 | Auditor | `auditor@example.com` | `password` | Read-only auditing |
 | ReadOnly | `readonly@example.com` | `password` | Intended as the base for guest/external testing |
 
-> To test the **External** (guest) experience, log in as `readonly@example.com`, impersonate as Admin, and change the role to **External** inside the Users module.
+> To test the **External** (guest) experience, log in as `readonly@example.com`, impersonate as Admin, and change the role to **External** inside the Staff module.
 
 ---
 
@@ -41,10 +41,10 @@ The Asset Management boilerplate ships with a production-ready RBAC model, Sanct
 | Dashboard & Notifications | ✅ | ✅ | ✅ | ✅ |
 | Staff Index / Export | ✅ | ✅ | ✅ (view only) | 🚫 |
 | Staff Create / Edit / Delete | ✅ | ✅ | 🚫 | 🚫 |
-| Users Module | ✅ | 🚫 | 🚫 | 🚫 |
+| Staff Module | ✅ | 🚫 | 🚫 | 🚫 |
 | Roles Module | ✅ | 🚫 | 🚫 | 🚫 |
 | Activity Logs | ✅ | 🚫 | 🚫 | 🚫 |
-| Impersonation | ✅ (via `users.impersonate`) | 🚫 | 🚫 | 🚫 |
+| Impersonation | ✅ (via `staff.impersonate`) | 🚫 | 🚫 | 🚫 |
 | API Tokens (via Sanctum) | ✅ | ✅ (read endpoints) | ✅ (limited) | 🚫 |
 | Sample Placeholder Page | `/samples/admin` | `/samples/manager` | `/samples/technician` | `/samples/external` |
 
@@ -58,13 +58,13 @@ To make RBAC validation painless, the boilerplate now includes lightweight Inert
 
 | Route | Audience | Middleware | Purpose |
 | --- | --- | --- | --- |
-| `/samples` | Any authenticated user | `auth` | Landing page linking to all samples |
+| `/samples` | Any authenticated staff | `auth` | Landing page linking to all samples |
 | `/samples/admin` | Admin | `role:Admin` | Confirms full platform control |
 | `/samples/manager` | Manager | `role:Manager` | Verifies staff management access only |
 | `/samples/technician` | Technician | `role:Technician` | Confirms read-only operations |
 | `/samples/external` | External / ReadOnly | `role:External|ReadOnly` | Confirms dashboard-only experience |
 
-> If you hit a 403 on a page you should own, check the user’s role assignment in **Users → Edit User**.
+> If you hit a 403 on a page you should own, check the staff’s role assignment in **Staff → Edit Staff**.
 
 ---
 
@@ -72,27 +72,27 @@ To make RBAC validation painless, the boilerplate now includes lightweight Inert
 
 ### 1. Admin
 - Sign in with `admin@example.com`.
-- Navigate to **Staff**, **Users**, **Roles** — all should load.
+- Navigate to **Staff**, **Staff**, **Roles** — all should load.
 - Visit `/samples/admin` and walk through the checklist.
-- Optional: use the user menu → **Impersonate** to test other roles.
+- Optional: use the staff menu → **Impersonate** to test other roles.
 - Run automated API checks: `./vendor/bin/pest tests/Feature/Api`.
 
 ### 2. Manager
 - Sign in with `manager@example.com`.
 - Confirm **Staff** shows create/edit buttons.
-- Verify `/users` and `/roles` return 403.
+- Verify `/staff` and `/roles` return 403.
 - Visit `/samples/manager` and complete the suggested flow.
 
 ### 3. Technician (applies to Staff, Auditor as well)
 - Sign in with `technician@example.com`.
 - Staff list loads, but edit/delete buttons are hidden.
-- `/users` and `/roles` should respond with 403.
+- `/staff` and `/roles` should respond with 403.
 - Visit `/samples/technician` to confirm expectations.
 
 ### 4. External / Guest
 - Log in with `readonly@example.com` (after converting to **External** role).
 - Sidebar should only show Dashboard + Settings.
-- `/staff`, `/users`, `/roles` should redirect or 403.
+- `/staff`, `/staff`, `/roles` should redirect or 403.
 - Visit `/samples/external` to confirm the restricted view.
 
 ---
@@ -105,12 +105,12 @@ To make RBAC validation painless, the boilerplate now includes lightweight Inert
 2. **Navigation audit**
    - Compare the sidebar groupings per role against the matrix above.
 3. **Permission denial audit**
-   - Attempt restricted pages (Users/Roles) with Manager and Technician — confirm 403.
+   - Attempt restricted pages (Staff/Roles) with Manager and Technician — confirm 403.
 4. **API surface**
-   - Authenticate via `/api/v1/auth/login`, then call `/api/v1/users` with Admin token (works) and Technician token (should return 403).
+   - Authenticate via `/api/v1/auth/login`, then call `/api/v1/staff` with Admin token (works) and Technician token (should return 403).
 5. **Automated regression**
    - `./vendor/bin/pest tests/Feature/Api`
-   - `./vendor/bin/pest tests/Feature/UserShowTest.php`
+   - `./vendor/bin/pest tests/Feature/StaffShowTest.php`
 
 Document the results in your QA notes. If any unexpected access is observed, re-run `php artisan permission:cache-reset` (or `php artisan optimize:clear`) after adjusting roles.
 
@@ -129,18 +129,18 @@ Document the results in your QA notes. If any unexpected access is observed, re-
 
 | Issue | Likely Cause | Fix |
 | --- | --- | --- |
-| Sample page immediately redirects | Missing role assignment | Update the user via **Users → Edit → Roles** |
-| Sidebar still shows Users/Roles for Technician | Cached permissions | `php artisan permission:cache-reset` |
+| Sample page immediately redirects | Missing role assignment | Update the staff via **Staff → Edit → Roles** |
+| Sidebar still shows Staff/Roles for Technician | Cached permissions | `php artisan permission:cache-reset` |
 | 419 CSRF on API tests | Token missing or expired | Re-authenticate via `/api/v1/auth/login` |
 | 404 on `/samples/...` | Routes not cached / environment mismatch | `php artisan route:clear` |
-| Seeder users absent | Migrate skipped seeding | `php artisan migrate:fresh --seed` |
+| Seeder staff absent | Migrate skipped seeding | `php artisan migrate:fresh --seed` |
 
 ---
 
 ## 📚 References
 
 - `database/seeders/RolePermissionSeeder.php` – role → permission mapping
-- `database/seeders/DatabaseSeeder.php` – seeded users & staff
+- `database/seeders/DatabaseSeeder.php` – seeded staff & staff
 - `routes/web.php` → `/samples` group – sample placeholders
 - `resources/js/pages/samples` – Inertia sample pages
 - `MD/Upcomming/Must/ApiTest.md` – API smoke testing playbook

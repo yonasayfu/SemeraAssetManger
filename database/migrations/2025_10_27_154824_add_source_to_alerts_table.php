@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('alerts', function (Blueprint $table) {
-            //
+            // Reverted changes as columns are already in create_alerts_table
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('alerts', function (Blueprint $table) {
-            //
+            // Reverted changes as columns are already in create_alerts_table
         });
     }
 };

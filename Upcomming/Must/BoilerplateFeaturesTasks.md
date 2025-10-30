@@ -5,7 +5,7 @@ Use this list to track the remaining polish items for the reusable Laravel/Inert
 ## 1. Activity Logging & Audit UI
 
 - [ ] Finalize “activity matrix” (which models/actions must log) and publish in `BoilerplateFeaturesPlan.md`.
-- [ ] Expand `RecordsActivity` coverage to user/staff CRUD, role/permission changes, notification preference edits, and Mailpit ingestion events.
+- [ ] Expand `RecordsActivity` coverage to staff CRUD, role/permission changes, notification preference edits, and Mailpit ingestion events.
 - [ ] Build the audit log UI (filters, detail drawer) so admins can browse the history.
 
 ## 2. Navigation & Appearance Enhancements
@@ -17,7 +17,7 @@ Use this list to track the remaining polish items for the reusable Laravel/Inert
 ## 3. Mobile/API Readiness
 
 - [ ] Draft `ApiIntegrationGuide.md` that defines versioning, authentication (token + optional OAuth), pagination format, and error envelope.
-- [ ] Ship base API scaffolding: auth endpoints (login, refresh, profile), notification feed, and user management summary – all guarded by Sanctum.
+- [ ] Ship base API scaffolding: auth endpoints (login, refresh, profile), notification feed, and staff management summary – all guarded by Sanctum.
 - [ ] Generate an OpenAPI spec + Postman collection and store them under `docs/api/`.
 - [ ] Add automated API smoke tests (Pest/PHPUnit) for the new endpoints.
 

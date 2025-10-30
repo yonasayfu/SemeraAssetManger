@@ -19,6 +19,16 @@ const props = defineProps<{
 
 const page = usePage();
 
+// TEMPORARY DEBUGGING:
+console.log('--- NAVMAIN DEBUG DATA ---');
+console.log('PERMISSIONS:', JSON.parse(JSON.stringify(page.props.auth?.permissions)));
+console.log('--- END NAVMAIN DEBUG DATA ---');
+
+// TEMPORARY DEBUGGING:
+console.log('--- NAVMAIN DEBUG DATA ---');
+console.log('PERMISSIONS:', JSON.parse(JSON.stringify(page.props.auth?.permissions)));
+console.log('--- END NAVMAIN DEBUG DATA ---');
+
 // Check if user has a specific permission
 const userCan = (permission: string | undefined | null): boolean => {
     if (!permission) return true;

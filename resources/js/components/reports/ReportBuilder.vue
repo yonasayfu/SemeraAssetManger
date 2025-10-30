@@ -2,7 +2,6 @@
 import axios from 'axios';
 import { computed, reactive, ref, watch } from 'vue';
 
-declare const route: (name: string, params?: Record<string, unknown>) => string;
 
 type FilterType = 'text' | 'number' | 'select' | 'date' | 'date-range';
 
@@ -122,7 +121,7 @@ const handlePreview = async () => {
     previewError.value = null;
 
     try {
-        const response = await axios.post(route('reports.preview'), {
+        const response = await axios.post('/reports/preview', {
             ...buildPayload(),
             limit: 25,
         });
@@ -140,7 +139,7 @@ const handleExport = async (format: string) => {
     previewError.value = null;
 
     try {
-        const response = await axios.post(route('reports.export'), {
+        const response = await axios.post('/reports/export', {
             ...buildPayload(),
             format,
         }, {

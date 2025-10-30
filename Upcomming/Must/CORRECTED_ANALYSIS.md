@@ -129,9 +129,9 @@ Routes defined (lines 25-28, 224-228):
 
 ### 7. **Advanced Module** - 100% ✅
 **Implemented:**
-- ✅ `/advanced/persons` (line 42, resource route) - PersonController
+- ✅ `/advanced/staff` (line 42, resource route) - StaffController
 - ✅ `/advanced/customers` (line 43, resource route) - CustomerController
-- ✅ Vue pages: `Advanced/Persons/Index.vue`, `Advanced/Customers/Index.vue`
+- ✅ Vue pages: `Advanced/Staff/Index.vue`, `Advanced/Customers/Index.vue`
 
 ---
 
@@ -232,7 +232,7 @@ b) Update sidebar to not show these as direct links
 | **Reports** | 5% ❌ | Only index page exists |
 | **Lists** | 50% ⚠️ | 2 of 4 lists work |
 | **Tools** | 60% ⚠️ | Docs/Images/Audits work |
-| **Advanced** | 100% ✅ | Persons & Customers complete |
+| **Advanced** | 100% ✅ | Staff & Customers complete |
 | **Help** | 100% ✅ | All pages work |
 | **Maintenance** | 30% ⚠️ | Asset-specific only |
 | **Warranty** | 10% ❌ | List only, no CRUD |
@@ -310,12 +310,12 @@ b) Update sidebar to not show these as direct links
 ## ✅ VERIFIED WORKING FEATURES
 
 - ✅ Authentication (including 2FA)
-- ✅ User/Staff/Role management
+- ✅ Staff/Role management
 - ✅ All Setup CRUD (companies, sites, locations, categories, departments)
 - ✅ Asset CRUD
 - ✅ All asset operations (when accessed from asset detail page)
 - ✅ Asset import/export
-- ✅ Persons & Customers
+- ✅ Staff & Customers
 - ✅ Maintenance list & Warranty list
 - ✅ Document & Image galleries
 - ✅ Audit list (basic)

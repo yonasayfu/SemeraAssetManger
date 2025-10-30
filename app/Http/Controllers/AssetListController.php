@@ -240,12 +240,12 @@ class AssetListController extends Controller
 
         $query->where(function (Builder $builder) use ($term) {
             $builder
-                ->where('asset_tag', 'like', "%{$term}%")
-                ->orWhere('description', 'like', "%{$term}%")
-                ->orWhere('serial_no', 'like', "%{$term}%")
-                ->orWhere('brand', 'like', "%{$term}%")
-                ->orWhere('model', 'like', "%{$term}%")
-                ->orWhere('project_code', 'like', "%{$term}%");
+                ->where('asset_tag', 'ilike', "%{$term}%")
+                ->orWhere('description', 'ilike', "%{$term}%")
+                ->orWhere('serial_no', 'ilike', "%{$term}%")
+                ->orWhere('brand', 'ilike', "%{$term}%")
+                ->orWhere('model', 'ilike', "%{$term}%")
+                ->orWhere('project_code', 'ilike', "%{$term}%");
         });
     }
 

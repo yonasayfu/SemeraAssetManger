@@ -7,6 +7,7 @@ use App\Models\Asset;
 use App\Models\Checkout;
 use App\Models\Lease;
 use App\Models\Maintenance;
+use App\Models\User;
 use App\Models\Warranty;
 use Carbon\Carbon;
 
@@ -65,7 +66,7 @@ class AlertService
     /**
      * Check for maintenance due and generate alerts.
      */
-    public function checkMaintenanceDue(): void
+    public function checkMaintenanceDue(?int $userId = null): void
     {
         $maintenanceDue = Maintenance::where('scheduled_for', '<', Carbon::now()->addDays(30)) // Maintenance due in next 30 days
             ->where('scheduled_for', '>', Carbon::now())
@@ -81,6 +82,7 @@ class AlertService
                     'source_type' => Maintenance::class,
                 ],
                 [
+                    'user_id' => $userId,
                     'due_date' => $maintenance->scheduled_for,
                     'message' => 'Maintenance for asset ' . $maintenance->asset->asset_tag . ' is due on ' . $maintenance->scheduled_for->format('Y-m-d') . '.',
                 ]
@@ -126,7 +128,7 @@ class AlertService
         foreach ($expiringWarranties as $warranty) {
             Alert::firstOrCreate(
                 [
-                    'type' => 'Expiring Warranty',
+                    'type' => 'Warranty Expiring',
                     'asset_id' => $warranty->asset_id,
                     'source_id' => $warranty->id,
                     'source_type' => Warranty::class,
@@ -146,23 +148,79 @@ class AlertService
      */
     public function checkAssetsDue(): void
     {
-        // This is a placeholder. The logic here depends on how 'assets due' is defined.
-        // For example, if assets have a 'next_audit_date' field:
-        $assetsDue = Asset::where('next_audit_date', '<', Carbon::now()->addDays(30))
-            ->where('next_audit_date', '>', Carbon::now())
+        // For demonstration, let's consider assets due for a "review" 1 year after purchase
+        $assetsDueForReview = Asset::where('purchase_date', '<=', Carbon::now()->subYears(1))
+            ->whereDoesntHave('alerts', function ($query) {
+                $query->where('type', 'Assets Due')
+                    ->where('due_date', '>', Carbon::now()->subYears(1)); // Only consider alerts for the current review cycle
+            })
             ->get();
 
-        foreach ($assetsDue as $asset) {
+        foreach ($assetsDueForReview as $asset) {
             Alert::firstOrCreate(
                 [
-                    'type' => 'Asset Due',
+                    'type' => 'Assets Due',
                     'asset_id' => $asset->id,
-                    'source_id' => $asset->id, // Assuming asset itself is the source
+                    'source_id' => $asset->id,
                     'source_type' => Asset::class,
                 ],
                 [
-                    'due_date' => $asset->next_audit_date,
-                    'message' => 'Asset ' . $asset->asset->asset_tag . ' is due for audit/re-calibration on ' . $asset->next_audit_date->format('Y-m-d') . '.',
+                    'due_date' => $asset->purchase_date->addYears(1), // Example: Due 1 year after purchase
+                    'message' => 'Asset ' . $asset->asset_tag . ' is due for a review 1 year after purchase on ' . $asset->purchase_date->addYears(1)->format('Y-m-d') . '.',
+                ]
+            );
+        }
+    }
+
+    /**
+     * Check for assets past due (e.g., for audit or re-calibration) and generate alerts.
+     */
+    public function checkAssetsPastDue(): void
+    {
+        // For demonstration, let's consider assets past due for a "review" 1 year after purchase
+        $assetsPastDueForReview = Asset::where('purchase_date', '<=', Carbon::now()->subYears(1))
+            ->whereDoesntHave('alerts', function ($query) {
+                $query->where('type', 'Assets Past Due')
+                    ->where('due_date', '<', Carbon::now());
+            })
+            ->get();
+
+        foreach ($assetsPastDueForReview as $asset) {
+            Alert::firstOrCreate(
+                [
+                    'type' => 'Assets Past Due',
+                    'asset_id' => $asset->id,
+                    'source_id' => $asset->id,
+                    'source_type' => Asset::class,
+                ],
+                [
+                    'due_date' => $asset->purchase_date->addYears(1), // Example: Due 1 year after purchase
+                    'message' => 'Asset ' . $asset->asset_tag . ' was due for a review 1 year after purchase on ' . $asset->purchase_date->addYears(1)->format('Y-m-d') . ' and is now past due.',
+                ]
+            );
+        }
+    }
+
+    /**
+     * Check for leases expiring and generate alerts.
+     */
+    public function checkLeasesExpiring(): void
+    {
+        $expiringLeases = Lease::where('end_at', '<', Carbon::now()->addDays(30)) // Leases expiring in next 30 days
+            ->where('end_at', '>', Carbon::now())
+            ->get();
+
+        foreach ($expiringLeases as $lease) {
+            Alert::firstOrCreate(
+                [
+                    'type' => 'Lease Expiring',
+                    'asset_id' => $lease->asset_id,
+                    'source_id' => $lease->id,
+                    'source_type' => Lease::class,
+                ],
+                [
+                    'due_date' => $lease->end_at,
+                    'message' => 'Lease for asset ' . $lease->asset->asset_tag . ' is expiring on ' . $lease->end_at->format('Y-m-d') . '.',
                 ]
             );
         }

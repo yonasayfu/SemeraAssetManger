@@ -13,8 +13,12 @@ return new class extends Migration
     {
         Schema::create('alerts', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ['Maintenance Due', 'Warranty Expiring', 'Audit Due']);
+            $table->string('type');
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('asset_id')->nullable()->constrained('assets')->onDelete('cascade');
+            $table->unsignedBigInteger('source_id');
+            $table->string('source_type');
+            $table->text('message');
             $table->date('due_date');
             $table->boolean('sent')->default(false);
             $table->timestamp('sent_at')->nullable();

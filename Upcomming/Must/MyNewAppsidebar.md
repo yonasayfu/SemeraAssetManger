@@ -116,7 +116,7 @@ This version groups items in a clean, collapsible way following **Inertia Vue 3 
         title: "Advanced",
         href: "/advanced",
         children: [
-          { title: "Persons / Employees", href: "/advanced/persons" },
+          { title: "Staff", href: "/advanced/staff" },
           { title: "Customers", href: "/advanced/customers" },
         ],
       },
@@ -175,7 +175,7 @@ This version groups items in a clean, collapsible way following **Inertia Vue 3 
 | **Lists**          | Asset, Maintenance, Warranty lists                                                   |
 | **Reports**        | All report families (automated, custom, asset, audit, etc.)                          |
 | **Tools**          | Import/Export, Gallery, Audit                                                        |
-| **Advanced**       | Persons/Employees, Customers                                                         |
+| **Advanced**       | Staff, Customers                                                         |
 | **Setup**          | Company Info, Sites, Locations, Categories, Departments, Manage Dashboard            |
 | **Help & Support** | About, Contact, Terms, Privacy, Videos, Reviews, Changelog                           |
 

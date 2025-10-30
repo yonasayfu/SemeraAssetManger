@@ -26,7 +26,7 @@ withDefaults(defineProps<Props>(), {
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Two-Factor Authentication',
-        href: route('two-factor.show'),
+        href: '/settings/two-factor',
     },
 ];
 

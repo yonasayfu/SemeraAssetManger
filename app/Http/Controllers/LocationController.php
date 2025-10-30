@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Site;
+use App\Models\Location;
 use Inertia\Inertia;
 
 use Illuminate\Http\Request;
@@ -17,6 +18,11 @@ class LocationController extends Controller
         $this->authorize('viewAny', Location::class);
         return Inertia::render('Setup/Location/Index', [
             'locations' => Location::all(),
+            'can' => [
+                'create' => auth()->user()->can('create', Location::class),
+                'edit' => auth()->user()->can('update', Location::class),
+                'delete' => auth()->user()->can('delete', Location::class),
+            ],
         ]);
     }
 

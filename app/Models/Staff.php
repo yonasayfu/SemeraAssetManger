@@ -3,57 +3,131 @@
 namespace App\Models;
 
 use App\Models\Concerns\RecordsActivity;
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
+use Lab404\Impersonate\Models\Impersonate;
+use Lab404\Impersonate\Services\ImpersonateManager;
 
-class Staff extends Model
+class Staff extends Authenticatable
 {
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_SUSPENDED = 'suspended';
+
+    public const TYPE_EXTERNAL = 'external';
+    public const TYPE_INTERNAL = 'internal';
+
+    /** @use HasFactory<\Database\Factories\UserFactory> */
+    use HasApiTokens;
     use HasFactory;
+    use HasRoles;
+    use Impersonate;
+    use Notifiable;
     use RecordsActivity;
+    use TwoFactorAuthenticatable;
 
-    protected $table = 'staff';
-
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
     protected $fillable = [
-        'first_name',
-        'last_name',
+        'name',
         'email',
-        'phone',
-        'job_title',
-        'status',
-        'hire_date',
-        'user_id',
-        'avatar_path',
+        'password',
+        'recovery_email',
+        'phone_number',
+        'account_status',
+        'account_type',
+        'approved_at',
+        'approved_by',
     ];
 
-    protected $casts = [
-        'hire_date' => 'date',
-    ];
-
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
     protected $appends = [
-        'full_name',
-        'avatar_url',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'is_impersonating',
+        'impersonated_by_name',
+    ];
+    protected $hidden = [
+        'password',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'two_factor_email_recovery_codes',
+        'remember_token',
     ];
 
     protected string $activityLogLabel = 'Staff';
 
     protected array $activityLogAttributes = [
-        'first_name',
-        'last_name',
+        'name',
         'email',
-        'phone',
-        'job_title',
-        'status',
-        'hire_date',
-        'user_id',
-        'avatar_path',
+        'account_status',
+        'account_type',
     ];
 
-    public function user(): BelongsTo
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
     {
-        return $this->belongsTo(User::class);
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'two_factor_confirmed_at' => 'datetime',
+            'approved_at' => 'datetime',
+        ];
+    }
+
+    public function getIsImpersonatingAttribute(): bool
+    {
+        /** @var ImpersonateManager $manager */
+        $manager = app(ImpersonateManager::class);
+
+        return $manager->isImpersonating();
+    }
+
+    public function getImpersonatedByNameAttribute(): ?string
+    {
+        /** @var ImpersonateManager $manager */
+        $manager = app(ImpersonateManager::class);
+
+        if (!$manager->isImpersonating() || auth()->id() !== $this->getKey()) {
+            return null;
+        }
+
+        $impersonatorId = $manager->getImpersonatorId();
+
+        if (!$impersonatorId) {
+            return null;
+        }
+
+        static $impersonatorName;
+
+        if ($impersonatorName === null) {
+            $impersonatorName = static::query()
+                ->select('name')
+                ->find($impersonatorId)
+                ?->name;
+        }
+
+        return $impersonatorName;
     }
 
     public function activityLogs(): MorphMany
@@ -61,17 +135,61 @@ class Staff extends Model
         return $this->morphMany(ActivityLog::class, 'subject');
     }
 
-    public function getFullNameAttribute(): string
+    public function notificationPreferences(): HasMany
     {
-        return trim("{$this->first_name} {$this->last_name}");
+        return $this->hasMany(UserNotificationPreference::class);
     }
 
-    public function getAvatarUrlAttribute(): ?string
+    public function approver(): BelongsTo
     {
-        if (! $this->avatar_path) {
-            return null;
+        return $this->belongsTo(self::class, 'approved_by');
+    }
+
+    public function getTwoFactorEmailRecoveryCodesAttribute(?string $value): array
+    {
+        if (! $value) {
+            return [];
         }
 
-        return Storage::disk('public')->url($this->avatar_path);
+        try {
+            $decoded = json_decode(decrypt($value), true, 512, JSON_THROW_ON_ERROR);
+        } catch (\Throwable $exception) {
+            return [];
+        }
+
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        return array_values(
+            array_filter($decoded, fn ($code) => is_string($code) && $code !== '')
+        );
+    }
+
+    public function setTwoFactorEmailRecoveryCodesAttribute(?array $codes): void
+    {
+        if (empty($codes)) {
+            $this->attributes['two_factor_email_recovery_codes'] = null;
+
+            return;
+        }
+
+        $normalized = array_values(
+            array_filter($codes, fn ($code) => is_string($code) && $code !== '')
+        );
+
+        if (! $normalized) {
+            $this->attributes['two_factor_email_recovery_codes'] = null;
+
+            return;
+        }
+
+        try {
+            $encoded = json_encode($normalized, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            $encoded = json_encode($normalized);
+        }
+
+        $this->attributes['two_factor_email_recovery_codes'] = encrypt($encoded);
     }
 }

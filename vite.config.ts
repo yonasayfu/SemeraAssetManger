@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
 import { defineConfig } from 'vite';
+import path from 'path';
 
 const enableWayfinder = false;
 
@@ -38,6 +39,7 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': '/resources/js',
+            'ziggy': path.resolve('vendor/tightenco/ziggy/dist/index.esm.js'),
         },
     },
 });

@@ -12,11 +12,32 @@ class DepartmentController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('viewAny', Department::class);
+
+        $search = trim((string) $request->query('search', ''));
+        $perPage = $request->integer('per_page', 5);
+
+        $query = Department::query();
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $departments = $query->paginate($perPage)->withQueryString();
+
         return Inertia::render('Setup/Department/Index', [
-            'departments' => Department::all(),
+            'departments' => $departments,
+            'filters' => [
+                'search' => $search,
+                'per_page' => $perPage,
+            ],
+            'can' => [
+                'create' => auth()->user()->can('create', Department::class),
+                'edit' => auth()->user()->can('update', Department::class),
+                'delete' => auth()->user()->can('delete', Department::class),
+            ],
         ]);
     }
 

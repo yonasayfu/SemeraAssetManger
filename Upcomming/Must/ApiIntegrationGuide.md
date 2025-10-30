@@ -5,7 +5,8 @@ This boilerplate ships with a Sanctum-protected REST API designed for mobile app
 ## 1. Base URL & Versioning
 - All endpoints live under /api/v1/....
 - Increment the version when making breaking changes; keep previous versions available until consumers migrate.
-- Add new routes in outes/api.php and group them by namespace + prefix.
+- Add new routes in 
+outes/api.php and group them by namespace + prefix.
 
 ## 2. Authentication
 - Uses Laravel Sanctum personal access tokens.
@@ -13,10 +14,10 @@ This boilerplate ships with a Sanctum-protected REST API designed for mobile app
 - POST /api/v1/auth/logout revokes the current token.
 - Tokens are supplied via the Authorization: Bearer <token> header.
 - For mobile apps, create one token per device and store the name in device_name.
-- To scope tokens, pass an bilities array when calling $user->createToken(..., ['read', 'write']).
+- To scope tokens, pass an  bilities array when calling $staff->createToken(..., ['read', 'write']).
 
 ## 3. Serialization & Resources
-- API controllers return JSON using dedicated Resource classes (see pp/Http/Resources/Api).
+- API controllers return JSON using dedicated Resource classes (see  pp/Http/Resources/Api).
 - List endpoints wrap results in a resource collection with data, meta, and links payloads matching Laravel's paginator.
 - All timestamps are ISO 8601 strings (UTC).
 
@@ -52,7 +53,7 @@ This boilerplate ships with a Sanctum-protected REST API designed for mobile app
 - For authorization failures, return HTTP 403 with { "message": "This action is unauthorized." }.
 
 ## 6. Rate Limiting
-- Default throttle: pi middleware (60 requests/minute).
+- Default throttle:  pi middleware (60 requests/minute).
 - Override per route/group with ->middleware('throttle:120,1').
 
 ## 7. Reference Artifacts

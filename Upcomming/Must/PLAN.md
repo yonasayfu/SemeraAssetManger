@@ -32,8 +32,8 @@
 - [ ] **Task 6.4:** Implement the `Audit` tool.
 
 ### Phase 7: Advanced Module
-- [ ] **Task 7.1:** Create migration and model for `People`.
-- [ ] **Task 7.2:** Implement "Persons / Employees" management.
+- [ ] **Task 7.1:** Create migration and model for `Staff`.
+- [ ] **Task 7.2:** Implement "Staff" management.
 - [ ] **Task 7.3:** Create migration and model for `Customers`.
 - [ ] **Task 7.4:** Implement "Customers" management.
 

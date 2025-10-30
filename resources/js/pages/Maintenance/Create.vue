@@ -88,7 +88,7 @@ const submit = () => {
         parts_cost: data.parts_cost === '' ? null : data.parts_cost,
         recurrence_frequency: data.is_recurring ? data.recurrence_frequency : null,
         recurrence_interval: data.is_recurring ? data.recurrence_interval : null,
-    })).post(route('maintenance.store'), {
+    })).post('/maintenance', {
         preserveScroll: true,
         onFinish: () => form.transform((data) => data),
         onSuccess: () => show('Maintenance created successfully.', 'success'),

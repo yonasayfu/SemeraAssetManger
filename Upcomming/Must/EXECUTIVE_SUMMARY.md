@@ -47,7 +47,7 @@
 - ⚠️ Asset detail page (basic, needs tabs)
 
 ### 5. **Asset Lifecycle Operations** - 100% ✅
-- ✅ Check-out (assign asset to person)
+- ✅ Check-out (assign asset to staff)
 - ✅ Check-in (return asset)
 - ✅ Lease (lease asset to customer)
 - ✅ Lease Return
@@ -56,8 +56,8 @@
 - ✅ Dispose (mark asset as disposed)
 - ✅ Maintenance (basic - tied to asset)
 
-### 6. **People & Customers** - 100% ✅
-- ✅ Persons/Employees (CRUD complete)
+### 6. **Staff & Customers** - 100% ✅
+- ✅ Staff/Employees (CRUD complete)
 - ✅ Customers (CRUD complete)
 
 ### 7. **Tools Module** - 60% ⚠️
@@ -203,7 +203,7 @@ All report routes exist as **placeholders only** (return generic page)
 
 ### 8. **Import/Export Multi-Entity** - 15% ⚠️
 - ✅ Asset import/export
-- ❌ **People import**
+- ❌ **Staff import**
 - ❌ **Site import**
 - ❌ **Location import**
 - ❌ **Category import**

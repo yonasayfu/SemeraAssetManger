@@ -36,7 +36,7 @@ Integrating these services with Laravel is incredibly simple, requiring only a f
 ## Managing AssetManagement Easily
 
 *   **Minimal Third-Party Interaction**: Once configured, you rarely need to interact with the email service directly. Laravel handles sending, and the service handles delivery.
-*   **Reliability**: Your MFA codes will be delivered reliably to your users' personal inboxes.
+*   **Reliability**: Your MFA codes will be delivered reliably to your staff's personal inboxes.
 *   **Cost-Effective**: Free tiers are often sufficient, and paid plans are usually very affordable for transactional emails.
 *   **No Code Changes**: You do not need to change any application code when switching between these services; just update the `.env` variables.
 

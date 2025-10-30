@@ -125,7 +125,12 @@ class DashboardController extends Controller
                 ];
             });
 
-        return $maintenance->merge($leases)->merge($warranties)->sortBy('date')->values()->toArray();
+        return collect($maintenance->toArray())
+            ->merge($leases->toArray())
+            ->merge($warranties->toArray())
+            ->sortBy('date')
+            ->values()
+            ->toArray();
     }
 
     private function getUpcomingMaintenanceList(Carbon $now): array

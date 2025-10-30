@@ -36,7 +36,6 @@ use App\Http\Controllers\ManageDashboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NotificationPreferenceController;
 use App\Http\Controllers\PendingApprovalController;
-use App\Http\Controllers\PersonController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Report\AssetReportController;
 use App\Http\Controllers\Report\AuditReportController as AuditReportListController;
@@ -61,16 +60,17 @@ use App\Http\Controllers\StoreAssetLeaseController;
 use App\Http\Controllers\StoreAssetLeaseReturnController;
 use App\Http\Controllers\StoreAssetMoveController;
 use App\Http\Controllers\StoreAssetReserveController;
-use App\Http\Controllers\PersonImportController;
+use App\Http\Controllers\StaffImportController;
 use App\Http\Controllers\SiteImportController;
 use App\Http\Controllers\LocationImportController;
 use App\Http\Controllers\CategoryImportController;
 use App\Http\Controllers\DepartmentImportController;
 use App\Http\Controllers\MaintenanceImportController;
 use App\Http\Controllers\WarrantyImportController;
+use App\Http\Controllers\SiteController;
 use App\Http\Controllers\ToolsController;
 use App\Http\Controllers\TwoFactorEmailRecoveryController;
-use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\StaffManagementController;
 use App\Http\Controllers\WarrantyController;
 use App\Http\Controllers\WarrantyListController;
 use App\Http\Controllers\Alert\AssetsDueController;
@@ -188,21 +188,21 @@ Route::middleware('auth')->group(function () {
         });
 
         // User Management
-        Route::prefix('users')->name('users.')->middleware('permission:users.manage')->group(function () {
-            Route::get('/', [UserManagementController::class, 'index'])->name('index');
-            Route::get('/export', [UserManagementController::class, 'export'])->name('export');
-            Route::get('/create', [UserManagementController::class, 'create'])->name('create');
-            Route::post('/', [UserManagementController::class, 'store'])->name('store');
-            Route::get('/{user}', [UserManagementController::class, 'show'])->name('show');
-            Route::get('/{user}/edit', [UserManagementController::class, 'edit'])->name('edit');
-            Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
-            Route::delete('/{user}', [UserManagementController::class, 'destroy'])->name('destroy');
+        Route::prefix('staff')->name('staff.')->middleware('permission:users.manage')->group(function () {
+            Route::get('/', [StaffManagementController::class, 'index'])->name('index');
+            Route::get('/export', [StaffManagementController::class, 'export'])->name('export');
+            Route::get('/create', [StaffManagementController::class, 'create'])->name('create');
+            Route::post('/', [StaffManagementController::class, 'store'])->name('store');
+            Route::get('/{user}', [StaffManagementController::class, 'show'])->name('show');
+            Route::get('/{user}/edit', [StaffManagementController::class, 'edit'])->name('edit');
+            Route::put('/{user}', [StaffManagementController::class, 'update'])->name('update');
+            Route::delete('/{user}', [StaffManagementController::class, 'destroy']);
         });
 
         // Role Management
         Route::resource('roles', RoleManagementController::class)
             ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
-            ->middleware('permission:roles.manage|users.manage');
+            ->middleware('permission:roles.manage|staff.manage');
 
         // Sample Pages
         Route::prefix('samples')->name('samples.')->group(function () {
@@ -270,9 +270,9 @@ Route::middleware('auth')->group(function () {
             Route::put('/', [AssetController::class, 'update'])->middleware('permission:assets.update')->name('update');
             Route::delete('/', [AssetController::class, 'destroy'])->middleware('permission:assets.delete')->name('destroy');
 
-            Route::get('checkout', [AssetCheckoutController::class, 'create'])->name('checkout.create');
+            Route::get('checkout', AssetCheckoutController::class)->name('checkout.create');
             Route::post('checkout', [StoreAssetCheckoutController::class, 'store'])->name('checkout.store');
-            Route::get('checkin', [AssetCheckinController::class, 'create'])->name('checkin.create');
+            Route::get('checkin', AssetCheckinController::class)->name('checkin.create');
             Route::post('checkin', [StoreAssetCheckinController::class, 'store'])->name('checkin.store');
             Route::get('lease', [AssetLeaseController::class, 'create'])->name('lease.create');
             Route::post('lease', [StoreAssetLeaseController::class, 'store'])->name('lease.store');
@@ -358,7 +358,7 @@ Route::middleware('auth')->group(function () {
         Route::prefix('tools')->name('tools.')->middleware('permission:tools.view')->group(function () {
             Route::get('import', [ToolsController::class, 'import'])->name('import');
             Route::get('export', [ToolsController::class, 'export'])->name('export');
-            Route::post('import/persons', PersonImportController::class)->name('import.persons');
+            Route::post('import/staff', StaffImportController::class)->name('import.staff');
             Route::post('import/sites', SiteImportController::class)->name('import.sites');
             Route::post('import/locations', LocationImportController::class)->name('import.locations');
             Route::post('import/categories', CategoryImportController::class)->name('import.categories');
@@ -377,13 +377,13 @@ Route::middleware('auth')->group(function () {
 
         // Advanced Module
         Route::prefix('advanced')->name('advanced.')->middleware('permission:advanced.view')->group(function () {
-            Route::resource('persons', PersonController::class);
+            Route::resource('staff', StaffController::class);
             Route::resource('customers', CustomerController::class);
         });
 
         // Advanced root should not 404; send to default list
         Route::get('/advanced', function () {
-            return redirect()->route('advanced.persons.index');
+            return redirect()->route('advanced.customers.index');
         })->name('advanced.index');
 
         // Help & Support Module
@@ -505,7 +505,7 @@ Route::middleware('auth')->group(function () {
                         "title" => "Advanced",
                         "href" => "/advanced",
                         "children" => [
-                            ["title" => "Persons / Employees", "href" => "/advanced/persons"],
+                            ["title" => "Staff", "href" => "/advanced/staff"],
                             ["title" => "Customers", "href" => "/advanced/customers"],
                         ],
                     ],
@@ -558,4 +558,7 @@ Route::middleware('auth')->group(function () {
 
 // Authentication routes
 require __DIR__.'/auth.php';
+
+// Settings routes
+require __DIR__.'/settings.php';
 

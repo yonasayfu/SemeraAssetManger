@@ -17,6 +17,11 @@ class SiteController extends Controller
         $this->authorize('viewAny', Site::class);
         return Inertia::render('Setup/Site/Index', [
             'sites' => Site::all(),
+            'can' => [
+                'create' => auth()->user()->can('create', Site::class),
+                'edit' => auth()->user()->can('update', Site::class),
+                'delete' => auth()->user()->can('delete', Site::class),
+            ],
         ]);
     }
 

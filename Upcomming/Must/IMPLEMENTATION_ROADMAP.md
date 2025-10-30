@@ -5,7 +5,7 @@
 ### âœ… COMPLETED (Based on Analysis)
 
 #### Database & Models
-- âœ… All core tables created (companies, sites, locations, categories, departments, people, assets, asset_photos, asset_documents, checkouts, leases, maintenances, moves, reservations, alerts, warranties, audits, audit_assets, customers)
+- âœ… All core tables created (companies, sites, locations, categories, departments, staff, assets, asset_photos, asset_documents, checkouts, leases, maintenances, moves, reservations, alerts, warranties, audits, audit_assets, customers)
 - âœ… All models exist with relationships
 
 #### Controllers & Routes
@@ -19,7 +19,7 @@
   - Maintenance (AssetMaintenanceController)
 - âœ… Sidebar asset operation links have been updated to point to asset selection pages.
 - âœ… Setup modules (Company, Site, Location, Category, Department)
-- âœ… Advanced modules (Person, Customer)
+- âœ… Advanced modules (Customer)
 - âœ… Tools (DocumentGallery, ImageGallery, Audit)
 - âœ… Import/Export (AssetImportController, AssetExport)
 - âœ… Lists (MaintenanceList, WarrantyList)
@@ -267,7 +267,7 @@ protected function schedule(Schedule $schedule)
 #### 12. **Import/Export - Multi-Entity Support** âš ï¸
 **Status:** Asset import exists
 **Missing Import Types:**
-- People/Employees import
+- Staff/Employees import
 - Sites import
 - Locations import
 - Categories import
@@ -583,7 +583,7 @@ protected function schedule(Schedule $schedule)
 
 #### Tasks:
 1. âœ… Generic Import Landing Page
-   - Select entity type (Assets, People, Sites, etc.)
+   - Select entity type (Assets, Staff, Sites, etc.)
    - Download template
    - Upload file
    - Map columns
@@ -591,7 +591,7 @@ protected function schedule(Schedule $schedule)
    - Import
 
 2. âœ… Import Controllers for Each Entity
-   - `PersonImportController.php`
+   - `StaffImportController.php`
    - `SiteImportController.php`
    - `LocationImportController.php`
    - `CategoryImportController.php`

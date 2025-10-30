@@ -321,7 +321,6 @@
     - [x] Export landing page
 
 - [x] Create Import Controllers
-    - [x] `PersonImportController.php`
     - [x] `SiteImportController.php`
     - [x] `LocationImportController.php`
     - [x] `CategoryImportController.php`
@@ -330,9 +329,12 @@
     - [x] `WarrantyImportController.php`
 
 - [x] Create Import Jobs
-    - [x] `ImportPersonsJob.php`
     - [x] `ImportSitesJob.php`
-    - [x] etc.
+    - [x] `ImportLocationsJob.php`
+    - [x] `ImportCategoriesJob.php`
+    - [x] `ImportDepartmentsJob.php`
+    - [x] `ImportMaintenancesJob.php`
+    - [x] `ImportWarrantiesJob.php`
 
 ### Frontend
 
@@ -369,7 +371,7 @@
     - [x] `app/Policies/LocationPolicy.php`
     - [x] `app/Policies/CategoryPolicy.php`
     - [x] `app/Policies/DepartmentPolicy.php`
-    - [x] `app/Policies/PersonPolicy.php`
+    - [x] `app/Policies/StaffPolicy.php`
     - [x] `app/Policies/CustomerPolicy.php`
 
 - [x] Add authorize checks in controllers (for `AssetController`)
@@ -394,16 +396,11 @@
 
 ### UI/UX
 
-- [ ] Consistent styling across all pages
-- [ ] Loading states on all async operations
-- [ ] Error handling and messages
-- [ ] Empty states for lists
-- [ ] Success toasts/notifications
-- [ ] Confirmation dialogs for destructive actions
+Refer to `upgradeTasks.md` for detailed UI/UX tasks and progress.
 
 ### Performance
 
-- [x] Add database indexes
+- [x] Add database indexes (Completed)
     - [x] Assets table (asset_tag, status, site_id, location_id, category_id)
     - [x] Checkouts table (asset_id, due_at, status)
     - [x] Leases table (asset_id, end_at, status)
@@ -443,13 +440,12 @@
 - [x] Phase 7: Dashboard Enhancements (8/8)
 - [x] Phase 8: Import/Export Multi-Entity (15/15)
 - [ ] Phase 9: Permissions & Policies (0/15)
-- [ ] Phase 10: Polish & Testing (0/20)
+- [ ] Phase 10: Polish & Testing (UI/UX tasks moved to `upgradeTasks.md`)
 
 ### Total Tasks: 133
 
-### Completed: 18
-
-### Progress: 13%
+### Completed: 73
+### Progress: 55%
 
 ---
 
@@ -504,7 +500,7 @@ I’ll finish the remaining conversions in one go:
 - **Sidebar**
   - Team + Account Settings groups added, with correct icons and RBAC gates.
 
-- **Advanced/Persons**
+- **Advanced/Staff**
   - Actions converted to icons (Eye, Edit3, Trash2) with confirm + toasts.
 
 - **Settings/Auth**

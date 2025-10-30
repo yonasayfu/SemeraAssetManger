@@ -2,9 +2,11 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import GlassButton from '@/components/GlassButton.vue';
 import GlassCard from '@/components/GlassCard.vue';
+import ResourceToolbar from '@/components/ResourceToolbar.vue';
 import { confirmDialog } from '@/lib/confirm';
 import { useToast } from '@/composables/useToast';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { Edit3, Trash2 } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface RoleSummary {
@@ -49,27 +51,12 @@ const remove = async (role: RoleSummary) => {
 
     <AppLayout :breadcrumbs="[{ title: 'Roles', href: '/roles' }]">
     <div class="space-y-6">
-        <div class="liquidGlass-wrapper">
-            <span class="liquidGlass-inner-shine" aria-hidden="true" />
-            <div class="liquidGlass-content flex flex-col gap-4 px-5 py-5 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h1 class="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-                        Role management
-                    </h1>
-                    <p class="text-sm text-slate-600 dark:text-slate-300">
-                        Define access profiles and attach permissions to your team.
-                    </p>
-                </div>
-
-                <div v-if="can.create">
-                    <GlassButton as="span">
-                        <Link href="/roles/create">
-                            <span>Create role</span>
-                        </Link>
-                    </GlassButton>
-                </div>
-            </div>
-        </div>
+        <ResourceToolbar
+            title="Role management"
+            description="Define access profiles and attach permissions to your team."
+            :create-route="can.create ? '/roles/create' : undefined"
+            :show-create="can.create"
+        />
 
         <GlassCard
             variant="lite"
@@ -138,24 +125,25 @@ const remove = async (role: RoleSummary) => {
                         </td>
                         <td class="px-6 py-4 text-right text-sm">
                             <div class="flex justify-end gap-2">
-                                <GlassButton
+                                <Link
                                     v-if="can.edit"
-                                    size="sm"
-                                    as="span"
+                                    :href="`/roles/${role.id}/edit`"
+                                    class="inline-flex items-center rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-indigo-300"
+                                    title="Edit role"
                                 >
-                                    <Link :href="`/roles/${role.id}/edit`">
-                                        Edit
-                                    </Link>
-                                </GlassButton>
-                                <GlassButton
+                                    <Edit3 class="h-4 w-4" />
+                                    <span class="sr-only">Edit</span>
+                                </Link>
+                                <button
                                     v-if="can.delete"
-                                    size="sm"
-                                    class="bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:bg-red-500/20 dark:text-red-200"
                                     type="button"
+                                    class="inline-flex items-center rounded-md p-2 text-red-500 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                                    title="Delete role"
                                     @click="remove(role)"
                                 >
-                                    Delete
-                                </GlassButton>
+                                    <Trash2 class="h-4 w-4" />
+                                    <span class="sr-only">Delete</span>
+                                </button>
                             </div>
                         </td>
                     </tr>

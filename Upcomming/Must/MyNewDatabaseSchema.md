@@ -76,7 +76,7 @@ These define your hierarchy, structure, and static lookups.
 
 ---
 
-### 👥 `people`
+### 👥 `staff`
 
 | Column        | Type                        | Notes              |
 | ------------- | --------------------------- | ------------------ |
@@ -119,7 +119,7 @@ This is the heart of your system — everything connects to this.
 | location_id     | BIGINT (FK: locations.id)                                                                  |                           |
 | category_id     | BIGINT (FK: categories.id)                                                                 |                           |
 | department_id   | BIGINT (FK: departments.id)                                                                |                           |
-| assigned_to     | BIGINT (FK: people.id)                                                                     | Nullable                  |
+| assigned_to     | BIGINT (FK: staff.id)                                                                     | Nullable                  |
 | status          | ENUM(‘Available’,‘Checked Out’,‘Under Repair’,‘Leased’,‘Disposed’,‘Lost’,‘Donated’,‘Sold’) |                           |
 | photo           | VARCHAR(255)                                                                               | File path                 |
 | created_by      | BIGINT (FK: users.id)                                                                      |                           |
@@ -282,7 +282,7 @@ These support your operations — logging, alerts, company setup.
 | --------------------------------- | ---------------- |
 | Company → Sites                   | 1:N              |
 | Site → Locations                  | 1:N              |
-| Department → People               | 1:N              |
+| Department → Staff               | 1:N              |
 | Category → Assets                 | 1:N              |
 | Site → Assets                     | 1:N              |
 | Location → Assets                 | 1:N              |
@@ -298,7 +298,7 @@ These support your operations — logging, alerts, company setup.
 
 When you implement this schema:
 
-* You’ll have **core CRUD** for Assets, Departments, Sites, Locations, People, and Categories.
+* You’ll have **core CRUD** for Assets, Departments, Sites, Locations, Staff, and Categories.
 * You can **import/export** via Excel (Asset Tag-based uniqueness).
 * You can begin building **Audit**, **Maintenance**, and **Warranty** modules right after this.
 

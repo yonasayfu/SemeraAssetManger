@@ -1,85 +1,94 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useForm, Head } from '@inertiajs/vue3';
-import axios from 'axios';
+import { useForm, Head, router } from '@inertiajs/vue3';
+import AppLayout from '@/layouts/AppLayout.vue';
+import SettingsLayout from '@/layouts/settings/Layout.vue';
+import HeadingSmall from '@/components/HeadingSmall.vue';
+import GlassCard from '@/components/GlassCard.vue';
+import { useToast } from '@/composables/useToast';
+import { type NotificationPreference, type BreadcrumbItem } from '@/types';
 
-const props = defineProps({
-    preferences: {
-        type: Array,
-        default: () => [],
+const props = defineProps<{
+    preferences: NotificationPreference[];
+    availableNotificationTypes: string[];
+}>();
+
+const { show } = useToast();
+
+const breadcrumbItems: BreadcrumbItem[] = [
+    {
+        title: 'Notification Preferences',
+        href: '/profile/notification-preferences',
     },
-    availableNotificationTypes: {
-        type: Array,
-        default: () => [],
-    },
-});
+];
 
-const localPreferences = ref([]);
+const localPreferences = ref<{
+    type: string;
+    channels: { channel: string; enabled: boolean }[];
+}>(
+    props.availableNotificationTypes.map(type => ({
+        type,
+        channels: ['mail', 'database'].map(channel => ({
+            channel,
+            enabled: props.preferences.find(
+                p => p.notification_type === type && p.channel === channel
+            )?.enabled ?? true,
+        })),
+    }))
+);
 
-onMounted(() => {
-    // Initialize local preferences from props
-    localPreferences.value = props.availableNotificationTypes.map(type => {
-        return {
-            type: type,
-            channels: ['mail', 'database'].map(channel => { // Assuming mail and database are always available channels
-                const existingPref = props.preferences.find(p => p.notification_type === type && p.channel === channel);
-                return {
-                    channel: channel,
-                    enabled: existingPref ? existingPref.enabled : true, // Default to true if no preference exists
-                };
-            }),
-        };
+const updatePreference = async (type: string, channel: string, enabled: boolean) => {
+    router.post('/profile/notification-preferences', {
+        notification_type: type,
+        channel: channel,
+        enabled: enabled,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => show('Preference updated successfully.', 'success'),
+        onError: (errors) => {
+            console.error('Error updating preference:', errors);
+            show('Failed to update preference.', 'danger');
+        },
     });
-});
-
-const updatePreference = async (type, channel, enabled) => {
-    try {
-        await axios.post(route('profile.notification-preferences.update'), {
-            notification_type: type,
-            channel: channel,
-            enabled: enabled,
-        });
-        // Optionally, refresh local preferences or show a success message
-    } catch (error) {
-        console.error('Error updating preference:', error);
-    }
 };
 </script>
 
 <template>
     <Head title="Notification Preferences" />
 
-    <!-- Assuming a layout is applied externally -->
-    <div class="p-6 md:p-10">
-        <h2 class="text-lg font-medium text-gray-900">Notification Preferences</h2>
+    <AppLayout :breadcrumbs="breadcrumbItems">
+        <SettingsLayout>
+            <div class="space-y-6">
+                <HeadingSmall
+                    title="Notification Preferences"
+                    description="Manage how you receive notifications from the application."
+                />
 
-        <p class="mt-1 text-sm text-gray-600">
-            Manage how you receive notifications from the application.
-        </p>
-
-        <div class="mt-6 bg-white rounded-lg shadow-md p-6">
-            <div v-if="localPreferences.length === 0" class="text-gray-500">
-                No notification types available to manage.
-            </div>
-            <div v-else>
-                <div v-for="prefType in localPreferences" :key="prefType.type" class="mb-6 pb-4 border-b last:border-b-0">
-                    <h3 class="font-semibold text-gray-800 mb-2">{{ prefType.type.replace(/([A-Z])/g, ' $1').trim() }}</h3>
-                    <div class="flex flex-wrap gap-4">
-                        <div v-for="prefChannel in prefType.channels" :key="prefChannel.channel" class="flex items-center">
-                            <input
-                                :id="`${prefType.type}-${prefChannel.channel}`"
-                                type="checkbox"
-                                v-model="prefChannel.enabled"
-                                @change="updatePreference(prefType.type, prefChannel.channel, prefChannel.enabled)"
-                                class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                            />
-                            <label :for="`${prefType.type}-${prefChannel.channel}`" class="ml-2 text-sm text-gray-700 capitalize">
-                                {{ prefChannel.channel }}
-                            </label>
+                <GlassCard>
+                    <div v-if="localPreferences.length === 0" class="text-slate-500 dark:text-slate-300">
+                        No notification types available to manage.
+                    </div>
+                    <div v-else class="space-y-6">
+                        <div v-for="prefType in localPreferences" :key="prefType.type" class="pb-4 last:pb-0 ">
+                            <h3 class="font-semibold text-slate-800 dark:text-slate-100 mb-2">{{ prefType.type.replace(/([A-Z])/g, ' $1').trim() }}</h3>
+                            <div class="flex flex-wrap gap-4">
+                                <div v-for="prefChannel in prefType.channels" :key="prefChannel.channel" class="flex items-center">
+                                    <input
+                                        :id="`${prefType.type}-${prefChannel.channel}`"
+                                        type="checkbox"
+                                        v-model="prefChannel.enabled"
+                                        @change="updatePreference(prefType.type, prefChannel.channel, prefChannel.enabled)"
+                                        class="rounded border-slate-300 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:bg-slate-700 dark:border-slate-600"
+                                    />
+                                    <label :for="`${prefType.type}-${prefChannel.channel}`" class="ml-2 text-sm text-slate-700 dark:text-slate-200 capitalize">
+                                        {{ prefChannel.channel }}
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </GlassCard>
             </div>
-        </div>
-    </div>
+        </SettingsLayout>
+    </AppLayout>
 </template>

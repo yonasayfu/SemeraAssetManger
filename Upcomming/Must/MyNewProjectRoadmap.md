@@ -5,7 +5,7 @@ Amazing—this is enough to design a full clone plan. Here’s the complete, str
 # 0) Product scope (from your screenshots)
 
 A single-tenant asset management system with:
-Dashboard (widgets + charts + calendar alerts), Alerts (due/overdue/expiring), Asset lifecycle (create, view, check-out/in, lease/return, move, reserve, dispose), Lists (Assets, Maintenance, Warranties), Maintenance, Warranty, Sites/Locations, Departments, People/Employees, Import/Export, Documents & Images galleries, Audits (cycle counts), Reporting (prebuilt + custom + automated), Setup (company info + taxonomy), Help.
+Dashboard (widgets + charts + calendar alerts), Alerts (due/overdue/expiring), Asset lifecycle (create, view, check-out/in, lease/return, move, reserve, dispose), Lists (Assets, Maintenance, Warranties), Maintenance, Warranty, Sites/Locations, Departments, Staff/Employees, Import/Export, Documents & Images galleries, Audits (cycle counts), Reporting (prebuilt + custom + automated), Setup (company info + taxonomy), Help.
 
 ---
 
@@ -54,7 +54,7 @@ Dashboard (widgets + charts + calendar alerts), Alerts (due/overdue/expiring), A
 
 **Advanced**
 
-* Persons/Employees
+* Staff/Employees
 * (Customers also appears in first batch)
 
 **Reports**
@@ -82,7 +82,7 @@ Dashboard (widgets + charts + calendar alerts), Alerts (due/overdue/expiring), A
 * **departments** — name, parent_id
 * **sites** — name, description, address_line, suite, city, state, postal_code, country
 * **locations** — site_id, name, code, parent_id, notes
-* **people** — name, employee_code, title, email, phone, department_id, site_id, location_id, active
+* **staff** — name, employee_code, title, email, phone, department_id, site_id, location_id, active
 * **customers** — name, contact_name, email, phone, address_json (optional)
 
 ### Taxonomy
@@ -100,14 +100,14 @@ Dashboard (widgets + charts + calendar alerts), Alerts (due/overdue/expiring), A
 
 ### Lifecycle: movements, usage, reservations, leasing
 
-* **checkouts** — asset_id, assignee_type (person|department|customer), assignee_id, due_at, checked_out_at, checked_in_at, condition_out_id, condition_in_id, notes, status (open|closed|overdue)
+* **checkouts** — asset_id, assignee_type (staff|department|customer), assignee_id, due_at, checked_out_at, checked_in_at, condition_out_id, condition_in_id, notes, status (open|closed|overdue)
 * **leases** — asset_id, lessee_type (customer|department), lessee_id, start_at, end_at, rate_minor, currency, terms, status (active|returned|overdue|cancelled)
-* **reservations** — asset_id, requester_id (user/person), start_at, end_at, status (pending|approved|cancelled|fulfilled)
+* **reservations** — asset_id, requester_id (user/staff), start_at, end_at, status (pending|approved|cancelled|fulfilled)
 * **moves** — asset_id, from_location_id, to_location_id, moved_by (user_id), moved_at, reason
 
 ### Maintenance & warranty
 
-* **maintenances** — asset_id, code, title, description, type (preventive|corrective), status (open|scheduled|in_progress|completed|cancelled|overdue), opened_by (user_id), assigned_to (user_id or person_id), scheduled_for, started_at, closed_at, cost_parts_minor, cost_labor_minor, currency
+* **maintenances** — asset_id, code, title, description, type (preventive|corrective), status (open|scheduled|in_progress|completed|cancelled|overdue), opened_by (user_id), assigned_to (user_id or staff_id), scheduled_for, started_at, closed_at, cost_parts_minor, cost_labor_minor, currency
 * **warranties** — asset_id, provider, description, length_months, start_at, end_at, active (bool), notes
 
 ### Audits (stocktakes)
@@ -164,7 +164,7 @@ Dashboard (widgets + charts + calendar alerts), Alerts (due/overdue/expiring), A
 Map to policies:
 
 * AssetPolicy: viewAny, view, create, update, delete, operate(checkout/lease/move/reserve/dispose), export, import
-* MaintenancePolicy, AuditPolicy, WarrantyPolicy, PersonPolicy, Site/Location/Category/Department policies, ReportPolicy.
+* MaintenancePolicy, AuditPolicy, WarrantyPolicy, StaffPolicy, Site/Location/Category/Department policies, ReportPolicy.
 
 ---
 
@@ -239,7 +239,7 @@ Map to policies:
 * `/audits` (Index/Manage) and `/audits/:id/run`
 * `/reports` (families + builder + saved)
 * `/tools/import`, `/tools/export`, `/tools/galleries`
-* `/advanced/people`, `/advanced/customers`
+* `/advanced/staff`, `/advanced/customers`
 * `/setup/company`, `/setup/sites`, `/setup/locations`, `/setup/categories`, `/setup/departments`, `/setup/dashboard`
 
 ---
@@ -248,7 +248,7 @@ Map to policies:
 
 **Import Wizard**
 
-* Targets: Assets, People, Sites, Locations, Categories, Departments, Maintenance, Warranties
+* Targets: Assets, Staff, Sites, Locations, Categories, Departments, Maintenance, Warranties
 * Steps: (1) Upload CSV/XLSX → (2) Map columns to fields (auto-match on header) → (3) Validate preview (N errors shown with row numbers) → (4) Queue job → (5) Email summary
 * Safety: dry-run mode, “update or create” toggle via Asset Tag ID
 * Limits: chunk processing (e.g., 1,000 rows per chunk), 5,000/file UI hint
@@ -301,7 +301,7 @@ Map to policies:
 
 * status, expires (due date), asset_tag_id, description, title, maintenance_detail
 
-**People**
+**Staff**
 
 * searchable on: name, employee ID, job title, email, phone; columns include site, location, department, notes
 

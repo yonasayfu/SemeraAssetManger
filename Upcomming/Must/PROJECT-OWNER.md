@@ -18,7 +18,7 @@
 - UI shell: sidebar group/collapse, glass effect style
 
 ## Naming & Conventions
-- Use neutral, domain-consistent names: Asset, Maintenance, Warranty, Audit, Site, Location, Department, Person.
+- Use neutral, domain-consistent names: Asset, Maintenance, Warranty, Audit, Site, Location, Department, Staff.
 - Money in minor units; store currency per row.
 - Timestamps: `*_at`; soft deletes where reasonable.
 

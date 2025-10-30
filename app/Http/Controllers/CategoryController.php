@@ -12,11 +12,32 @@ class CategoryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('viewAny', Category::class);
+
+        $search = trim((string) $request->query('search', ''));
+        $perPage = $request->integer('per_page', 5);
+
+        $query = Category::query();
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $categories = $query->paginate($perPage)->withQueryString();
+
         return Inertia::render('Setup/Category/Index', [
-            'categories' => Category::all(),
+            'categories' => $categories,
+            'filters' => [
+                'search' => $search,
+                'per_page' => $perPage,
+            ],
+            'can' => [
+                'create' => auth()->user()->can('create', Category::class),
+                'edit' => auth()->user()->can('update', Category::class),
+                'delete' => auth()->user()->can('delete', Category::class),
+            ],
         ]);
     }
 

@@ -2,7 +2,7 @@
 
 This guide summarizes roles, permissions, and accessible features in the Asset Management System.
 
-## Test Users (default password: password)
+## Test Staff (default password: password)
 
 - Admin — admin@example.com (all features)
 - Manager — manager@example.com
@@ -37,14 +37,14 @@ Permissions are powered by Spatie Laravel-Permission. Admin is a superuser (Gate
 - tools.view — Tools (Import/Export, Galleries, Audits)
 - tools.import — Submit imports on Tools > Import
 - tools.export — Submit exports on Tools > Export
-- advanced.view — Advanced (Persons, Customers)
+- advanced.view — Advanced (Staff, Customers)
 - setup.manage — Setup (Companies, Sites, Locations, Categories, Departments, Manage Dashboard)
 - activity-logs.view — Activity Logs
-- users.manage — User Management
+- staff.manage — Staff Management
 - roles.manage — Role Management
 - mailbox.view, mailbox.process — Dev mailbox
 - staff.view/create/update/delete — Staff module
-- users.impersonate — Impersonation
+- staff.impersonate — Impersonation
 
 ## Default Role Access Matrix
 
@@ -65,7 +65,7 @@ Permissions are powered by Spatie Laravel-Permission. Admin is a superuser (Gate
 
 ## Menu Visibility
 
-- The sidebar hides items the user lacks permission for. Parent items gate children.
+- The sidebar hides items the staff member lacks permission for. Parent items gate children.
 - Examples:
   - Setup only appears with setup.manage.
   - Reports only appears with reports.view.

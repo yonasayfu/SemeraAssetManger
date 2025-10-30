@@ -34,6 +34,11 @@ class Kernel extends ConsoleKernel
             ->dailyAt('01:00')
             ->onOneServer()
             ->name('warranties.check-expiry');
+
+        $schedule
+            ->job(new \App\Jobs\GenerateAlertsJob())
+            ->daily()
+            ->name('alerts.generate');
     }
 
     /**

@@ -1,6 +1,6 @@
-# Users API Test Playbook
+# Staff API Test Playbook
 
-This guide teaches you how to exercise the Sanctum-protected **Users API** from beginner basics through advanced CRUD validation. It uses [Thunder Client](https://www.thunderclient.com/) inside VS Code, but every step also includes the equivalent `curl` commands for terminal usage.
+This guide teaches you how to exercise the Sanctum-protected **Staff API** from beginner basics through advanced CRUD validation. It uses [Thunder Client](https://www.thunderclient.com/) inside VS Code, but every step also includes the equivalent `curl` commands for terminal usage.
 
 ---
 
@@ -12,7 +12,7 @@ This guide teaches you how to exercise the Sanctum-protected **Users API** from 
 | Queue worker | `php artisan queue:listen` (if the API triggers jobs). |
 | Frontend assets | `npm run dev` when testing UI side effects. |
 | Base URL | `http://127.0.0.1:8000/api/v1`. |
-| Seeded data | `php artisan migrate --seed` creates an admin user and baseline permissions. |
+| Seeded data | `php artisan migrate --seed` creates an admin staff and baseline permissions. |
 | Thunder Client | VS Code extension. |
 | Authentication | Sanctum personal access token retrieved via `/auth/login`. |
 
@@ -65,23 +65,23 @@ TOKEN="your-token-here"
 
 ---
 
-## 4. Users API Quick Reference
+## 4. Staff API Quick Reference
 
 | Endpoint | Method | Purpose | Needs Permission |
 | --- | --- | --- | --- |
-| `/users` | GET | List users (supports `per_page`, `page`, `search`) | `users.manage` |
-| `/users/{id}` | GET | Show a user | `users.manage` |
-| `/users` | POST | Create a user | `users.manage` |
-| `/users/{id}` | PUT | Replace an entire user record | `users.manage` |
-| `/users/{id}` | PATCH | Partially update a user | `users.manage` |
-| `/users/{id}` | DELETE | Remove a user (self-delete blocked) | `users.manage` |
-| `/auth/logout` | POST | Revoke the token | any authenticated user |
+| `/staff` | GET | List staff (supports `per_page`, `page`, `search`) | `staff.manage` |
+| `/staff/{id}` | GET | Show a staff | `staff.manage` |
+| `/staff` | POST | Create a staff | `staff.manage` |
+| `/staff/{id}` | PUT | Replace an entire staff record | `staff.manage` |
+| `/staff/{id}` | PATCH | Partially update a staff | `staff.manage` |
+| `/staff/{id}` | DELETE | Remove a staff (self-delete blocked) | `staff.manage` |
+| `/auth/logout` | POST | Revoke the token | any authenticated staff |
 
 > **PUT vs PATCH**
 > - **PUT** expects a full replacement payload. Any missing attribute is interpreted as `null` or default. Use this when the client can send the complete state (for example, editing a full profile form).
 > - **PATCH** is for partial updates. Send only the fields that need to change. This keeps other attributes untouched.
 
-The Users API accepts these key attributes:
+The Staff API accepts these key attributes:
 
 | Field | Type | Required? | Notes |
 | --- | --- | --- | --- |
@@ -100,32 +100,32 @@ The Users API accepts these key attributes:
 
 Everything below assumes you already duplicated the login request and set the Auth tab to Bearer with your token.
 
-### 5.1 List Users (GET `/users`)
+### 5.1 List Staff (GET `/staff`)
 
 | Setting | Value |
 | --- | --- |
 | Method | `GET` |
-| URL | `{{base_url}}/users?per_page=10&search=` |
+| URL | `{{base_url}}/staff?per_page=10&search=` |
 | Headers | `Accept: application/json` |
 | Auth | Bearer token from login |
 
 Click **Send**. Expected result: a paginated JSON payload with `data`, `links`, and `meta`. Confirm you see `data[0].email` and `roles` arrays.
 
-### 5.2 Show a User (GET `/users/{id}`)
+### 5.2 Show a Staff (GET `/staff/{id}`)
 
 | Setting | Value |
 | --- | --- |
 | Method | `GET` |
-| URL | `{{base_url}}/users/1` |
+| URL | `{{base_url}}/staff/1` |
 
-Send the request. If user `1` exists you will receive the full record, including `roles`, `permissions`, and linked `staff` details when available.
+Send the request. If staff `1` exists you will receive the full record, including `roles`, `permissions`, and linked `staff` details when available.
 
-### 5.3 Create a User (POST `/users`)
+### 5.3 Create a Staff (POST `/staff`)
 
 | Setting | Value |
 | --- | --- |
 | Method | `POST` |
-| URL | `{{base_url}}/users` |
+| URL | `{{base_url}}/staff` |
 | Headers | `Accept: application/json`, `Content-Type: application/json` |
 | Body | ```json
 {
@@ -141,16 +141,16 @@ Send the request. If user `1` exists you will receive the full record, including
 }
 ``` |
 
-After you send the request Thunder Client should display **201 Created** with the newly created resource. Verify that the user appears in the list request too.
+After you send the request Thunder Client should display **201 Created** with the newly created resource. Verify that the staff appears in the list request too.
 
-### 5.4 Update a User Completely (PUT `/users/{id}`)
+### 5.4 Update a Staff Completely (PUT `/staff/{id}`)
 
 Use PUT when you can provide **every mutable field**. If you omit a field, it may reset to `null`.
 
 | Setting | Value |
 | --- | --- |
 | Method | `PUT` |
-| URL | `{{base_url}}/users/{{user_id}}` |
+| URL | `{{base_url}}/staff/{{staff_id}}` |
 | Body | ```json
 {
   "name": "QA Rookie",
@@ -170,14 +170,14 @@ Notes:
 - PUT still requires `password_confirmation` even when empty.  
 - The response body (200 OK) returns the new state so you can verify the change.
 
-### 5.5 Update a User Partially (PATCH `/users/{id}`)
+### 5.5 Update a Staff Partially (PATCH `/staff/{id}`)
 
 PATCH changes only what you include. For example, flip the status and append a role without touching other fields.
 
 | Setting | Value |
 | --- | --- |
 | Method | `PATCH` |
-| URL | `{{base_url}}/users/{{user_id}}` |
+| URL | `{{base_url}}/staff/{{staff_id}}` |
 | Body | ```json
 {
   "account_status": "active",
@@ -185,14 +185,14 @@ PATCH changes only what you include. For example, flip the status and append a r
 }
 ``` |
 
-After the request returns 200 OK, run a GET `/users/{{user_id}}` to check that only `account_status` and `roles` changed while everything else stayed the same.
+After the request returns 200 OK, run a GET `/staff/{{staff_id}}` to check that only `account_status` and `roles` changed while everything else stayed the same.
 
-### 5.6 Delete a User (DELETE `/users/{id}`)
+### 5.6 Delete a Staff (DELETE `/staff/{id}`)
 
 | Setting | Value |
 | --- | --- |
 | Method | `DELETE` |
-| URL | `{{base_url}}/users/{{user_id}}` |
+| URL | `{{base_url}}/staff/{{staff_id}}` |
 
 Expected: `204 No Content`. If you attempt to delete your own account, you receive a `422` with message `"You cannot delete your own account."`
 
@@ -212,13 +212,13 @@ Success returns `{ "message": "Logged out" }`. Any subsequent request without re
 Replace `$TOKEN` with your bearer token. Keep JSON payloads in single quotes to avoid shell escaping issues.
 
 ```bash
-# List users
-curl "$BASE_URL/users?per_page=5" \
+# List staff
+curl "$BASE_URL/staff?per_page=5" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Accept: application/json"
 
 # Create
-curl -X POST "$BASE_URL/users" \
+curl -X POST "$BASE_URL/staff" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -231,7 +231,7 @@ curl -X POST "$BASE_URL/users" \
   }'
 
 # PUT update
-curl -X PUT "$BASE_URL/users/5" \
+curl -X PUT "$BASE_URL/staff/5" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -244,13 +244,13 @@ curl -X PUT "$BASE_URL/users/5" \
   }'
 
 # PATCH update
-curl -X PATCH "$BASE_URL/users/5" \
+curl -X PATCH "$BASE_URL/staff/5" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{ "account_status":"active" }'
 
 # Delete
-curl -X DELETE "$BASE_URL/users/5" \
+curl -X DELETE "$BASE_URL/staff/5" \
   -H "Authorization: Bearer $TOKEN"
 
 # Logout
@@ -265,7 +265,7 @@ curl -X POST "$BASE_URL/auth/logout" \
 Use the existing Pest suite to ensure nothing regresses after code changes:
 
 ```bash
-./vendor/bin/pest tests/Feature/Api/UsersTest.php
+./vendor/bin/pest tests/Feature/Api/StaffTest.php
 ```
 
 This file covers listing, creating, updating (PUT), partial updating (PATCH), deleting, and self-delete protection. Run the entire API suite when you add new endpoints:
@@ -283,7 +283,7 @@ Pest uses SQLite in-memory by default, so migrations must support it (avoid data
 | Symptom | Likely Cause | Fix |
 | --- | --- | --- |
 | `401 Unauthorized` | Missing/expired bearer token | Re-run `/auth/login` and set the token again. |
-| `403 Forbidden` | User lacks `users.manage` | Grant the permission (seed data adds it to Admin) or impersonate an admin. |
+| `403 Forbidden` | Staff lacks `staff.manage` | Grant the permission (seed data adds it to Admin) or impersonate an admin. |
 | `422 Unprocessable Entity` | Validation error | Check the `errors` array returned in the response. Common issues: duplicate email, missing password confirmation. |
 | `500` during role assignment | Permissions use a different guard | Ensure permissions exist for the `web` guard (seeders create them). |
 | Thunder Client still sends old data | Cached tab | Click the **Code** view to double-check the JSON you are sending; duplicate a fresh tab if needed. |
@@ -295,15 +295,15 @@ Pest uses SQLite in-memory by default, so migrations must support it (avoid data
 
 ---
 
-## 9. Expanding Beyond Users
+## 9. Expanding Beyond Staff
 
-Once you are comfortable with users, repeat the same pattern for:
+Once you are comfortable with staff, repeat the same pattern for:
 
 | Module | Endpoints | Required Permission |
 | --- | --- | --- |
-| Roles | `/roles`, `/roles/{id}` | `roles.manage` or `users.manage` |
+| Roles | `/roles`, `/roles/{id}` | `roles.manage` or `staff.manage` |
 | Staff | `/staff`, `/staff/{id}` | `staff.view`, `staff.create`, `staff.update`, `staff.delete` |
-| Notifications | `/notifications` | any authenticated user |
+| Notifications | `/notifications` | any authenticated staff |
 
 Each controller follows the same Sanctum guard, so the authentication and testing approach remains consistent.
 
@@ -318,4 +318,4 @@ Each controller follows the same Sanctum guard, so the authentication and testin
 - [ ] Automated tests pass locally.  
 - [ ] Laravel logs are clean (no unexpected warnings or errors).  
 
-With this playbook you can confidently validate the Users API end-to-end, whether you are new to HTTP clients or building advanced automated checks.
+With this playbook you can confidently validate the Staff API end-to-end, whether you are new to HTTP clients or building advanced automated checks.

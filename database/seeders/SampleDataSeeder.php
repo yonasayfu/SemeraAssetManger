@@ -11,7 +11,7 @@ use App\Models\Lease;
 use App\Models\Location;
 use App\Models\Maintenance;
 use App\Models\Move;
-use App\Models\Person;
+use App\Models\Staff;
 use App\Models\Reservation;
 use App\Models\Site;
 use App\Models\User;
@@ -20,6 +20,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use App\Services\AlertService;
 
 class SampleDataSeeder extends Seeder
 {
@@ -95,23 +96,6 @@ class SampleDataSeeder extends Seeder
             $departments[$name] = Department::firstOrCreate(['name' => $name]);
         }
 
-        // People
-        $people = [
-            ['name' => 'John Doe', 'email' => 'john@example.com', 'department_id' => $departments['IT']->id, 'site_id' => $hq->id],
-            ['name' => 'Jane Smith', 'email' => 'jane@example.com', 'department_id' => $departments['Operations']->id, 'site_id' => $plant->id],
-        ];
-        foreach ($people as $p) {
-            Person::firstOrCreate(
-                ['email' => $p['email']],
-                [
-                    'name' => $p['name'],
-                    'title' => 'Employee',
-                    'department_id' => $p['department_id'] ?? null,
-                    'site_id' => $p['site_id'] ?? null,
-                ]
-            );
-        }
-
         // Customers
         if (class_exists(Customer::class)) {
             Customer::firstOrCreate(['name' => 'Globex LLC'], [
@@ -137,7 +121,7 @@ class SampleDataSeeder extends Seeder
                 'location_id' => Arr::first($locations)->id,
                 'category_id' => $categories['Computers']->id,
                 'department_id' => $departments['IT']->id,
-                'assigned_to' => Person::firstWhere('email', 'john@example.com')?->id,
+                'staff_id' => Staff::firstWhere('email', 'john@example.com')?->id,
                 'status' => 'Available',
                 'photo' => null,
                 'created_by' => $admin->id,
@@ -157,7 +141,7 @@ class SampleDataSeeder extends Seeder
                 'location_id' => $locations[2]->id,
                 'category_id' => $categories['Machinery']->id,
                 'department_id' => $departments['Operations']->id,
-                'assigned_to' => null,
+                'staff_id' => null,
                 'status' => 'Under Repair',
                 'photo' => null,
                 'created_by' => $admin->id,
@@ -181,7 +165,7 @@ class SampleDataSeeder extends Seeder
                 'description' => 'Routine check',
                 'maintenance_type' => 'Preventive',
                 'scheduled_for' => Carbon::now()->addDays(rand(3, 30)),
-                'status' => 'Scheduled',
+                'status' => 'Open',
                 'cost' => null,
                 'vendor' => null,
             ]);
@@ -245,5 +229,15 @@ class SampleDataSeeder extends Seeder
         }
 
         $this->command->info('Sample data seeded.');
+
+        // Generate sample alerts
+        $alertService = new AlertService();
+        $alertService->checkAssetsDue();
+        $alertService->checkAssetsPastDue();
+        $alertService->checkLeasesExpiring();
+        $alertService->checkMaintenanceDue($admin->id);
+        $alertService->checkWarrantiesExpiring();
+
+        $this->command->info('Sample alerts generated.');
     }
 }

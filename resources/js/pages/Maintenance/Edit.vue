@@ -101,7 +101,7 @@ const submit = () => {
         parts_cost: data.parts_cost === '' ? null : data.parts_cost,
         recurrence_frequency: data.is_recurring ? data.recurrence_frequency : null,
         recurrence_interval: data.is_recurring ? data.recurrence_interval : null,
-    })).put(route('maintenance.update', props.maintenance.id), {
+    })).put(`/maintenance/${props.maintenance.id}`, {
         preserveScroll: true,
         onFinish: () => form.transform((data) => data),
         onSuccess: () => show('Maintenance updated successfully.', 'success'),

@@ -14,10 +14,10 @@ use App\Models\Department;
 use App\Models\Lease;
 use App\Models\Location;
 use App\Models\Maintenance;
-use App\Models\Person;
 use App\Models\Reservation;
 use App\Models\Site;
 use App\Models\Warranty;
+use App\Models\Staff;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -68,7 +68,7 @@ class AssetController extends Controller
             'locations' => Location::select('id', 'name', 'site_id')->orderBy('name')->get(),
             'categories' => Category::select('id', 'name')->orderBy('name')->get(),
             'departments' => Department::select('id', 'name')->orderBy('name')->get(),
-            'people' => Person::select('id', 'name')->orderBy('name')->get(),
+            'staff' => Staff::select('id', 'name')->orderBy('name')->get(),
         ]);
     }
 
@@ -94,7 +94,7 @@ class AssetController extends Controller
             'location_id' => 'nullable|exists:locations,id',
             'category_id' => 'nullable|exists:categories,id',
             'department_id' => 'nullable|exists:departments,id',
-            'assigned_to' => 'nullable|exists:people,id',
+            'assigned_to' => 'nullable|exists:staff,id',
             'status' => 'required|in:Available,Checked Out,Under Repair,Leased,Disposed,Lost,Donated,Sold',
             'photo' => 'nullable|image|max:2048',
         ]);
@@ -169,7 +169,7 @@ class AssetController extends Controller
             'locations' => Location::select('id', 'name', 'site_id')->orderBy('name')->get(),
             'categories' => Category::select('id', 'name')->orderBy('name')->get(),
             'departments' => Department::select('id', 'name')->orderBy('name')->get(),
-            'people' => Person::select('id', 'name')->orderBy('name')->get(),
+            'staff' => Staff::select('id', 'name')->orderBy('name')->get(),
         ]);
     }
 
@@ -195,7 +195,7 @@ class AssetController extends Controller
             'location_id' => 'nullable|exists:locations,id',
             'category_id' => 'nullable|exists:categories,id',
             'department_id' => 'nullable|exists:departments,id',
-            'assigned_to' => 'nullable|exists:people,id',
+            'assigned_to' => 'nullable|exists:staff,id',
             'status' => 'required|in:Available,Checked Out,Under Repair,Leased,Disposed,Lost,Donated,Sold',
             'photo' => 'nullable|image|max:2048',
         ]);

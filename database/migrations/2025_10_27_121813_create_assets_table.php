@@ -28,7 +28,7 @@ return new class extends Migration
             $table->foreignId('location_id')->nullable()->constrained('locations')->onDelete('set null');
             $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('set null');
             $table->foreignId('department_id')->nullable()->constrained('departments')->onDelete('set null');
-            $table->foreignId('assigned_to')->nullable()->constrained('people')->onDelete('set null');
+            $table->foreignId('staff_id')->nullable()->constrained('staff')->onDelete('set null');
             $table->enum('status', ['Available', 'Checked Out', 'Under Repair', 'Leased', 'Disposed', 'Lost', 'Donated', 'Sold']);
             $table->string('photo', 255)->nullable();
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');

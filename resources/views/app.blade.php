@@ -42,6 +42,9 @@
         {{-- Include our manually created CSS file --}}
         <link rel="stylesheet" href="/css/app.css">
 
+        {{-- Ziggy routes --}}
+        @routes
+
         {{-- Conditionally include Vite assets if manifest exists --}}
         @if (file_exists(public_path('build/manifest.json')))
             @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])

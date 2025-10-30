@@ -27,10 +27,11 @@ class GenerateAlertsJob implements ShouldQueue
     public function handle(AlertService $alertService): void
     {
         $alertService->checkOverdueCheckouts();
-        $alertService->checkExpiringLeases();
+        $alertService->checkLeasesExpiring();
         $alertService->checkMaintenanceDue();
         $alertService->checkMaintenanceOverdue();
         $alertService->checkWarrantiesExpiring();
         $alertService->checkAssetsDue();
+        $alertService->checkAssetsPastDue();
     }
 }
