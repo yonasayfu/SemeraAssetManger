@@ -10,7 +10,7 @@ class AssetsPastDueController extends Controller
 {
     public function __invoke()
     {
-        $alerts = Alert::where('type', 'Overdue Checkout')
+        $alerts = Alert::where('type', 'Assets Past Due')
             ->with('asset')
             ->paginate(10);
 

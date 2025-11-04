@@ -18,7 +18,7 @@ class AlertService
      */
     public function checkOverdueCheckouts(): void
     {
-        $overdueCheckouts = Checkout::where('due_date', '<', Carbon::now())
+        $overdueCheckouts = Checkout::where('due_at', '<', Carbon::now())
             ->whereNull('checked_in_at')
             ->get();
 
@@ -31,7 +31,7 @@ class AlertService
                     'source_type' => Checkout::class,
                 ],
                 [
-                    'due_date' => $checkout->due_date,
+                    'due_date' => $checkout->due_at,
                     'message' => 'Asset ' . $checkout->asset->asset_tag . ' is overdue for check-in.',
                 ]
             );

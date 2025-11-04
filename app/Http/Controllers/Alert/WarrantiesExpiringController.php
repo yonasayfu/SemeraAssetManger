@@ -10,7 +10,7 @@ class WarrantiesExpiringController extends Controller
 {
     public function __invoke()
     {
-        $alerts = Alert::where('type', 'Expiring Warranty')
+        $alerts = Alert::where('type', 'Warranty Expiring')
             ->with('asset')
             ->paginate(10);
 

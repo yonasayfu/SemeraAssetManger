@@ -10,7 +10,7 @@ class AssetsDueController extends Controller
 {
     public function __invoke()
     {
-        $alerts = Alert::where('type', 'Asset Due')
+        $alerts = Alert::where('type', 'Assets Due')
             ->with('asset')
             ->paginate(10);
 

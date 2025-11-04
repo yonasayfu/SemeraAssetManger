@@ -177,7 +177,21 @@ class SampleDataSeeder extends Seeder
             ]);
         }
 
-        // Leases on a few assets
+        // Create a few warranties that will expire within the next 60 days to populate alerts
+        foreach (array_slice($assets, 0, 3) as $asset) {
+            Warranty::updateOrCreate([
+                'asset_id' => $asset->id,
+                'description' => 'Near-Term Warranty',
+            ], [
+                'provider' => 'OEM',
+                'length_months' => 12,
+                'start_date' => Carbon::now()->subMonths(10)->toDateString(),
+                'expiry_date' => Carbon::now()->addDays(rand(7, 55))->toDateString(),
+                'active' => true,
+            ]);
+        }
+
+        // Leases on a few assets (ensure at least one expires within 30 days)
         foreach (array_slice($assets, 0, 5) as $leased) {
             Lease::firstOrCreate([
                 'asset_id' => $leased->id,
@@ -185,7 +199,7 @@ class SampleDataSeeder extends Seeder
                 'lessee_id' => $departments['IT']->id,
             ], [
                 'start_at' => Carbon::now()->subWeeks(rand(1, 8))->toDateString(),
-                'end_at' => Carbon::now()->addWeeks(rand(4, 16))->toDateString(),
+                'end_at' => Carbon::now()->addDays(rand(7, 120))->toDateString(),
                 'rate_minor' => rand(200, 900),
                 'currency' => 'USD',
                 'terms' => 'Standard lease terms',
@@ -218,6 +232,45 @@ class SampleDataSeeder extends Seeder
             ]);
         }
 
+        // Create some maintenance due soon and overdue
+        foreach (array_slice($assets, 0, 3) as $asset) {
+            Maintenance::updateOrCreate([
+                'asset_id' => $asset->id,
+                'title' => 'Due Soon Check',
+            ], [
+                'description' => 'Routine check',
+                'maintenance_type' => 'Preventive',
+                'scheduled_for' => Carbon::now()->addDays(rand(3, 10)),
+                'status' => 'Open',
+            ]);
+        }
+        foreach (array_slice($assets, 3, 3) as $asset) {
+            Maintenance::updateOrCreate([
+                'asset_id' => $asset->id,
+                'title' => 'Overdue Check',
+            ], [
+                'description' => 'Follow-up check',
+                'maintenance_type' => 'Corrective',
+                'scheduled_for' => Carbon::now()->subDays(rand(3, 14)),
+                'status' => 'Open',
+            ]);
+        }
+
+        // Add an overdue checkout
+        $anyAsset = $assets[0] ?? null;
+        if ($anyAsset) {
+            \App\Models\Checkout::firstOrCreate([
+                'asset_id' => $anyAsset->id,
+                'assignee_type' => 'staff',
+                'assignee_id' => $admin->id,
+            ], [
+                'due_at' => Carbon::now()->subDays(3),
+                'checked_out_at' => Carbon::now()->subDays(10),
+                'status' => 'open',
+                'notes' => 'Seeded overdue checkout',
+            ]);
+        }
+
         $this->command->info('Sample data seeded.');
 
         // Generate sample alerts
@@ -226,6 +279,8 @@ class SampleDataSeeder extends Seeder
         $alertService->checkAssetsPastDue();
         $alertService->checkLeasesExpiring();
         $alertService->checkMaintenanceDue($admin->id);
+        $alertService->checkMaintenanceOverdue();
+        $alertService->checkOverdueCheckouts();
         $alertService->checkWarrantiesExpiring();
 
         $this->command->info('Sample alerts generated.');
