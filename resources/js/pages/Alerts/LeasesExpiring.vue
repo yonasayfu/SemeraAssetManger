@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import ResourceToolbar from '@/components/ResourceToolbar.vue';
 import { Link } from '@inertiajs/vue3';
+import AlertTable from '@/components/alerts/AlertTable.vue';
 
 const props = defineProps<{
     alerts: any; // Paginated list of alerts
@@ -8,14 +10,17 @@ const props = defineProps<{
 </script>
 
 <template>
-    <AppLayout title="Leases Expiring Alerts">
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Leases Expiring Alerts</h2>
-        </template>
+    <AppLayout title="Leases Expiring">
+        <ResourceToolbar
+            title="Leases Expiring"
+            description="Leases expiring within the next 30 days."
+            :show-create="false"
+            :show-export="false"
+            :show-print="false"
+        />
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
+        <div class="mx-auto mt-6 w-full max-w-6xl px-4 pb-12">
+            <div class="overflow-hidden rounded-xl border border-slate-200/70 bg-white/80 p-6 shadow-sm dark:border-slate-800/60 dark:bg-slate-900/60">
                     <div v-if="alerts.data.length">
                         <ul class="divide-y divide-gray-200">
                             <li
@@ -33,7 +38,6 @@ const props = defineProps<{
                                 </Link>
                             </li>
                         </ul>
-                        <!-- Pagination links -->
                         <div class="mt-4">
                             <template v-for="(link, key) in alerts.links" :key="key">
                                 <Link
@@ -53,9 +57,8 @@ const props = defineProps<{
                     </div>
                     <div v-else class="text-center text-gray-500 py-8">
                         No leases expiring alerts found.
-                    </div>
-                </div>
             </div>
+        </div>
         </div>
     </AppLayout>
 </template>
