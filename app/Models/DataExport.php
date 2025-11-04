@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Staff;
 use Illuminate\Support\Str;
 
 class DataExport extends Model
@@ -44,7 +45,8 @@ class DataExport extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        // In this application, Staff is the authenticatable model
+        return $this->belongsTo(Staff::class, 'user_id');
     }
 
     public function getRouteKeyName(): string

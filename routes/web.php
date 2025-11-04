@@ -15,7 +15,7 @@ use App\Http\Controllers\AssetOperationController;
 use App\Http\Controllers\AssetReserveController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\AuditListController;
-use App\Http\Controllers\AuditReportController;
+
 use App\Http\Controllers\AuditScanController;
 use App\Http\Controllers\AuditWizardController;
 use App\Http\Controllers\CategoryController;
@@ -38,7 +38,7 @@ use App\Http\Controllers\NotificationPreferenceController;
 use App\Http\Controllers\PendingApprovalController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Report\AssetReportController;
-use App\Http\Controllers\Report\AuditReportController as AuditReportListController;
+use App\Http\Controllers\Report\AuditReportListController;
 use App\Http\Controllers\Report\AutomatedReportController;
 use App\Http\Controllers\Report\CheckoutReportController;
 use App\Http\Controllers\Report\CustomReportController;
@@ -133,10 +133,16 @@ Route::middleware('auth')->group(function () {
         })->name('profile.two-factor-authentication');
 
         // Notification Preferences
-        Route::get('/profile/notification-preferences', [NotificationPreferenceController::class, 'index'])
+        Route::get('/profile/notification-preferences', [\App\Http\Controllers\UserNotificationSettingsController::class, 'index'])
             ->name('profile.notification-preferences.index');
-        Route::post('/profile/notification-preferences', [NotificationPreferenceController::class, 'update'])
+        Route::post('/profile/notification-preferences', [\App\Http\Controllers\UserNotificationSettingsController::class, 'update'])
             ->name('profile.notification-preferences.update');
+
+        // General Settings
+        Route::get('/profile/general-settings', [\App\Http\Controllers\GeneralSettingsController::class, 'index'])
+            ->name('profile.general-settings.index');
+        Route::post('/profile/general-settings', [\App\Http\Controllers\GeneralSettingsController::class, 'update'])
+            ->name('profile.general-settings.update');
 
         // Mailbox for local environment
         if (app()->environment('local')) {
@@ -148,8 +154,8 @@ Route::middleware('auth')->group(function () {
             });
         }
 
-        // Data Exports
-        Route::prefix('exports')->name('exports.')->group(function () {
+        // Data Exports (Admin only)
+        Route::prefix('exports')->name('exports.')->middleware('role:Admin')->group(function () {
             Route::get('/', [DataExportController::class, 'index'])->name('index');
             Route::get('/{export}', [DataExportController::class, 'download'])->name('download');
             Route::delete('/{export}', [DataExportController::class, 'destroy'])->name('destroy');
@@ -176,7 +182,7 @@ Route::middleware('auth')->group(function () {
         Route::prefix('staff')->name('staff.')->group(function () {
             Route::middleware('permission:staff.view')->group(function () {
                 Route::get('/', [StaffController::class, 'index'])->name('index');
-                Route::get('/export', [StaffController::class, 'export'])->name('export');
+                Route::get('/export', [StaffController::class, 'export'])->name('export')->middleware('role:Admin');
                 Route::get('/{staff}', [StaffController::class, 'show'])->name('show');
             });
 
@@ -187,10 +193,10 @@ Route::middleware('auth')->group(function () {
             Route::delete('/{staff}', [StaffController::class, 'destroy'])->name('destroy')->middleware('permission:staff.delete');
         });
 
-        // User Management
-        Route::prefix('staff')->name('staff.')->middleware('permission:users.manage')->group(function () {
+        // User Management (Admin Accounts) - moved under /admin/staff to avoid conflict with Staff directory
+        Route::prefix('admin/staff')->name('admin.staff.')->middleware('permission:users.manage')->group(function () {
             Route::get('/', [StaffManagementController::class, 'index'])->name('index');
-            Route::get('/export', [StaffManagementController::class, 'export'])->name('export');
+            Route::get('/export', [StaffManagementController::class, 'export'])->name('export')->middleware('role:Admin');
             Route::get('/create', [StaffManagementController::class, 'create'])->name('create');
             Route::post('/', [StaffManagementController::class, 'store'])->name('store');
             Route::get('/{user}', [StaffManagementController::class, 'show'])->name('show');
@@ -274,15 +280,15 @@ Route::middleware('auth')->group(function () {
             Route::post('checkout', [StoreAssetCheckoutController::class, 'store'])->name('checkout.store');
             Route::get('checkin', AssetCheckinController::class)->name('checkin.create');
             Route::post('checkin', [StoreAssetCheckinController::class, 'store'])->name('checkin.store');
-            Route::get('lease', [AssetLeaseController::class, 'create'])->name('lease.create');
+            Route::get('lease', AssetLeaseController::class)->name('lease.create');
             Route::post('lease', [StoreAssetLeaseController::class, 'store'])->name('lease.store');
-            Route::get('lease-return', [AssetLeaseReturnController::class, 'create'])->name('lease-return.create');
+            Route::get('lease-return', AssetLeaseReturnController::class)->name('lease-return.create');
             Route::post('lease-return', [StoreAssetLeaseReturnController::class, 'store'])->name('lease-return.store');
-            Route::get('dispose', [AssetDisposeController::class, 'create'])->name('dispose.create');
+            Route::get('dispose', AssetDisposeController::class)->name('dispose.create');
             Route::post('dispose', [StoreAssetDisposeController::class, 'store'])->name('dispose.store');
-            Route::get('move', [AssetMoveController::class, 'create'])->name('move.create');
+            Route::get('move', AssetMoveController::class)->name('move.create');
             Route::post('move', [StoreAssetMoveController::class, 'store'])->name('move.store');
-            Route::get('reserve', [AssetReserveController::class, 'create'])->name('reserve.create');
+            Route::get('reserve', AssetReserveController::class)->name('reserve.create');
             Route::post('reserve', [StoreAssetReserveController::class, 'store'])->name('reserve.store');
             Route::resource('maintenance', AssetMaintenanceController::class)->except(['index', 'create', 'store']); // Resource routes for asset-specific maintenance
 
@@ -316,13 +322,13 @@ Route::middleware('auth')->group(function () {
         // Lists Module
         Route::prefix('lists')->name('lists.')->middleware('permission:lists.view')->group(function () {
             Route::get('assets', [AssetListController::class, 'index'])->name('assets');
-            Route::get('assets/export', [AssetListController::class, 'export'])->name('assets.export');
+            Route::get('assets/export', [AssetListController::class, 'export'])->name('assets.export')->middleware('role:Admin');
             Route::get('audits', [AuditListController::class, 'index'])->name('audits');
-            Route::get('audits/export', [AuditListController::class, 'export'])->name('audits.export');
+            Route::get('audits/export', [AuditListController::class, 'export'])->name('audits.export')->middleware('role:Admin');
             Route::get('maintenances', [MaintenanceListController::class, 'index'])->name('maintenances');
-            Route::get('maintenances/export', [MaintenanceListController::class, 'export'])->name('maintenances.export');
+            Route::get('maintenances/export', [MaintenanceListController::class, 'export'])->name('maintenances.export')->middleware('role:Admin');
             Route::get('warranties', [WarrantyListController::class, 'index'])->name('warranties');
-            Route::get('warranties/export', [WarrantyListController::class, 'export'])->name('warranties.export');
+            Route::get('warranties/export', [WarrantyListController::class, 'export'])->name('warranties.export')->middleware('role:Admin');
         });
 
         Route::prefix('audits')->name('audits.')->group(function () {
@@ -332,8 +338,8 @@ Route::middleware('auth')->group(function () {
             Route::post('{audit}/scan/assets/{auditAsset}', [AuditScanController::class, 'update'])->name('scan.assets.update');
             Route::post('{audit}/scan/complete', [AuditScanController::class, 'complete'])->name('scan.complete');
             Route::get('{audit}/scan/search', [AuditScanController::class, 'search'])->name('scan.search');
-            Route::get('{audit}/report', [Report\AuditReportController::class, 'show'])->name('report');
-            Route::get('{audit}/report/export', [Report\AuditReportController::class, 'export'])->name('report.export');
+            Route::get('{audit}/report', [AuditReportListController::class, 'show'])->name('report');
+            Route::get('{audit}/report/export', [AuditReportListController::class, 'export'])->name('report.export')->middleware('role:Admin');
         });
 
         // Reports Module
@@ -351,20 +357,20 @@ Route::middleware('auth')->group(function () {
             Route::get('transactions', TransactionReportController::class)->name('transactions');
             Route::get('others', \App\Http\Controllers\Report\OtherReportController::class)->name('others');
             Route::post('preview', [RunReportController::class, 'preview'])->name('preview');
-            Route::post('export', [RunReportController::class, 'export'])->name('export');
+            Route::post('export', [RunReportController::class, 'export'])->name('export')->middleware('role:Admin');
         });
 
         // Tools Module
         Route::prefix('tools')->name('tools.')->middleware('permission:tools.view')->group(function () {
-            Route::get('import', [ToolsController::class, 'import'])->name('import');
-            Route::get('export', [ToolsController::class, 'export'])->name('export');
-            Route::post('import/staff', StaffImportController::class)->name('import.staff');
-            Route::post('import/sites', SiteImportController::class)->name('import.sites');
-            Route::post('import/locations', LocationImportController::class)->name('import.locations');
-            Route::post('import/categories', CategoryImportController::class)->name('import.categories');
-            Route::post('import/departments', DepartmentImportController::class)->name('import.departments');
-            Route::post('import/maintenances', MaintenanceImportController::class)->name('import.maintenances');
-            Route::post('import/warranties', WarrantyImportController::class)->name('import.warranties');
+            Route::get('import', [ToolsController::class, 'import'])->name('import')->middleware('role:Admin');
+            Route::get('export', [ToolsController::class, 'export'])->name('export')->middleware('role:Admin');
+            Route::post('import/staff', StaffImportController::class)->name('import.staff')->middleware('role:Admin');
+            Route::post('import/sites', SiteImportController::class)->name('import.sites')->middleware('role:Admin');
+            Route::post('import/locations', LocationImportController::class)->name('import.locations')->middleware('role:Admin');
+            Route::post('import/categories', CategoryImportController::class)->name('import.categories')->middleware('role:Admin');
+            Route::post('import/departments', DepartmentImportController::class)->name('import.departments')->middleware('role:Admin');
+            Route::post('import/maintenances', MaintenanceImportController::class)->name('import.maintenances')->middleware('role:Admin');
+            Route::post('import/warranties', WarrantyImportController::class)->name('import.warranties')->middleware('role:Admin');
             Route::get('documents', DocumentGalleryController::class)->name('documents');
             Route::get('images', ImageGalleryController::class)->name('images');
             Route::resource('audits', AuditController::class);
@@ -561,4 +567,3 @@ require __DIR__.'/auth.php';
 
 // Settings routes
 require __DIR__.'/settings.php';
-

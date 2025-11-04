@@ -11,8 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->json('dashboard_preferences')->nullable();
+        Schema::table('staff', function (Blueprint $table) {
+            $table->string('theme')->default('system');
+            $table->string('locale')->default('en');
+            $table->string('timezone')->default('UTC');
         });
     }
 
@@ -21,8 +23,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('dashboard_preferences');
+        Schema::table('staff', function (Blueprint $table) {
+            $table->dropColumn(['theme', 'locale', 'timezone']);
         });
     }
 };

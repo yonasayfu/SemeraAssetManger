@@ -27,32 +27,21 @@ type ActivityEntry = {
 const props = defineProps<{
     staff: {
         id: number;
-        first_name: string;
-        last_name: string;
+        full_name: string;
         email: string;
         phone: string | null;
-        job_title: string | null;
         status: 'active' | 'inactive';
-        hire_date: string | null;
         avatar_url?: string | null;
-
-
         avatar_label?: string | null;
-
-
     };
     activity: ActivityEntry[];
 }>();
 
 const form = useForm({
-    first_name: props.staff.first_name,
-    last_name: props.staff.last_name,
+    name: props.staff.full_name,
     email: props.staff.email,
     phone: props.staff.phone ?? '',
-    job_title: props.staff.job_title ?? '',
     status: props.staff.status,
-    hire_date: props.staff.hire_date ?? '',
-    user_id: null as number | null,
     avatar: null as File | null,
     remove_avatar: false,
 });
@@ -81,7 +70,7 @@ const submit = () => {
 </script>
 
 <template>
-    <Head :title="`Edit ${staff.first_name}`" />
+    <Head :title="`Edit ${staff.full_name}`" />
 
     <AppLayout :breadcrumbs="[{ title: 'Staff', href: '/staff' }, { title: staff.full_name ?? staff.first_name, href: `/staff/${staff.id}/edit` }]">
     <div class="flex flex-col gap-4">
@@ -89,35 +78,20 @@ const submit = () => {
             <h1 class="text-2xl font-semibold text-slate-900 dark:text-slate-100">
                 Edit staff member
             </h1>
-            <p class="text-sm text-slate-600 dark:text-slate-300">
-                Update contact information or status for {{ staff.first_name }}.
-            </p>
+            <p class="text-sm text-slate-600 dark:text-slate-300">Update contact information or status.</p>
         </div>
 
         <GlassCard>
             <form class="space-y-5" @submit.prevent="submit">
                 <div class="grid gap-4 md:grid-cols-2">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                            First name
-                        </label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Name</label>
                         <input
-                            v-model="form.first_name"
+                            v-model="form.name"
                             type="text"
                             class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
                         />
-                        <InputError :message="form.errors.first_name" class="mt-2" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                            Last name
-                        </label>
-                        <input
-                            v-model="form.last_name"
-                            type="text"
-                            class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
-                        />
-                        <InputError :message="form.errors.last_name" class="mt-2" />
+                        <InputError :message="form.errors.name" class="mt-2" />
                     </div>
                 </div>
 
@@ -148,43 +122,17 @@ const submit = () => {
 
                 <div class="grid gap-4 md:grid-cols-2">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                            Job title
-                        </label>
-                        <input
-                            v-model="form.job_title"
-                            type="text"
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">Status</label>
+                        <select
+                            v-model="form.status"
                             class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
-                        />
-                        <InputError :message="form.errors.job_title" class="mt-2" />
+                        >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                        <InputError :message="form.errors.status" class="mt-2" />
                     </div>
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                                Status
-                            </label>
-                            <select
-                                v-model="form.status"
-                                class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
-                            >
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                            <InputError :message="form.errors.status" class="mt-2" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                                Hire date
-                            </label>
-                            <input
-                                v-model="form.hire_date"
-                                type="date"
-                                class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
-                            />
-                            <InputError :message="form.errors.hire_date" class="mt-2" />
-                        </div>
                 </div>
-            </div>
 
                 <div>
                     <FileUploadField

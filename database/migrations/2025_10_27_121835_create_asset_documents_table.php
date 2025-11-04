@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('title', 150);
             $table->string('file_path', 255);
             $table->string('mime_type', 100);
-            $table->foreignId('uploaded_by')->constrained('users')->onDelete('cascade');
+            $table->foreignId('uploaded_by')->constrained('staff')->onDelete('cascade');
             $table->timestamps();
         });
     }

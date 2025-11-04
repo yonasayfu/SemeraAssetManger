@@ -9,6 +9,7 @@ use App\Models\Lease;
 use App\Models\Maintenance;
 use App\Models\Reservation;
 use App\Models\ActivityLog; // Assuming ActivityLog is used for transactions/status changes
+use App\Models\SavedReport;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -56,8 +57,13 @@ class ReportService
             ->when(isset($filters['status']), fn ($query) => $query->where('status', $filters['status']))
             ->when(isset($filters['category_id']), fn ($query) => $query->where('category_id', $filters['category_id']))
             ->when(isset($filters['site_id']), fn ($query) => $query->where('site_id', $filters['site_id']))
+            ->when(isset($filters['department_id']), fn ($query) => $query->where('department_id', $filters['department_id']))
+            ->when(isset($filters['date_range']), fn ($query) => $query->whereBetween('purchase_date', [
+                Carbon::parse($filters['date_range']['start']),
+                Carbon::parse($filters['date_range']['end']),
+            ]))
             // Add more filters as needed
-            ->with(['category', 'site', 'location', 'department', 'assignedTo']);
+            ->with(['category', 'site', 'location', 'department', 'assignee']);
     }
 
     /**
@@ -158,26 +164,64 @@ class ReportService
     // Placeholder for Automated Reports - will likely use existing queries with scheduling logic
     public function getAutomatedReportQuery(array $filters = []): Builder
     {
-        // Example: return $this->getAssetReportQuery($filters);
-        return Asset::query(); // Placeholder
+        return SavedReport::query()
+            ->when(isset($filters['family']) && $filters['family'] !== '', fn ($q) => $q->where('family', $filters['family']))
+            ->when(isset($filters['owner_id']), fn ($q) => $q->where('owner_id', $filters['owner_id']))
+            ->when(isset($filters['schedule_cron']) && $filters['schedule_cron'] !== '', fn ($q) => $q->where('schedule_cron', 'like', '%'.$filters['schedule_cron'].'%'))
+            ->when(isset($filters['date_range']), fn ($q) => $q->whereBetween('last_run_at', [
+                Carbon::parse($filters['date_range']['start']),
+                Carbon::parse($filters['date_range']['end']),
+            ]));
     }
 
     // Placeholder for Custom Reports - will involve dynamic query building based on user input
     public function getCustomReportQuery(array $definition): Builder
     {
-        // This will be complex, involving parsing $definition to build a query
-        return Asset::query(); // Placeholder
+        // For now, surface saved custom report definitions (metadata), not data rows.
+        return SavedReport::query()
+            ->where('family', 'custom')
+            ->when(isset($definition['owner_id']), fn ($q) => $q->where('owner_id', $definition['owner_id']))
+            ->when(isset($definition['data_sources']) && $definition['data_sources'] !== '', function ($q) use ($definition) {
+                $q->where('definition_json->data_sources', 'like', '%'.$definition['data_sources'].'%');
+            })
+            ->when(isset($definition['group_by']) && $definition['group_by'] !== '', function ($q) use ($definition) {
+                $q->where('definition_json->group_by', 'like', '%'.$definition['group_by'].'%');
+            })
+            ->when(isset($definition['tag']) && $definition['tag'] !== '', function ($q) use ($definition) {
+                $q->where('definition_json->tags', 'like', '%'.$definition['tag'].'%');
+            });
     }
 
     // Placeholder for Status Reports - might aggregate data from assets or activity logs
     public function getStatusReportQuery(array $filters = []): Builder
     {
-        return Asset::query(); // Placeholder
+        // Use ActivityLog entries that indicate status changes
+        return ActivityLog::query()
+            ->when(isset($filters['user_id']), fn ($q) => $q->where('causer_id', $filters['user_id']))
+            ->when(isset($filters['date_range']), fn ($q) => $q->whereBetween('created_at', [
+                Carbon::parse($filters['date_range']['start']),
+                Carbon::parse($filters['date_range']['end']),
+            ]))
+            ->where('action', 'like', '%status%')
+            ->with(['causer', 'subject']);
     }
 
     // Placeholder for Other Reports
     public function getOtherReportQuery(array $filters = []): Builder
     {
-        return Asset::query(); // Placeholder
+        // Reuse saved report metadata for miscellaneous families
+        return SavedReport::query()
+            ->where('family', 'other')
+            ->when(isset($filters['owner_id']), fn ($q) => $q->where('owner_id', $filters['owner_id']))
+            ->when(isset($filters['module']) && $filters['module'] !== '', function ($q) use ($filters) {
+                $q->where('definition_json->module', 'like', '%'.$filters['module'].'%');
+            })
+            ->when(isset($filters['tag']) && $filters['tag'] !== '', function ($q) use ($filters) {
+                $q->where('definition_json->tags', 'like', '%'.$filters['tag'].'%');
+            })
+            ->when(isset($filters['date_range']), fn ($q) => $q->whereBetween('created_at', [
+                Carbon::parse($filters['date_range']['start']),
+                Carbon::parse($filters['date_range']['end']),
+            ]));
     }
 }

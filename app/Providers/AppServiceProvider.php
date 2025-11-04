@@ -11,6 +11,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use App\Models\Department;
+use App\Models\Customer;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -35,5 +38,12 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute(30)->by('mailpit-'.$request->ip()),
             ];
         });
+
+        // Map morph types for checkout/lease assignees/lessees
+        Relation::enforceMorphMap([
+            'staff' => Staff::class,
+            'department' => Department::class,
+            'customer' => Customer::class,
+        ]);
     }
 }

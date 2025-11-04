@@ -9,7 +9,7 @@ use App\Models\ActivityLog;
 use App\Models\Staff;
 use App\Support\Exports\ExportConfig;
 use App\Support\Exports\HandlesDataExport;
-use App\Support\Users\SyncsStaffAssignment;
+use App\Support\Staff\SyncsStaffAssignment;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,7 +40,6 @@ class StaffManagementController extends Controller
         $query = Staff::query()->with([
             'roles:id,name',
             'permissions:id,name',
-            'staff:id,first_name,last_name,email,status,user_id',
             'approver:id,name',
         ]);
 
@@ -63,15 +62,10 @@ class StaffManagementController extends Controller
                     'roles' => $staff->roles->pluck('name')->values(),
                     'permissions' => $staff->getAllPermissions()->pluck('name')->values(),
                     'has_two_factor' => ! is_null($staff->two_factor_secret),
-                    'staff' => $staff->staff ? [
-                        'id' => $staff->staff->id,
-                        'full_name' => $staff->staff->full_name,
-                        'status' => $staff->staff->status,
-                    ] : null,
                 ];
             });
 
-        $staffLinkedCount = Staff::whereNotNull('user_id')->count();
+        $staffLinkedCount = 0;
         $pendingCount = Staff::where('account_status', Staff::STATUS_PENDING)->count();
 
         return Inertia::render('Staff/Index', [
@@ -304,8 +298,6 @@ class StaffManagementController extends Controller
             $staff->syncRoles($data['roles'] ?? []);
             $staff->syncPermissions($data['permissions'] ?? []);
 
-            $this->syncStaffAssignment($staff, $data['staff_id'] ?? null);
-
             $staff->refresh()->load('roles');
             $newRoles = $staff->roles->pluck('name')->sort()->values()->toArray();
             $newPermissions = $staff->getAllPermissions()->pluck('name')->sort()->values()->toArray();
@@ -371,7 +363,6 @@ class StaffManagementController extends Controller
         }
 
         DB::transaction(function () use ($staff) {
-            $this->syncStaffAssignment($staff, null);
             $staff->delete();
         });
 

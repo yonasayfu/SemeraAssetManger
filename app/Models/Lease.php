@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Lease extends Model
 {
@@ -30,5 +31,10 @@ class Lease extends Model
     public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class);
+    }
+
+    public function lessee(): MorphTo
+    {
+        return $this->morphTo('lessee', 'lessee_type', 'lessee_id');
     }
 }

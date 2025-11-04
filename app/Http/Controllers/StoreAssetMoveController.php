@@ -14,22 +14,27 @@ class StoreAssetMoveController extends Controller
      */
     public function __invoke(Request $request, Asset $asset)
     {
-        $request->validate([
+        $data = $request->validate([
             'to_location_id' => 'required|exists:locations,id',
             'reason' => 'nullable|string',
         ]);
 
+        // Prevent moving to the same location
+        if ((int) $asset->location_id === (int) $data['to_location_id']) {
+            return back()->withErrors(['to_location_id' => 'Destination location must be different from current location.']);
+        }
+
         Move::create([
             'asset_id' => $asset->id,
             'from_location_id' => $asset->location_id,
-            'to_location_id' => $request->to_location_id,
+            'to_location_id' => $data['to_location_id'],
             'moved_by' => Auth::id(),
             'moved_at' => now(),
-            'reason' => $request->reason,
+            'reason' => $data['reason'] ?? null,
         ]);
 
         $asset->update([
-            'location_id' => $request->to_location_id,
+            'location_id' => $data['to_location_id'],
         ]);
 
         return redirect()->route('assets.show', $asset->id);

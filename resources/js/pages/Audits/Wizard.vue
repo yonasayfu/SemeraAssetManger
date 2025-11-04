@@ -4,8 +4,8 @@
   <AppLayout :breadcrumbs="[{ title: 'Audits', href: '/audits' }, { title: 'Audit Wizard', href: '/audits/wizard' }]">
     <div class="space-y-6">
       <ResourceToolbar
-        title="Audit wizard"
-        description="Create a new audit by following the steps below."
+        :title="resourceTitle"
+        :description="resourceDescription"
       />
 
       <div class="overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm dark:border-slate-800/60 dark:bg-slate-900/50">
@@ -200,4 +200,18 @@ const toggleAsset = (assetId: number) => {
         form.asset_ids.splice(index, 1);
     }
 };
+
+const resourceTitle = computed(() => {
+  if (currentStep.value === 'info') return 'Audit Information';
+  if (currentStep.value === 'assets') return 'Select Assets to Audit';
+  if (currentStep.value === 'review') return 'Review and Start Audit';
+  return 'Audit Wizard';
+});
+
+const resourceDescription = computed(() => {
+  if (currentStep.value === 'info') return 'Provide basic information for the new audit.';
+  if (currentStep.value === 'assets') return 'Choose the assets you want to include in this audit.';
+  if (currentStep.value === 'review') return 'Confirm the details before starting the audit.';
+  return 'Create a new audit by following the steps below.';
+});
 </script>

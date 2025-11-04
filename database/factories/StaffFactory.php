@@ -2,30 +2,69 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
+use App\Models\Staff;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
- * @extends Factory<\App\Models\Staff>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Staff>
  */
 class StaffFactory extends Factory
 {
-    protected $model = \App\Models\Staff::class;
+    /**
+     * The name of the factory's corresponding model.
+     *
+     * @var string
+     */
+    protected $model = Staff::class;
 
+    /**
+     * The current password being used by the factory.
+     */
+    protected static ?string $password;
+
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
     public function definition(): array
     {
-        $firstName = $this->faker->firstName();
-        $lastName = $this->faker->lastName();
-
         return [
-            'first_name' => $firstName,
-            'last_name' => $lastName,
-            'email' => $this->faker->unique()->safeEmail(),
-            'phone' => $this->faker->optional()->phoneNumber(),
-            'job_title' => $this->faker->optional()->jobTitle(),
-            'status' => $this->faker->randomElement(['active', 'inactive']),
-            'hire_date' => $this->faker->optional()->date(),
-            'user_id' => User::factory(),
+            'name' => fake()->name(),
+            'email' => fake()->unique()->safeEmail(),
+            'email_verified_at' => now(),
+            'password' => static::$password ??= 'password',
+            'remember_token' => Str::random(10),
+            'two_factor_secret' => Str::random(10),
+            'two_factor_recovery_codes' => Str::random(10),
+            'two_factor_confirmed_at' => now(),
+            'account_status' => Staff::STATUS_ACTIVE,
+            'account_type' => Staff::TYPE_INTERNAL,
+            'approved_at' => now(),
+            'approved_by' => null,
         ];
+    }
+
+    /**
+     * Indicate that the model's email address should be unverified.
+     */
+    public function unverified(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the model does not have two-factor authentication configured.
+     */
+    public function withoutTwoFactor(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at' => null,
+        ]);
     }
 }

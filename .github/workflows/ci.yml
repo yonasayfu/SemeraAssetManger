@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_DATABASE: semera
+          MYSQL_USER: semera
+          MYSQL_PASSWORD: secret
+          MYSQL_ROOT_PASSWORD: root
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost" --health-interval=10s --health-timeout=5s --health-retries=3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, pdo, pdo_mysql, dom, fileinfo, tokenizer
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install PHP deps
+        run: composer install --no-interaction --prefer-dist
+      - name: Copy env
+        run: cp .env.example .env
+      - name: Generate key
+        run: php artisan key:generate
+      - name: Migrate
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: semera
+          DB_USERNAME: semera
+          DB_PASSWORD: secret
+        run: php artisan migrate --force
+      - name: JS deps
+        run: npm ci
+      - name: Build frontend
+        run: npm run build
+      - name: PHP lint (syntax)
+        run: find app -type f -name "*.php" -print0 | xargs -0 -n1 -P4 php -l
+      - name: PHPUnit
+        run: vendor/bin/phpunit --colors=always
+

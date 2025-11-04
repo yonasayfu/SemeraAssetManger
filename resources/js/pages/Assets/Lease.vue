@@ -1,20 +1,22 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import { Asset, Person, Department } from '@/types';
+import { Asset, Department } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
 import GlassCard from '@/components/GlassCard.vue';
 import GlassButton from '@/components/GlassButton.vue';
 import InputError from '@/components/InputError.vue';
+import AssetSummaryHeader from '@/components/Asset/AssetSummaryHeader.vue';
 import { useToast } from '@/composables/useToast';
 import { Link } from '@inertiajs/vue3';
 
-const props = defineProps<{ asset: Asset; people: Person[]; departments: Department[] }>();
+interface StaffOption { id: number; name: string }
+const props = defineProps<{ asset: Asset; staff: StaffOption[]; departments: Department[] }>();
 
 const { show } = useToast();
 
 const form = useForm({
     lessee_id: null,
-    lessee_type: 'person',
+    lessee_type: 'staff',
     start_at: '',
     end_at: '',
     rate_minor: null,
@@ -38,21 +40,22 @@ const submit = () => {
     <Head :title="`Lease ${asset.asset_tag}`" />
     <AppLayout :breadcrumbs="[{ title: 'Assets', href: '/assets' }, { title: asset.asset_tag, href: `/assets/${asset.id}` }, { title: 'Lease', href: `/assets/${asset.id}/lease` }]">
         <div class="space-y-6">
+            <AssetSummaryHeader :asset="asset" />
             <form @submit.prevent="submit">
                 <GlassCard class="space-y-4">
                     <div>
                         <label for="lessee_type" class="block text-sm font-medium text-slate-700 dark:text-slate-200">Lessee Type</label>
                         <select id="lessee_type" v-model="form.lessee_type" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100">
-                            <option value="person">Person</option>
+                            <option value="staff">Staff</option>
                             <option value="department">Department</option>
                         </select>
                         <InputError :message="form.errors.lessee_type" class="mt-2" />
                     </div>
-                    <div v-if="form.lessee_type === 'person'">
-                        <label for="lessee_id_person" class="block text-sm font-medium text-slate-700 dark:text-slate-200">Lessee (Person)</label>
+                    <div v-if="form.lessee_type === 'staff'">
+                        <label for="lessee_id_person" class="block text-sm font-medium text-slate-700 dark:text-slate-200">Lessee (Staff)</label>
                         <select id="lessee_id_person" v-model="form.lessee_id" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-100">
-                            <option :value="null">Select Person</option>
-                            <option v-for="person in people" :key="person.id" :value="person.id">{{ person.name }}</option>
+                            <option :value="null">Select Staff</option>
+                            <option v-for="person in staff" :key="person.id" :value="person.id">{{ person.name }}</option>
                         </select>
                         <InputError :message="form.errors.lessee_id" class="mt-2" />
                     </div>

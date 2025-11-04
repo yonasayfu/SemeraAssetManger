@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Support\Exports;
 
@@ -646,6 +646,5 @@ class ExportConfig
             ],
         ];
     }\n}\n
-
 
 

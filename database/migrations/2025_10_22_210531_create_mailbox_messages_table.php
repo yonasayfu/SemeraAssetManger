@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('environment', 32)->default('local')->index();
             $table->timestamp('received_at')->index();
             $table->timestamp('processed_at')->nullable();
-            $table->foreignId('processed_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('processed_by')->nullable()->constrained('staff')->nullOnDelete();
             $table->unsignedBigInteger('size')->default(0);
             $table->longText('html_body')->nullable();
             $table->longText('text_body')->nullable();

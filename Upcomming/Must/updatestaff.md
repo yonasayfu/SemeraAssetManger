@@ -1,66 +1,47 @@
-## Plan: Consolidate `Staff` into `Staff`
+## Plan: Consolidate assignments onto `staff`
 
-The goal is to remove the `Staff` model and `staff` table, and instead use the `Staff` model and `staff` table for all asset assignments.
+Use the `Staff` model and `staff` table for all asset assignments. Replace legacy `assigned_to` and any `Person` references.
 
 ### Phase 1: Database Schema Modification
 
-1.  **Create a new migration to modify the `assets` table:**
-    *   Drop the existing `assigned_to` foreign key constraint referencing `staff.id`.
-    *   Rename the `assigned_to` column to `staff_id`.
-    *   Add a new foreign key constraint on `staff_id` referencing `staff.id`.
-    *   (Optional but recommended) Add a nullable constraint to `staff_id` if assets can be unassigned. (The current `assigned_to` is nullable, so `staff_id` should also be nullable).
-
-2.  **Create a new migration to drop the `staff` table:**
-    *   This migration will simply drop the `staff` table. This should be done *after* the `assets` table no longer references it.
+1.  **Modify the `assets` table (if needed):**
+    *   Ensure there is a nullable `staff_id` column with FK to `staff.id`.
+    *   If an old `assigned_to` column exists, backfill `staff_id` from it and drop `assigned_to`.
 
 ### Phase 2: Backend Code Updates
 
-1.  **Delete `app/Models/Staff.php`:** Remove the `Staff` model file.
-2.  **Delete `database/seeders/StaffSeeder.php`:** Remove the seeder file.
-3.  **Update `app/Http/Controllers/AssetController.php`:**
-    *   Remove `use App\Models\Staff;`.
-    *   Change `Staff::select('id', 'name')->orderBy('name')->get()` to `Staff::select('id', 'first_name', 'last_name')->orderBy('first_name')->get()` (or similar, depending on how `Staff` names are handled).
-    *   Adjust the `assigned_to` validation rule from `nullable|exists:staff,id` to `nullable|exists:staff,id`.
-    *   Update any other references to `Staff` to `Staff`.
-4.  **Update `app/Http/Controllers/AssetCheckoutController.php`:**
-    *   Remove `use App\Models\Staff;`.
-    *   Change `Staff::all()` to `Staff::all()` for the `staff` prop.
-5.  **Review other controllers/services:** Search the entire `app/` directory for any other references to `App\Models\Staff` and update them to `App\Models\Staff` or remove them if no longer needed.
-6.  **Update `app/Models/Asset.php`:**
-    *   Change the `assignee` relationship from `belongsTo(Staff::class)` to `belongsTo(Staff::class, 'staff_id')`.
-    *   Update any other references to `Staff`.
+1.  Keep `app/Models/Staff.php` (primary identity model).
+2.  Remove legacy `Person` references (controllers, views, validation).
+3.  **`app/Models/Asset.php`:**
+    *   `fillable` includes `staff_id` (not `assigned_to`).
+    *   `assignee()` is `belongsTo(Staff::class, 'staff_id')`.
+4.  **`app/Http/Controllers/AssetController.php`:**
+    *   Validation uses `staff_id: nullable|exists:staff,id`.
+    *   Provide `staff` options via `Staff::select('id','name')->orderBy('name')`.
+5.  **Checkout & Lease controllers:**
+    *   Checkout validates `assignee_id: exists:staff,id`, sets `assignee_type: 'staff'`, and updates `asset.staff_id`.
+    *   Lease sets `asset.staff_id` only when `lessee_type === 'person'`, otherwise `null`.
+6.  **Return/Dispose/Check-in:** set `asset.staff_id = null`.
+7.  **Import/Export:**
+    *   Import accepts `staff_id` (fallback to `assigned_to` if present).
+    *   Export maps the `Staff ID` column from `asset.staff_id`.
 
 ### Phase 3: Frontend Code Updates
 
-1.  **Update `resources/js/Pages/Assets/Create.vue`:**
-    *   Change the `staff` prop type from `StaffOption[]` to `StaffOption[]` (or similar, reflecting `Staff` structure).
-    *   Update the `assigned_to` select input to iterate over `staff` instead of `staff`.
-    *   Adjust `staff.name` to `staff.full_name` or `staff.first_name + ' ' + staff.last_name` as appropriate.
-2.  **Update `resources/js/Pages/Assets/Checkout.vue`:**
-    *   Change the `staff` prop type from `StaffOption[]` to `StaffOption[]`.
-    *   Update the `assignee_id` select input to iterate over `staff` instead of `staff`.
-    *   Adjust `staff.name` to `staff.full_name` or `staff.first_name + ' ' + staff.last_name` as appropriate.
-3.  **Review other Vue components:** Search the `resources/js/` directory for any other references to `Staff` or `staff` prop and update them to `Staff` or `staff`.
+1.  **Assets Create/Edit pages:** use `staff_id` form field; select iterates `staff` list.
+2.  **Checkout page:** uses `assignee_type: 'staff'` and `assignee_id` from `staff` list.
+3.  **Lease page:** when `lessee_type === 'person'`, select from `staff` list.
+4.  **Types:** `Asset.staff_id: number | null` (remove `assigned_to`).
 
-### Phase 4: Roadmap and Schema Documentation Updates
+### Phase 4: Documentation Updates
 
-1.  **Update `MyNewDatabaseSchema.md`:**
-    *   Remove the `staff` table definition.
-    *   Update the `assets` table definition to show `staff_id` (FK: `staff.id`) instead of `assigned_to` (FK: `staff.id`).
-    *   Update the "RELATIONSHIPS SUMMARY" to reflect `Staff → Assets` (1:N) instead of `Department → Staff` and `Asset → Staff`.
-2.  **Update `MyNewProjectRoadmap.md`:**
-    *   Under "Identity & Org" in the database schema section, remove `staff`.
-    *   Under "Advanced" features, update "Staff/Employees" to "Staff/Employees" or just "Staff".
-    *   Review and update any other mentions of `Staff` or `staff`.
-3.  **Update `TASK_CHECKLIST.md`:**
-    *   Remove `StaffPolicy.php`.
-    *   Remove `StaffImportController.php` and `ImportStaffJob.php`.
-    *   Update any other mentions of `Staff`.
+1.  **`MyNewDatabaseSchema.md`:** show `staff_id` (FK: `staff.id`); `created_by` references `staff.id`.
+2.  **`MyNewProjectRoadmap.md`:** reflect checkout `assignee_type: staff|department|customer`; maintenance references staff consistently.
+3.  **`TASK_CHECKLIST.md`:** ensure any legacy references to `assigned_to`/`Person` are removed.
 
 ### Phase 5: Testing and Cleanup
 
-1.  Run `php artisan migrate` (after creating the new migrations).
-2.  Run `php artisan db:seed` (if there are other seeders).
-3.  Manually test asset creation, checkout, and any other functionality that previously used `Staff`.
-4.  Ensure no "Class not found" or "Undefined column" errors appear.
-5.  Remove the `console.log` from `FileUploadField.vue` (if it's still there).
+1.  Run `php artisan migrate`.
+2.  Seed and test: create asset (with/without staff), checkout/checkin, lease/return.
+3.  Confirm no "Class not found" or "Undefined column" errors.
+4.  Remove stray debug logs from components if any.

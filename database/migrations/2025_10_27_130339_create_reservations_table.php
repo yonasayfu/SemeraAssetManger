@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('reservations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('asset_id')->constrained('assets')->onDelete('cascade');
-            $table->foreignId('requester_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('requester_id')->constrained('staff')->onDelete('cascade');
             $table->timestamp('start_at');
             $table->timestamp('end_at');
             $table->enum('status', ['pending', 'approved', 'cancelled', 'fulfilled'])->default('pending');

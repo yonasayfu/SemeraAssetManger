@@ -55,7 +55,7 @@ const filterDefinitions = [
     },
 ];
 
-const columns = ['Report Name', 'Owner', 'Data Sources', 'Group By', 'Created At'];
+const columns = ['name', 'owner_id', 'created_at'];
 
 const notes =
     'Custom reports combine multiple data sources. This UI will eventually allow drag-and-drop fields and aggregations; for now, it captures the key inputs we know about.';

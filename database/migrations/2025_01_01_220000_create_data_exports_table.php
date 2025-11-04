@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('data_exports', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
-            $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('staff')->cascadeOnDelete();
             $table->string('name');
             $table->string('type')->index();
             $table->string('format', 20);

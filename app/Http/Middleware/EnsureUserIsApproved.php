@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\User;
+use App\Models\Staff;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,7 +17,7 @@ class EnsureUserIsApproved
             return redirect()->route('login');
         }
 
-        if ($user->account_status !== User::STATUS_ACTIVE) {
+        if ($user->account_status !== Staff::STATUS_ACTIVE) {
             return redirect()
                 ->route('onboarding.pending')
                 ->with('status', $user->account_status);

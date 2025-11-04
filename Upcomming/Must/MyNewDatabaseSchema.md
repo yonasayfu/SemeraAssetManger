@@ -119,10 +119,10 @@ This is the heart of your system — everything connects to this.
 | location_id     | BIGINT (FK: locations.id)                                                                  |                           |
 | category_id     | BIGINT (FK: categories.id)                                                                 |                           |
 | department_id   | BIGINT (FK: departments.id)                                                                |                           |
-| assigned_to     | BIGINT (FK: staff.id)                                                                     | Nullable                  |
+| staff_id        | BIGINT (FK: staff.id)                                                                     | Nullable                  |
 | status          | ENUM(‘Available’,‘Checked Out’,‘Under Repair’,‘Leased’,‘Disposed’,‘Lost’,‘Donated’,‘Sold’) |                           |
 | photo           | VARCHAR(255)                                                                               | File path                 |
-| created_by      | BIGINT (FK: users.id)                                                                      |                           |
+| created_by      | BIGINT (FK: staff.id)                                                                      |                           |
 | created_at      | TIMESTAMP                                                                                  |                           |
 | updated_at      | TIMESTAMP                                                                                  |                           |
 

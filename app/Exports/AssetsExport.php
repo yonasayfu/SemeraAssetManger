@@ -14,62 +14,47 @@ class AssetsExport implements FromCollection, WithHeadings, WithMapping
     */
     public function collection()
     {
-        return Asset::all();
+        return Asset::with(['site:id,name', 'location:id,name', 'category:id,name', 'department:id,name', 'assignee:id,name'])->get();
     }
 
     public function headings(): array
     {
+        // Match legacy/default export headers to ease re-import
         return [
-            'ID',
-            'Asset Tag',
+            'Asset Photo',
+            'Asset Tag ID',
             'Description',
             'Purchase Date',
             'Cost',
-            'Currency',
-            'Purchased From',
-            'Brand',
-            'Model',
-            'Serial No',
-            'Project Code',
-            'Asset Condition',
-            'Site ID',
-            'Location ID',
-            'Category ID',
-            'Department ID',
-            'Assigned To',
             'Status',
-            'Photo',
-            'Created By',
-            'Created At',
-            'Updated At',
+            'Purchased from',
+            'Serial No',
+            'Site',
+            'Location',
+            'Category',
+            'Department',
+            'Assigned to',
+            'Project code',
         ];
     }
 
     public function map($asset): array
     {
         return [
-            $asset->id,
+            $asset->photo,
             $asset->asset_tag,
             $asset->description,
-            $asset->purchase_date,
+            optional($asset->purchase_date)->toDateString(),
             $asset->cost,
-            $asset->currency,
-            $asset->purchased_from,
-            $asset->brand,
-            $asset->model,
-            $asset->serial_no,
-            $asset->project_code,
-            $asset->asset_condition,
-            $asset->site_id,
-            $asset->location_id,
-            $asset->category_id,
-            $asset->department_id,
-            $asset->assigned_to,
             $asset->status,
-            $asset->photo,
-            $asset->created_by,
-            $asset->created_at,
-            $asset->updated_at,
+            $asset->purchased_from,
+            $asset->serial_no,
+            $asset->site?->name,
+            $asset->location?->name,
+            $asset->category?->name,
+            $asset->department?->name,
+            $asset->assignee?->name,
+            $asset->project_code,
         ];
     }
 }

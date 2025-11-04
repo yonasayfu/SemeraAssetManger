@@ -47,7 +47,7 @@ const filterDefinitions = [
     },
 ];
 
-const columns = ['id', 'name', 'module', 'created_at', 'owner_id'];
+const columns = ['id', 'name', 'family', 'created_at', 'owner_id'];
 
 const notes = 'Catch-all for specialised reports. Use tags and modules to keep them organised until they graduate to a dedicated report family.';
 </script>

@@ -49,7 +49,7 @@ const filterDefinitions = [
     },
 ];
 
-const columns = ['id', 'subject_type', 'subject_id', 'action', 'causer_id', 'properties', 'created_at'];
+const columns = ['id', 'subject_type', 'subject_id', 'action', 'causer_id', 'changes', 'created_at'];
 
 const notes = 'Provides a detailed audit trail across modules. Useful for compliance and debugging.';
 </script>

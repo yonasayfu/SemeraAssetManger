@@ -50,6 +50,11 @@ const props = withDefaults(defineProps<Props>(), {
 
 const page = usePage();
 const auth = computed(() => page.props.auth);
+const userPerms = computed<string[]>(() => auth.value?.permissions || []);
+const hasPermission = (perm?: string | null) => {
+    if (!perm) return true;
+    return userPerms.value.includes(perm);
+};
 
 const isCurrentRoute = computed(
     () => (url: NonNullable<InertiaLinkProps['href']>) =>
@@ -63,13 +68,11 @@ const activeItemStyles = computed(
             : '',
 );
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
+const mainNavItems: Array<NavItem & { permission?: string | null }> = [
+    { title: 'Dashboard', href: dashboard(), icon: LayoutGrid, permission: 'dashboard.view' },
 ];
+
+const visibleMainNavItems = computed(() => mainNavItems.filter(i => hasPermission(i.permission)));
 
 const rightNavItems: NavItem[] = [
     {
@@ -110,7 +113,7 @@ const rightNavItems: NavItem[] = [
                                 <div class="flex h-full flex-1 flex-col justify-between space-y-4 py-6">
                                     <nav class="-mx-3 space-y-1">
                                         <Link
-                                            v-for="item in mainNavItems"
+                                            v-for="item in visibleMainNavItems"
                                             :key="item.title"
                                             :href="item.href"
                                             class="flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
@@ -153,8 +156,8 @@ const rightNavItems: NavItem[] = [
                     <div class="hidden h-full flex-1 lg:flex">
                         <NavigationMenu class="ml-10 flex h-full items-stretch">
                             <NavigationMenuList class="flex h-full items-stretch space-x-2">
-                                <NavigationMenuItem
-                                    v-for="item in mainNavItems"
+                                    <NavigationMenuItem
+                                    v-for="item in visibleMainNavItems"
                                     :key="item.title"
                                     class="relative flex h-full items-center justify-center"
                                 >
@@ -254,4 +257,3 @@ const rightNavItems: NavItem[] = [
         </div>
     </div>
 </template>
-

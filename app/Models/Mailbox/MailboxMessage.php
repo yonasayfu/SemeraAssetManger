@@ -3,7 +3,7 @@
 namespace App\Models\Mailbox;
 
 use App\Models\Concerns\RecordsActivity;
-use App\Models\User;
+use App\Models\Staff;
 use Illuminate\Database\Eloquent\Casts\AsArrayObject;
 use Illuminate\Database\Eloquent\Casts\AsEncryptedArrayObject;
 use Illuminate\Database\Eloquent\Casts\AsEncryptedString;
@@ -64,6 +64,6 @@ class MailboxMessage extends Model
 
     public function processedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'processed_by');
+        return $this->belongsTo(Staff::class, 'processed_by');
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Policies;
 
-use App\Models\User;
+use App\Models\Staff as User;
 use App\Models\Warranty;
 use Illuminate\Auth\Access\HandlesAuthorization;
 

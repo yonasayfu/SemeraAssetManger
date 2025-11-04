@@ -94,7 +94,7 @@ class AssetController extends Controller
             'location_id' => 'nullable|exists:locations,id',
             'category_id' => 'nullable|exists:categories,id',
             'department_id' => 'nullable|exists:departments,id',
-            'assigned_to' => 'nullable|exists:staff,id',
+            'staff_id' => 'nullable|exists:staff,id',
             'status' => 'required|in:Available,Checked Out,Under Repair,Leased,Disposed,Lost,Donated,Sold',
             'photo' => 'nullable|image|max:2048',
         ]);
@@ -195,7 +195,7 @@ class AssetController extends Controller
             'location_id' => 'nullable|exists:locations,id',
             'category_id' => 'nullable|exists:categories,id',
             'department_id' => 'nullable|exists:departments,id',
-            'assigned_to' => 'nullable|exists:staff,id',
+            'staff_id' => 'nullable|exists:staff,id',
             'status' => 'required|in:Available,Checked Out,Under Repair,Leased,Disposed,Lost,Donated,Sold',
             'photo' => 'nullable|image|max:2048',
         ]);

@@ -18,12 +18,9 @@ interface UserSummary {
 
 interface StaffSummary {
     id: number;
-    first_name: string;
-    last_name: string;
     full_name: string;
     email: string;
     phone: string | null;
-    job_title: string | null;
     status: 'active' | 'inactive';
     user: UserSummary | null;
 }
@@ -312,7 +309,7 @@ const statTone = (tone?: string) => {
             </div>
         </div>
 
-        <div class="overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm dark:border-slate-800/60 dark:bg-slate-900/50 print:border print:bg-white print:shadow-none">
+        <div v-if="hasResults" class="overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm dark:border-slate-800/60 dark:bg-slate-900/50 print:border print:bg-white print:shadow-none">
             <table class="min-w-full divide-y divide-slate-200 print-table dark:divide-slate-800">
                 <thead class="bg-slate-50/80 dark:bg-slate-900/80">
                     <tr>
@@ -369,7 +366,7 @@ const statTone = (tone?: string) => {
                             </div>
                         </td>
                         <td class="px-5 py-4 text-sm text-slate-600 dark:text-slate-300">
-                            <div>{{ member.job_title ?? '-' }}</div>
+                            <div class="text-slate-500">&nbsp;</div>
                             <div v-if="member.user" class="text-xs text-slate-500 dark:text-slate-400">
                                 Linked user: {{ member.user.name }}
                             </div>
@@ -420,6 +417,10 @@ const statTone = (tone?: string) => {
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <div v-else class="rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500 dark:border-slate-700 dark:text-slate-400">
+            No staff found.
         </div>
 
         <div class="flex items-center justify-end print:hidden">

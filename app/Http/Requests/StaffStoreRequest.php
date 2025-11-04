@@ -2,28 +2,30 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Staff as User;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StaffStoreRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('users.manage') ?? false;
     }
 
     public function rules(): array
     {
         return [
-            'first_name' => ['required', 'string', 'max:150'],
-            'last_name' => ['required', 'string', 'max:150'],
+            'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:staff,email'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'job_title' => ['nullable', 'string', 'max:150'],
-            'status' => ['required', 'in:active,inactive'],
-            'hire_date' => ['nullable', 'date'],
-            'user_id' => ['nullable', 'exists:users,id'],
-            'avatar' => ['nullable', 'image', 'max:5120'],
+            'password' => ['required', 'string', 'min:8', 'max:255', 'confirmed'],
+            'account_status' => ['required', Rule::in([User::STATUS_PENDING, User::STATUS_ACTIVE, User::STATUS_SUSPENDED])],
+            'account_type' => ['required', Rule::in([User::TYPE_INTERNAL, User::TYPE_EXTERNAL])],
+            'roles' => ['sometimes', 'array'],
+            'roles.*' => ['string', Rule::exists('roles', 'name')],
+            'permissions' => ['sometimes', 'array'],
+            'permissions.*' => ['string', Rule::exists('permissions', 'name')],
+            'staff_id' => ['nullable', Rule::exists('staff', 'id')],
         ];
     }
 }
-

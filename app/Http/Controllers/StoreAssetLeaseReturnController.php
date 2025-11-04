@@ -28,7 +28,7 @@ class StoreAssetLeaseReturnController extends Controller
 
         $asset->update([
             'status' => 'Available',
-            'assigned_to' => null,
+            'staff_id' => null,
         ]);
 
         return redirect()->route('assets.show', $asset->id);

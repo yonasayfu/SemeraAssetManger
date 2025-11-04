@@ -107,7 +107,7 @@ Dashboard (widgets + charts + calendar alerts), Alerts (due/overdue/expiring), A
 
 ### Maintenance & warranty
 
-* **maintenances** — asset_id, code, title, description, type (preventive|corrective), status (open|scheduled|in_progress|completed|cancelled|overdue), opened_by (user_id), assigned_to (user_id or staff_id), scheduled_for, started_at, closed_at, cost_parts_minor, cost_labor_minor, currency
+* **maintenances** — asset_id, code, title, description, type (preventive|corrective), status (open|scheduled|in_progress|completed|cancelled|overdue), opened_by (staff_id), assigned_to (staff_id), scheduled_for, started_at, closed_at, cost_parts_minor, cost_labor_minor, currency
 * **warranties** — asset_id, provider, description, length_months, start_at, end_at, active (bool), notes
 
 ### Audits (stocktakes)

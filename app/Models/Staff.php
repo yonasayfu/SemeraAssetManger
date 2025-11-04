@@ -16,6 +16,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use Lab404\Impersonate\Models\Impersonate;
 use Lab404\Impersonate\Services\ImpersonateManager;
+use Illuminate\Support\Facades\Storage;
 
 class Staff extends Authenticatable
 {
@@ -45,8 +46,9 @@ class Staff extends Authenticatable
         'email',
         'password',
         'recovery_email',
-        'phone_number',
-        'account_status',
+        'phone',
+        'status',
+        'job_title',
         'account_type',
         'approved_at',
         'approved_by',
@@ -191,5 +193,31 @@ class Staff extends Authenticatable
         }
 
         $this->attributes['two_factor_email_recovery_codes'] = encrypt($encoded);
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        return (string) $this->name;
+    }
+
+    public function getFirstNameAttribute(): string
+    {
+        $parts = preg_split('/\s+/', (string) $this->name, 2);
+        return $parts[0] ?? '';
+    }
+
+    public function getLastNameAttribute(): string
+    {
+        $parts = preg_split('/\s+/', (string) $this->name, 2);
+        return $parts[1] ?? '';
+    }
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (!empty($this->attributes['avatar_path'])) {
+            return Storage::disk('public')->url($this->attributes['avatar_path']);
+        }
+
+        return null;
     }
 }

@@ -4,7 +4,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { useToast } from '@/composables/useToast';
 import { Asset, Site, Location, Category, Department } from '@/types';
 
-interface PersonOption { id: number; name: string }
+interface StaffOption { id: number; name: string }
 
 const props = defineProps<{
     asset: Asset;
@@ -12,7 +12,7 @@ const props = defineProps<{
     locations: Location[];
     categories: Category[];
     departments: Department[];
-    people: PersonOption[];
+    staff: StaffOption[];
 }>();
 
 const form = useForm({
@@ -31,7 +31,7 @@ const form = useForm({
     location_id: props.asset.location_id,
     category_id: props.asset.category_id,
     department_id: props.asset.department_id,
-    assigned_to: props.asset.assigned_to,
+    staff_id: props.asset.staff_id,
     status: props.asset.status,
     photo: null,
 });
@@ -142,10 +142,10 @@ const submit = () => {
                 </select>
             </div>
             <div>
-                <label for="assigned_to">Assigned To</label>
-                <select id="assigned_to" v-model="form.assigned_to" class="w-full">
-                    <option :value="null">Select Person</option>
-                    <option v-for="person in people" :key="person.id" :value="person.id">{{ person.name }}</option>
+                <label for="staff_id">Assigned To</label>
+                <select id="staff_id" v-model="form.staff_id" class="w-full">
+                    <option :value="null">Select Staff</option>
+                    <option v-for="person in staff" :key="person.id" :value="person.id">{{ person.name }}</option>
                 </select>
             </div>
             <div>

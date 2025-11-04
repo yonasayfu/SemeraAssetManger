@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('mailbox_notes', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->foreignUlid('message_id')->constrained('mailbox_messages')->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained('staff')->cascadeOnDelete();
             $table->text('body');
             $table->timestamps();
         });

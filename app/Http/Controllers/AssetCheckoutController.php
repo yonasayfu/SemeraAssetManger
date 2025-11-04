@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Asset;
-use App\Models\Person;
+use App\Models\Staff;
 use Inertia\Inertia;
 
 class AssetCheckoutController extends Controller
@@ -15,7 +15,7 @@ class AssetCheckoutController extends Controller
     {
         return Inertia::render('Assets/Checkout', [
             'asset' => $asset,
-            'people' => Person::all(),
+            'staff' => Staff::select('id','name')->orderBy('name')->get(),
         ]);
     }
 }

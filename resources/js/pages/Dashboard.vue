@@ -8,7 +8,7 @@ import MetricCard from '@/components/dashboard/MetricCard.vue';
 import TrendSparkline from '@/components/dashboard/TrendSparkline.vue';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItemType } from '@/types';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import {
     AlertTriangle,
@@ -117,6 +117,16 @@ const maintenanceTone = (status: string) => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-1 flex-col gap-6 px-4 py-6 lg:px-8">
+            <div class="flex items-center justify-between">
+                <h1 class="text-xl font-semibold text-slate-800 dark:text-slate-100">Overview</h1>
+                <button
+                    type="button"
+                    class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    @click="router.visit('/dashboard', { preserveScroll: true, preserveState: false })"
+                >
+                    Refresh
+                </button>
+            </div>
             <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <DashboardWidget
                     v-for="metric in resolvedMetrics"
@@ -262,4 +272,3 @@ const maintenanceTone = (status: string) => {
         </div>
     </AppLayout>
 </template>
-

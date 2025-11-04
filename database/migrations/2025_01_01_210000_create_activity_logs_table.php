@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('causer_id')
                 ->nullable()
-                ->constrained('users')
+                ->constrained('staff')
                 ->nullOnDelete();
             $table->string('action');
             $table->string('description')->nullable();

@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('staff', function (Blueprint $table) {
             $table->string('account_status', 20)
                 ->default('pending')
                 ->after('password')
@@ -22,11 +22,11 @@ return new class extends Migration
             $table->foreignId('approved_by')
                 ->nullable()
                 ->after('approved_at')
-                ->constrained('users')
+                ->constrained('staff')
                 ->nullOnDelete();
         });
 
-        DB::table('users')->update([
+        DB::table('staff')->update([
             'account_status' => 'active',
             'account_type' => 'internal',
             'approved_at' => DB::raw("COALESCE(approved_at, CURRENT_TIMESTAMP)"),
@@ -35,7 +35,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('staff', function (Blueprint $table) {
             $table->dropForeign(['approved_by']);
             $table->dropColumn([
                 'approved_by',

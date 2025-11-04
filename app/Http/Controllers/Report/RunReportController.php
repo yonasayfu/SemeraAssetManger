@@ -66,10 +66,8 @@ class RunReportController extends Controller
             ], 422);
         }
 
-        $rows = $query->get()->map(fn ($model) => $model->toArray());
-
         if ($format === 'csv') {
-            return $this->streamCsv($rows, $data['family']);
+            return $this->streamCsvFromQuery($query, $data['family']);
         }
 
         return response()->json([
@@ -77,25 +75,28 @@ class RunReportController extends Controller
         ], 422);
     }
 
-    protected function streamCsv(Collection $rows, string $family)
+    protected function streamCsvFromQuery(\Illuminate\Database\Eloquent\Builder $query, string $family)
     {
         $filename = sprintf('%s-report-%s.csv', $family, now()->format('Ymd_His'));
 
-        $callback = function () use ($rows) {
+        $callback = function () use ($query) {
             $handle = fopen('php://output', 'w');
 
             $headersWritten = false;
 
-            foreach ($rows as $row) {
-                $flat = $this->flattenRow($row);
+            $query->orderBy($query->getModel()->getKeyName())
+                ->chunk(1000, function ($chunk) use (&$headersWritten, $handle) {
+                    foreach ($chunk as $model) {
+                        $flat = $this->flattenRow($model->toArray());
 
-                if (! $headersWritten) {
-                    fputcsv($handle, array_keys($flat));
-                    $headersWritten = true;
-                }
+                        if (! $headersWritten) {
+                            fputcsv($handle, array_keys($flat));
+                            $headersWritten = true;
+                        }
 
-                fputcsv($handle, array_values($flat));
-            }
+                        fputcsv($handle, array_values($flat));
+                    }
+                });
 
             fclose($handle);
         };

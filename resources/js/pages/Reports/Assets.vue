@@ -51,6 +51,12 @@ const filterDefinitions = [
         label: 'Department ID',
         type: 'number' as const,
     },
+    {
+        key: 'date_range',
+        label: 'Purchase Date Range',
+        type: 'date-range' as const,
+        description: 'Filter by purchase date window.'
+    },
 ];
 
 const columns = [

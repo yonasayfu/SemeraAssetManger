@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Maintenance;
-use App\Models\User;
+use App\Models\Staff as User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class MaintenancePolicy

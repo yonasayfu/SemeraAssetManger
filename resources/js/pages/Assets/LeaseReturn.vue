@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
+import { confirmDialog } from '@/lib/confirm';
 import { Asset } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
 import GlassCard from '@/components/GlassCard.vue';
 import GlassButton from '@/components/GlassButton.vue';
 import InputError from '@/components/InputError.vue';
+import AssetSummaryHeader from '@/components/Asset/AssetSummaryHeader.vue';
 import { useToast } from '@/composables/useToast';
 import { Link } from '@inertiajs/vue3';
 
@@ -16,7 +18,16 @@ const form = useForm({
     notes: '',
 });
 
-const submit = () => {
+const submit = async () => {
+    const accepted = await confirmDialog({
+        title: 'Return lease?',
+        message: `Confirm lease return for ${props.asset.asset_tag}.`,
+        confirmText: 'Return',
+        cancelText: 'Cancel',
+    });
+
+    if (!accepted) return;
+
     form.post(`/assets/${props.asset.id}/lease-return`, {
         onSuccess: () => {
             show('Asset lease returned successfully.', 'success');
@@ -32,6 +43,7 @@ const submit = () => {
     <Head :title="`Lease Return ${asset.asset_tag}`" />
     <AppLayout :breadcrumbs="[{ title: 'Assets', href: '/assets' }, { title: props.asset.asset_tag, href: `/assets/${props.asset.id}` }, { title: 'Lease Return', href: `/assets/${props.asset.id}/lease-return` }]">
         <div class="space-y-6">
+            <AssetSummaryHeader :asset="asset" />
             <form @submit.prevent="submit">
                 <GlassCard class="space-y-4">
                     <div>

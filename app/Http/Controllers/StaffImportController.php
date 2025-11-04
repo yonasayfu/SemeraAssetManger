@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ImportRequest;
 use App\Jobs\ImportPersonsJob;
 
-class PersonImportController extends Controller
+class StaffImportController extends Controller
 {
     public function __invoke(ImportRequest $request)
     {

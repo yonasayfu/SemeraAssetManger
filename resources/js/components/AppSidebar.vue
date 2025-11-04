@@ -101,7 +101,8 @@ type Item = {
   title: string
   href: string
   icon: any
-  permission?: string | null
+  permission?: string | string[] | null
+  role?: string | null
   children?: Item[]
 }
 type Group = {
@@ -119,12 +120,12 @@ const sidebarGroups = ref<Group[]>([
     label: "Alerts",
     icon: AlertTriangle,
     items: [
-      { title: "Assets Due", href: "/alerts/assets-due", icon: Clock, permission: null },
-      { title: "Assets Past Due", href: "/alerts/assets-past-due", icon: AlertCircle, permission: null },
-      { title: "Leases Expiring", href: "/alerts/leases-expiring", icon: CalendarClock, permission: null },
-      { title: "Maintenance Due", href: "/alerts/maintenance-due", icon: Wrench, permission: null },
-      { title: "Maintenance Overdue", href: "/alerts/maintenance-overdue", icon: Wrench, permission: null },
-      { title: "Warranties Expiring", href: "/alerts/warranties-expiring", icon: BadgeCheck, permission: null },
+      { title: "Assets Due", href: "/alerts/assets-due", icon: Clock, permission: 'alerts.view' },
+      { title: "Assets Past Due", href: "/alerts/assets-past-due", icon: AlertCircle, permission: 'alerts.view' },
+      { title: "Leases Expiring", href: "/alerts/leases-expiring", icon: CalendarClock, permission: 'alerts.view' },
+      { title: "Maintenance Due", href: "/alerts/maintenance-due", icon: Wrench, permission: 'alerts.view' },
+      { title: "Maintenance Overdue", href: "/alerts/maintenance-overdue", icon: Wrench, permission: 'alerts.view' },
+      { title: "Warranties Expiring", href: "/alerts/warranties-expiring", icon: BadgeCheck, permission: 'alerts.view' },
     ]
   },
 
@@ -149,32 +150,32 @@ const sidebarGroups = ref<Group[]>([
     label: "Assets",
     icon: Box,
     items: [
-      { title: "Assets", href: "/assets", icon: Box, permission: null },
-      { title: "Add an Asset", href: "/assets/create", icon: PlusCircle, permission: null },
-      { title: "Check Out", href: "/assets/checkout-select", icon: LogOut, permission: null },
-      { title: "Check In", href: "/assets/checkin-select", icon: LogIn, permission: null },
-      { title: "Lease", href: "/assets/lease-select", icon: FileSignature, permission: null },
-      { title: "Lease Return", href: "/assets/lease-return-select", icon: Undo2, permission: null },
-      { title: "Dispose", href: "/assets/dispose-select", icon: Trash2, permission: null },
-      { title: "Maintenance", href: "/assets/maintenance-select", icon: Wrench, permission: null },
-      { title: "Move", href: "/assets/move-select", icon: MoveRight, permission: null },
-      { title: "Reserve", href: "/assets/reserve-select", icon: CalendarPlus, permission: null },
-      { title: "Maintenance Board", href: "/maintenance", icon: Wrench, permission: null },
-      { title: "Warranty Center", href: "/warranties", icon: BadgeCheck, permission: null },
-      { title: "List of Assets", href: "/assets", icon: List, permission: null },
+      { title: "Assets", href: "/assets", icon: Box, permission: 'assets.view' },
+      { title: "Add an Asset", href: "/assets/create", icon: PlusCircle, permission: 'assets.create' },
+      { title: "Check Out", href: "/assets/checkout-select", icon: LogOut, permission: 'assets.view' },
+      { title: "Check In", href: "/assets/checkin-select", icon: LogIn, permission: 'assets.view' },
+      { title: "Lease", href: "/assets/lease-select", icon: FileSignature, permission: 'assets.view' },
+      { title: "Lease Return", href: "/assets/lease-return-select", icon: Undo2, permission: 'assets.view' },
+      { title: "Dispose", href: "/assets/dispose-select", icon: Trash2, permission: 'assets.view' },
+      { title: "Maintenance", href: "/assets/maintenance-select", icon: Wrench, permission: 'assets.view' },
+      { title: "Move", href: "/assets/move-select", icon: MoveRight, permission: 'assets.view' },
+      { title: "Reserve", href: "/assets/reserve-select", icon: CalendarPlus, permission: 'assets.view' },
+      { title: "Maintenance Board", href: "/maintenance", icon: Wrench, permission: 'maintenance.view' },
+      { title: "Warranty Center", href: "/warranties", icon: BadgeCheck, permission: 'warranty.view' },
+      // Removed duplicate link to assets index
     ]
   },
 
-  // Lists
+  // Inventory (Lists)
   {
-    id: 'lists',
-    label: "Lists",
+    id: 'inventory',
+    label: "Inventory",
     icon: ScrollText,
     items: [
-      { title: "List of Assets", href: "/lists/assets", icon: ListChecks, permission: null },
-      { title: "List of Maintenances", href: "/lists/maintenances", icon: Wrench, permission: null },
-      { title: "List of Warranties", href: "/lists/warranties", icon: BadgeCheck, permission: null },
-      { title: "List of Audits", href: "/lists/audits", icon: ClipboardCheck, permission: null },
+      { title: "Assets (List)", href: "/lists/assets", icon: ListChecks, permission: 'lists.view' },
+      { title: "Maintenances (List)", href: "/lists/maintenances", icon: Wrench, permission: 'lists.view' },
+      { title: "Warranties (List)", href: "/lists/warranties", icon: BadgeCheck, permission: 'lists.view' },
+      { title: "Audits (List)", href: "/lists/audits", icon: ClipboardCheck, permission: 'lists.view' },
     ]
   },
 
@@ -184,17 +185,17 @@ const sidebarGroups = ref<Group[]>([
     label: "Reports",
     icon: BarChart3,
     items: [
-      { title: "Automated Reports", href: "/reports/automated", icon: Clock, permission: null },
-      { title: "Custom Reports", href: "/reports/custom", icon: Settings2, permission: null },
-      { title: "Asset Reports", href: "/reports/assets", icon: Box, permission: null },
-      { title: "Audit Reports", href: "/reports/audits", icon: ClipboardCheck, permission: null },
-      { title: "Check-Out Reports", href: "/reports/checkout", icon: LogOut, permission: null },
-      { title: "Leased Asset Reports", href: "/reports/leased-assets", icon: FileSignature, permission: null },
-      { title: "Maintenance Reports", href: "/reports/maintenance", icon: Wrench, permission: null },
-      { title: "Reservation Reports", href: "/reports/reservations", icon: CalendarRange, permission: null },
-      { title: "Status Reports", href: "/reports/status", icon: Info, permission: null },
-      { title: "Transaction Reports", href: "/reports/transactions", icon: ArrowLeftRight, permission: null },
-      { title: "Other Reports", href: "/reports/others", icon: MoreHorizontal, permission: null },
+      { title: "Automated Reports", href: "/reports/automated", icon: Clock, permission: 'reports.view' },
+      { title: "Custom Reports", href: "/reports/custom", icon: Settings2, permission: 'reports.view' },
+      { title: "Asset Reports", href: "/reports/assets", icon: Box, permission: 'reports.view' },
+      { title: "Audit Reports", href: "/reports/audits", icon: ClipboardCheck, permission: 'reports.view' },
+      { title: "Check-Out Reports", href: "/reports/checkout", icon: LogOut, permission: 'reports.view' },
+      { title: "Leased Asset Reports", href: "/reports/leased-assets", icon: FileSignature, permission: 'reports.view' },
+      { title: "Maintenance Reports", href: "/reports/maintenance", icon: Wrench, permission: 'reports.view' },
+      { title: "Reservation Reports", href: "/reports/reservations", icon: CalendarRange, permission: 'reports.view' },
+      { title: "Status Reports", href: "/reports/status", icon: Info, permission: 'reports.view' },
+      { title: "Transaction Reports", href: "/reports/transactions", icon: ArrowLeftRight, permission: 'reports.view' },
+      { title: "Other Reports", href: "/reports/others", icon: MoreHorizontal, permission: 'reports.view' },
     ]
   },
 
@@ -204,11 +205,11 @@ const sidebarGroups = ref<Group[]>([
     label: "Tools",
     icon: Wrench,
     items: [
-      { title: "Import", href: "/tools/import", icon: Upload, permission: null },
-      { title: "Export", href: "/tools/export", icon: Download, permission: null },
-      { title: "Documents Gallery", href: "/tools/documents", icon: FileStack, permission: null },
-      { title: "Image Gallery", href: "/tools/images", icon: Images, permission: null },
-      { title: "Audit", href: "/tools/audits", icon: ClipboardList, permission: null },
+      { title: "Import", href: "/tools/import", icon: Upload, permission: 'tools.view', role: 'Admin' },
+      { title: "Export", href: "/tools/export", icon: Download, permission: 'tools.view', role: 'Admin' },
+      { title: "Documents Gallery", href: "/tools/documents", icon: FileStack, permission: 'tools.view' },
+      { title: "Image Gallery", href: "/tools/images", icon: Images, permission: 'tools.view' },
+      { title: "Audit", href: "/tools/audits", icon: ClipboardList, permission: 'tools.view' },
     ]
   },
 
@@ -218,9 +219,9 @@ const sidebarGroups = ref<Group[]>([
     label: "Team",
     icon: Users,
     items: [
-      { title: "Staff", href: "/staff", icon: Users, permission: null },
-      { title: "Users", href: "/users", icon: SquareUser, permission: null },
-      { title: "Roles & Permissions", href: "/roles", icon: Shield, permission: null },
+      { title: "Staff", href: "/staff", icon: Users, permission: 'staff.view' },
+      { title: "Accounts (Admin)", href: "/admin/staff", icon: SquareUser, permission: 'users.manage' },
+      { title: "Roles & Permissions", href: "/roles", icon: Shield, permission: ['roles.manage','users.manage','staff.manage'] },
     ]
   },
 
@@ -230,7 +231,7 @@ const sidebarGroups = ref<Group[]>([
     label: "Advanced",
     icon: Layers,
     items: [
-      { title: "Persons / Employees", href: "/advanced/persons", icon: Users, permission: null },
+      // Removed deprecated Persons/Employees
       { title: "Customers", href: "/advanced/customers", icon: SquareUser, permission: null },
     ]
   },
@@ -241,12 +242,12 @@ const sidebarGroups = ref<Group[]>([
     label: "Setup",
     icon: Settings,
     items: [
-      { title: "Company Info", href: "/setup/company", icon: Building2, permission: null },
-      { title: "Sites", href: "/setup/sites", icon: MapPinHouse, permission: null },
-      { title: "Locations", href: "/setup/locations", icon: MapPin, permission: null },
-      { title: "Categories", href: "/setup/categories", icon: Tags, permission: null },
-      { title: "Departments", href: "/setup/departments", icon: Network, permission: null },
-      { title: "Manage Dashboard", href: "/setup/manage-dashboard", icon: LayoutPanelLeft, permission: null },
+      { title: "Company Info", href: "/setup/company", icon: Building2, permission: 'setup.manage' },
+      { title: "Sites", href: "/setup/sites", icon: MapPinHouse, permission: 'setup.manage' },
+      { title: "Locations", href: "/setup/locations", icon: MapPin, permission: 'setup.manage' },
+      { title: "Categories", href: "/setup/categories", icon: Tags, permission: 'setup.manage' },
+      { title: "Departments", href: "/setup/departments", icon: Network, permission: 'setup.manage' },
+      { title: "Manage Dashboard", href: "/setup/manage-dashboard", icon: LayoutPanelLeft, permission: 'setup.manage' },
     ]
   },
 
@@ -267,7 +268,29 @@ const sidebarGroups = ref<Group[]>([
   }
 ])
 
-const groupsToRender = computed(() => sidebarGroups.value)
+// RBAC helpers
+const auth = computed(() => (page.props as any)?.auth || {})
+const userPerms = computed<string[]>(() => auth.value?.permissions || [])
+const userRoles = computed<string[]>(() => auth.value?.roles || [])
+
+const hasPermission = (perm?: string | string[] | null): boolean => {
+  if (!perm) return true
+  if (Array.isArray(perm)) return perm.some(p => userPerms.value.includes(p))
+  return userPerms.value.includes(perm)
+}
+const hasRole = (role?: string | null): boolean => {
+  if (!role) return true
+  return userRoles.value.includes(role)
+}
+
+const filterItems = (items: Item[]): Item[] =>
+  items.filter(i => hasPermission(i.permission) && hasRole(i.role))
+
+const groupsToRender = computed(() =>
+  sidebarGroups.value
+    .map(g => ({ ...g, items: filterItems(g.items) }))
+    .filter(g => g.items.length > 0)
+)
 
 // Limit 2 open groups unless "Expand All" is on
 const toggleGroup = (groupLabel: string, event?: Event) => {
@@ -380,6 +403,9 @@ const footerNavItems: NavItem[] = []
                 <div class="flex items-center gap-2 min-w-0">
                   <component :is="group.icon" class="h-4 w-4 flex-shrink-0" />
                   <span class="truncate">{{ group.label }}</span>
+                  <span v-if="group.id==='alerts' && inventoryAlertCount>0" class="ml-1 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                    {{ inventoryAlertCount }}
+                  </span>
                 </div>
                 <ChevronRight
                   class="ml-auto h-4 w-4 transition-transform duration-200 flex-shrink-0"

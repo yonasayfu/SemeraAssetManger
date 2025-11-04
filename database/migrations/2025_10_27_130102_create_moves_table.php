@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('asset_id')->constrained('assets')->onDelete('cascade');
             $table->foreignId('from_location_id')->nullable()->constrained('locations')->onDelete('set null');
             $table->foreignId('to_location_id')->nullable()->constrained('locations')->onDelete('set null');
-            $table->foreignId('moved_by')->constrained('users')->onDelete('cascade');
+            $table->foreignId('moved_by')->constrained('staff')->onDelete('cascade');
             $table->timestamp('moved_at');
             $table->text('reason')->nullable();
             $table->timestamps();

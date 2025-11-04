@@ -27,7 +27,7 @@ class StaffController extends Controller
         $status = $this->resolveStatusFilter($request);
         $search = trim((string) $request->query('search', ''));
 
-        $query = Staff::query()->with('user:id,name,email');
+        $query = Staff::query();
 
         if ($status) {
             $query->where('status', $status);
@@ -40,7 +40,7 @@ class StaffController extends Controller
         if ($sort) {
             $query->orderBy($sort, $direction);
         } else {
-            $query->orderBy('last_name')->orderBy('first_name');
+            $query->orderBy('name');
         }
 
         $staff = $query
@@ -65,7 +65,7 @@ class StaffController extends Controller
 
         $staff = Staff::create($data);
 
-        $staff->load('user:id,name,email');
+        // no linked user in current model
 
         return StaffResource::make($staff)
             ->response()
@@ -76,7 +76,7 @@ class StaffController extends Controller
     {
         $this->authorize('view', $staff);
 
-        $staff->load('user:id,name,email');
+        // no linked user in current model
 
         return StaffResource::make($staff);
     }
@@ -105,7 +105,7 @@ class StaffController extends Controller
         }
 
         $staff->update($data);
-        $staff->refresh()->load('user:id,name,email');
+        $staff->refresh();
 
         return StaffResource::make($staff);
     }
@@ -133,7 +133,7 @@ class StaffController extends Controller
 
     protected function resolveSort(Request $request): ?string
     {
-        $sortable = ['first_name', 'last_name', 'email', 'status', 'hire_date'];
+        $sortable = ['name', 'email', 'status', 'created_at'];
         $sort = $request->query('sort');
 
         return in_array($sort, $sortable, true) ? $sort : null;
@@ -150,10 +150,8 @@ class StaffController extends Controller
     {
         $query->where(function ($builder) use ($search) {
             $builder
-                ->where('first_name', 'like', "%{$search}%")
-                ->orWhere('last_name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%")
-                ->orWhere('job_title', 'like', "%{$search}%");
+                ->where('name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%");
         });
     }
 }

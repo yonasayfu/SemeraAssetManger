@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Customer;
-use App\Models\User;
+use App\Models\Staff as User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class CustomerPolicy

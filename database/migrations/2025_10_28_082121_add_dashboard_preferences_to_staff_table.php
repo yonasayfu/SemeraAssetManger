@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->text('two_factor_email_recovery_codes')
-                ->after('two_factor_recovery_codes')
-                ->nullable();
+        Schema::table('staff', function (Blueprint $table) {
+            $table->json('dashboard_preferences')->nullable();
         });
     }
 
@@ -23,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('two_factor_email_recovery_codes');
+        Schema::table('staff', function (Blueprint $table) {
+            $table->dropColumn('dashboard_preferences');
         });
     }
 };

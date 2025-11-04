@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('mailbox_events', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->foreignUlid('message_id')->constrained('mailbox_messages')->cascadeOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('staff')->nullOnDelete();
             $table->enum('type', ['ingested', 'viewed', 'processed', 'link_opened', 'note_added', 'attachment_saved', 'purged']);
             $table->json('payload')->nullable();
             $table->timestamp('created_at')->useCurrent();

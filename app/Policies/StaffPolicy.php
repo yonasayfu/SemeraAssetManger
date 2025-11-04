@@ -3,10 +3,13 @@
 namespace App\Policies;
 
 use App\Models\Staff;
-use App\Models\User;
+use App\Models\Staff as User;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class StaffPolicy
 {
+    use HandlesAuthorization;
+
     public function viewAny(User $user): bool
     {
         return $user->can('staff.view');
@@ -32,4 +35,3 @@ class StaffPolicy
         return $user->can('staff.delete');
     }
 }
-

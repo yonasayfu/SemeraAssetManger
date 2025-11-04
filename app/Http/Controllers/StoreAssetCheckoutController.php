@@ -15,14 +15,14 @@ class StoreAssetCheckoutController extends Controller
     public function __invoke(Request $request, Asset $asset)
     {
         $request->validate([
-            'assignee_id' => 'required|exists:people,id',
+            'assignee_id' => 'required|exists:staff,id',
             'due_at' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
 
         Checkout::create([
             'asset_id' => $asset->id,
-            'assignee_type' => 'person',
+            'assignee_type' => 'staff',
             'assignee_id' => $request->assignee_id,
             'due_at' => $request->due_at,
             'checked_out_at' => now(),
@@ -32,7 +32,7 @@ class StoreAssetCheckoutController extends Controller
 
         $asset->update([
             'status' => 'Checked Out',
-            'assigned_to' => $request->assignee_id,
+            'staff_id' => $request->assignee_id,
         ]);
 
         return redirect()->route('assets.show', $asset->id);

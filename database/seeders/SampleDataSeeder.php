@@ -14,7 +14,7 @@ use App\Models\Move;
 use App\Models\Staff;
 use App\Models\Reservation;
 use App\Models\Site;
-use App\Models\User;
+
 use App\Models\Warranty;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Arr;
@@ -26,7 +26,7 @@ class SampleDataSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = User::first();
+        $admin = Staff::first();
         if (!$admin) {
             $this->command->warn('No users found. Ensure DatabaseSeeder creates an admin before running SampleDataSeeder.');
             return;
@@ -104,71 +104,63 @@ class SampleDataSeeder extends Seeder
             ]);
         }
 
-        // Assets
-        $assetData = [
-            [
-                'asset_tag' => 'AST-' . Str::upper(Str::random(6)),
-                'description' => 'Dell Latitude 7440 Laptop',
-                'purchase_date' => Carbon::now()->subMonths(3)->toDateString(),
-                'cost' => 1450.00,
-                'currency' => 'USD',
-                'brand' => 'Dell',
-                'model' => 'Latitude 7440',
-                'serial_no' => 'DL-' . Str::upper(Str::random(8)),
-                'project_code' => 'IT-2025',
-                'asset_condition' => 'Good',
-                'site_id' => $hq->id,
-                'location_id' => Arr::first($locations)->id,
-                'category_id' => $categories['Computers']->id,
-                'department_id' => $departments['IT']->id,
-                'staff_id' => Staff::firstWhere('email', 'john@example.com')?->id,
-                'status' => 'Available',
-                'photo' => null,
-                'created_by' => $admin->id,
-            ],
-            [
-                'asset_tag' => 'AST-' . Str::upper(Str::random(6)),
-                'description' => 'Toyota Forklift',
-                'purchase_date' => Carbon::now()->subYears(1)->toDateString(),
-                'cost' => 23000.00,
-                'currency' => 'USD',
-                'brand' => 'Toyota',
-                'model' => '8FGCU25',
-                'serial_no' => 'TY-' . Str::upper(Str::random(8)),
-                'project_code' => 'OPS-PLANT',
-                'asset_condition' => 'Fair',
-                'site_id' => $plant->id,
-                'location_id' => $locations[2]->id,
-                'category_id' => $categories['Machinery']->id,
-                'department_id' => $departments['Operations']->id,
-                'staff_id' => null,
-                'status' => 'Under Repair',
-                'photo' => null,
-                'created_by' => $admin->id,
-            ],
+        // Generate a richer set of assets across statuses
+        $statuses = ['Available', 'Checked Out', 'Under Repair', 'Leased'];
+        $assetConfigs = [
+            ['desc' => 'Dell Latitude 7440 Laptop', 'brand' => 'Dell', 'model' => 'Latitude 7440', 'cat' => 'Computers', 'dept' => 'IT', 'site' => $hq->id, 'loc' => Arr::first($locations)->id],
+            ['desc' => 'Toyota Forklift', 'brand' => 'Toyota', 'model' => '8FGCU25', 'cat' => 'Machinery', 'dept' => 'Operations', 'site' => $plant->id, 'loc' => $locations[2]->id],
+            ['desc' => 'MacBook Pro 14"', 'brand' => 'Apple', 'model' => 'M3 Pro', 'cat' => 'Computers', 'dept' => 'IT', 'site' => $hq->id, 'loc' => $locations[1]->id],
+            ['desc' => 'Office Desk', 'brand' => 'Ikea', 'model' => 'Bekant', 'cat' => 'Furniture', 'dept' => 'HR', 'site' => $hq->id, 'loc' => $locations[0]->id],
+            ['desc' => 'CNC Machine', 'brand' => 'Haas', 'model' => 'VF-2', 'cat' => 'Machinery', 'dept' => 'Operations', 'site' => $plant->id, 'loc' => $locations[3]->id],
         ];
 
         $assets = [];
-        foreach ($assetData as $row) {
-            $assets[] = Asset::firstOrCreate(
-                ['serial_no' => $row['serial_no']],
-                $row
-            );
+        for ($i = 0; $i < 25; $i++) {
+            $base = $assetConfigs[$i % count($assetConfigs)];
+            $status = $statuses[$i % count($statuses)];
+
+            $row = [
+                'asset_tag' => 'AST-' . Str::upper(Str::random(6)),
+                'description' => $base['desc'],
+                'purchase_date' => Carbon::now()->subDays(rand(30, 730))->toDateString(),
+                'cost' => rand(200, 25000),
+                'currency' => 'USD',
+                'brand' => $base['brand'],
+                'model' => $base['model'],
+                'serial_no' => Str::upper(Str::random(12)),
+                'project_code' => rand(0, 1) ? 'PRJ-' . rand(100, 999) : null,
+                'asset_condition' => Arr::random(['New', 'Good', 'Fair', 'Poor']),
+                'site_id' => $base['site'],
+                'location_id' => $base['loc'],
+                'category_id' => $categories[$base['cat']]->id,
+                'department_id' => $departments[$base['dept']]->id,
+                'staff_id' => rand(0, 1) ? Staff::inRandomOrder()->first()?->id : null,
+                'status' => $status,
+                'photo' => null,
+                'created_by' => $admin->id,
+            ];
+
+            // Randomize created_at within last 12 months for better dashboard trends
+            $created = Carbon::now()->subDays(rand(0, 365));
+            $asset = Asset::create(array_merge($row, ['created_at' => $created, 'updated_at' => $created]));
+            $assets[] = $asset;
         }
 
-        // Maintenance - Scheduled for dashboard
+        // Maintenance - mix of scheduled/open/completed
         foreach ($assets as $asset) {
-            Maintenance::firstOrCreate([
-                'asset_id' => $asset->id,
-                'title' => 'Quarterly Inspection',
-            ], [
-                'description' => 'Routine check',
-                'maintenance_type' => 'Preventive',
-                'scheduled_for' => Carbon::now()->addDays(rand(3, 30)),
-                'status' => 'Open',
-                'cost' => null,
-                'vendor' => null,
-            ]);
+            if (rand(0, 1)) {
+                Maintenance::firstOrCreate([
+                    'asset_id' => $asset->id,
+                    'title' => 'Quarterly Inspection',
+                ], [
+                    'description' => 'Routine check',
+                    'maintenance_type' => 'Preventive',
+                    'scheduled_for' => Carbon::now()->addDays(rand(3, 45)),
+                    'status' => Arr::random(['Open', 'Scheduled', 'Completed']),
+                    'cost' => null,
+                    'vendor' => null,
+                ]);
+            }
         }
 
         // Warranty
@@ -185,33 +177,31 @@ class SampleDataSeeder extends Seeder
             ]);
         }
 
-        // Lease (one asset)
-        if (!empty($assets)) {
-            $leased = $assets[0];
+        // Leases on a few assets
+        foreach (array_slice($assets, 0, 5) as $leased) {
             Lease::firstOrCreate([
                 'asset_id' => $leased->id,
                 'lessee_type' => 'department',
                 'lessee_id' => $departments['IT']->id,
             ], [
-                'start_at' => Carbon::now()->subMonth()->toDateString(),
-                'end_at' => Carbon::now()->addMonths(2)->toDateString(),
-                'rate_minor' => 500.00,
+                'start_at' => Carbon::now()->subWeeks(rand(1, 8))->toDateString(),
+                'end_at' => Carbon::now()->addWeeks(rand(4, 16))->toDateString(),
+                'rate_minor' => rand(200, 900),
                 'currency' => 'USD',
                 'terms' => 'Standard lease terms',
                 'status' => 'active',
             ]);
         }
 
-        // Reservation (other asset)
-        if (count($assets) > 1) {
-            $reserved = $assets[1];
+        // Reservations spread out
+        foreach (array_slice($assets, 5, 5) as $reserved) {
             Reservation::firstOrCreate([
                 'asset_id' => $reserved->id,
                 'requester_id' => $admin->id,
             ], [
-                'start_at' => Carbon::now()->addDays(7),
-                'end_at' => Carbon::now()->addDays(10),
-                'status' => 'approved',
+                'start_at' => Carbon::now()->addDays(rand(3, 14)),
+                'end_at' => Carbon::now()->addDays(rand(15, 30)),
+                'status' => Arr::random(['pending', 'approved']),
             ]);
         }
 

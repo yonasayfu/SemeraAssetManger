@@ -34,7 +34,7 @@ const form = useForm({
     location_id: null,
     category_id: null,
     department_id: null,
-    assigned_to: null,
+    staff_id: null,
     status: '',
     photo: null,
     created_by: 1, // TODO: Replace with actual user ID
@@ -261,16 +261,16 @@ const submit = () => {
                         <InputError :message="form.errors.department_id" class="mt-2" />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200" for="assigned_to">Assigned To</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200" for="staff_id">Assigned To</label>
                         <select
-                            id="assigned_to"
-                            v-model="form.assigned_to"
+                            id="staff_id"
+                            v-model="form.staff_id"
                             class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
                         >
                             <option :value="null">Select Staff</option>
                             <option v-for="person in staff" :key="person.id" :value="person.id">{{ person.name }}</option>
                         </select>
-                        <InputError :message="form.errors.assigned_to" class="mt-2" />
+                        <InputError :message="form.errors.staff_id" class="mt-2" />
                     </div>
                 </div>
 

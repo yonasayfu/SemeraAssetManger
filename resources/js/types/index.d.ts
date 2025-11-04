@@ -141,7 +141,7 @@ export type Asset = {
     location_id: number | null;
     category_id: number | null;
     department_id: number | null;
-    assigned_to: number | null;
+    staff_id: number | null;
     status: 'Available' | 'Checked Out' | 'Under Repair' | 'Leased' | 'Disposed' | 'Lost' | 'Donated' | 'Sold';
     photo: string | null;
     created_by: number;

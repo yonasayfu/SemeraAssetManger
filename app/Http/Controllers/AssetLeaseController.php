@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Asset;
-use App\Models\Person;
+use App\Models\Staff;
 use App\Models\Department;
 use Inertia\Inertia;
 
@@ -16,7 +16,7 @@ class AssetLeaseController extends Controller
     {
         return Inertia::render('Assets/Lease', [
             'asset' => $asset,
-            'people' => Person::all(),
+            'staff' => Staff::select('id','name')->orderBy('name')->get(),
             'departments' => Department::all(),
         ]);
     }

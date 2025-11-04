@@ -29,7 +29,7 @@ class Asset extends Model
         'location_id',
         'category_id',
         'department_id',
-        'assigned_to',
+        'staff_id',
         'status',
         'photo',
         'created_by',
@@ -126,6 +126,6 @@ class Asset extends Model
 
     public function assignee(): BelongsTo
     {
-        return $this->belongsTo(Staff::class, 'assigned_to');
+        return $this->belongsTo(Staff::class, 'staff_id');
     }
 }

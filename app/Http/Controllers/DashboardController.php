@@ -17,30 +17,35 @@ class DashboardController extends Controller
         $now = Carbon::now();
         $user = Auth::user();
 
-        $metrics = Cache::remember('dashboard.metrics', 300, function () {
-            return [
-                [
-                    'label' => 'Total Assets',
-                    'value' => Asset::count(),
-                    'icon' => 'Archive',
-                ],
-                [
-                    'label' => 'Available',
-                    'value' => Asset::where('status', 'Available')->count(),
-                    'icon' => 'CheckCircle',
-                ],
-                [
-                    'label' => 'Checked Out',
-                    'value' => Asset::where('status', 'Checked Out')->count(),
-                    'icon' => 'Users',
-                ],
-                [
-                    'label' => 'Under Repair',
-                    'value' => Asset::where('status', 'Under Repair')->count(),
-                    'icon' => 'Wrench',
-                ],
-            ];
-        });
+        // Live metrics directly from the database (no cache) for realtime dashboard
+        [$totalChange, $availChange, $coChange, $repairChange] = $this->buildMetricChanges($now);
+
+        $metrics = [
+            [
+                'label' => 'Total Assets',
+                'value' => Asset::count(),
+                'icon' => 'Archive',
+                'change' => $totalChange,
+            ],
+            [
+                'label' => 'Available',
+                'value' => Asset::where('status', 'Available')->count(),
+                'icon' => 'CheckCircle',
+                'change' => $availChange,
+            ],
+            [
+                'label' => 'Checked Out',
+                'value' => Asset::where('status', 'Checked Out')->count(),
+                'icon' => 'Users',
+                'change' => $coChange,
+            ],
+            [
+                'label' => 'Under Repair',
+                'value' => Asset::where('status', 'Under Repair')->count(),
+                'icon' => 'Wrench',
+                'change' => $repairChange,
+            ],
+        ];
 
         return Inertia::render('Dashboard', [
             'metrics' => $metrics,
@@ -156,18 +161,16 @@ class DashboardController extends Controller
 
     private function getAssetValueByCategoryChartData(): array
     {
-        return Cache::remember('dashboard.asset_value_by_category', 300, function () {
-            $data = Asset::query()
-                ->selectRaw('categories.name as category, SUM(assets.cost) as value')
-                ->join('categories', 'assets.category_id', '=', 'categories.id')
-                ->groupBy('categories.name')
-                ->pluck('value', 'category');
+        $data = Asset::query()
+            ->selectRaw('categories.name as category, SUM(assets.cost) as value')
+            ->join('categories', 'assets.category_id', '=', 'categories.id')
+            ->groupBy('categories.name')
+            ->pluck('value', 'category');
 
-            return [
-                'labels' => $data->keys(),
-                'series' => $data->values(),
-            ];
-        });
+        return [
+            'labels' => $data->keys(),
+            'series' => $data->values(),
+        ];
     }
 
     private function getFiscalYearData(Carbon $now): array
@@ -193,26 +196,68 @@ class DashboardController extends Controller
     {
         $start = $now->copy()->subMonths(5)->startOfMonth();
 
-        $raw = Staff::selectRaw("to_char(created_at, 'YYYY-MM') as period, COUNT(*) as count")
-            ->where('created_at', '>=', $start)
-            ->groupBy('period')
-            ->orderBy('period')
-            ->pluck('count', 'period');
-
         $labels = [];
         $series = [];
         $cursor = $start->copy();
 
         while ($cursor <= $now) {
-            $periodKey = $cursor->format('Y-m');
             $labels[] = $cursor->format('M Y');
-            $series[] = (int) ($raw[$periodKey] ?? 0);
+            $count = Staff::whereBetween('created_at', [$cursor->copy()->startOfMonth(), $cursor->copy()->endOfMonth()])->count();
+            $series[] = (int) $count;
             $cursor->addMonth();
         }
 
         return [
             'labels' => $labels,
             'series' => $series,
+        ];
+    }
+
+    private function buildMetricChanges(Carbon $now): array
+    {
+        $start30 = $now->copy()->subDays(30);
+        $prevStart = $now->copy()->subDays(60);
+        $prevEnd = $start30;
+
+        $currentCreated = Asset::whereBetween('created_at', [$start30, $now])->count();
+        $prevCreated = Asset::whereBetween('created_at', [$prevStart, $prevEnd])->count();
+
+        $currentAvail = Asset::where('status', 'Available')->whereBetween('created_at', [$start30, $now])->count();
+        $prevAvail = Asset::where('status', 'Available')->whereBetween('created_at', [$prevStart, $prevEnd])->count();
+
+        $currentCo = Asset::where('status', 'Checked Out')->whereBetween('created_at', [$start30, $now])->count();
+        $prevCo = Asset::where('status', 'Checked Out')->whereBetween('created_at', [$prevStart, $prevEnd])->count();
+
+        $currentRepair = Asset::where('status', 'Under Repair')->whereBetween('created_at', [$start30, $now])->count();
+        $prevRepair = Asset::where('status', 'Under Repair')->whereBetween('created_at', [$prevStart, $prevEnd])->count();
+
+        return [
+            $this->percentChange($currentCreated, $prevCreated, 'vs. prev 30 days'),
+            $this->percentChange($currentAvail, $prevAvail, 'new in 30 days'),
+            $this->percentChange($currentCo, $prevCo, 'new in 30 days'),
+            $this->percentChange($currentRepair, $prevRepair, 'new in 30 days'),
+        ];
+    }
+
+    private function percentChange(int $current, int $previous, string $label): ?array
+    {
+        $delta = $current - $previous;
+        if ($current === 0 && $previous === 0) {
+            return [
+                'direction' => 'flat',
+                'percentage' => 0,
+                'label' => $label,
+            ];
+        }
+
+        $base = max($previous, 1);
+        $pct = round(($delta / $base) * 100);
+        $direction = $pct > 0 ? 'up' : ($pct < 0 ? 'down' : 'flat');
+
+        return [
+            'direction' => $direction,
+            'percentage' => abs($pct),
+            'label' => $label,
         ];
     }
 }

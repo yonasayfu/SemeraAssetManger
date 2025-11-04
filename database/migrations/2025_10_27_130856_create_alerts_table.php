@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('alerts', function (Blueprint $table) {
             $table->id();
             $table->string('type');
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->nullable()->constrained('staff')->onDelete('cascade');
             $table->foreignId('asset_id')->nullable()->constrained('assets')->onDelete('cascade');
             $table->unsignedBigInteger('source_id');
             $table->string('source_type');

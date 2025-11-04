@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('saved_reports', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('owner_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('owner_id')->constrained('staff')->onDelete('cascade');
             $table->string('name');
             $table->string('family'); // e.g., assets, maintenance, leases, etc.
             $table->json('definition_json'); // Stores the report's filters, columns, etc.

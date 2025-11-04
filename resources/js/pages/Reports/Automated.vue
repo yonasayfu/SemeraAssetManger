@@ -63,7 +63,7 @@ const filterDefinitions = [
     },
 ];
 
-const columns = ['Report Name', 'Family', 'Channel', 'Cron', 'Last Run'];
+const columns = ['name', 'family', 'schedule_cron', 'last_run_at'];
 
 const notes =
     'Automated reports summarise scheduled jobs. Once the scheduler runs, the preview will list recent executions and their cadence.';

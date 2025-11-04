@@ -35,7 +35,7 @@ class AssetMaintenanceController extends Controller
      */
     public function store(Request $request, Asset $asset)
     {
-        $request->validate([
+        $data = $request->validate([
             'title' => 'required|string|max:150',
             'description' => 'nullable|string',
             'maintenance_type' => 'required|in:Preventive,Corrective',
@@ -44,7 +44,7 @@ class AssetMaintenanceController extends Controller
             'vendor' => 'nullable|string|max:150',
         ]);
 
-        $asset->maintenances()->create($request->all());
+        $asset->maintenances()->create($data);
 
         return redirect()->route('assets.show', $asset->id);
     }

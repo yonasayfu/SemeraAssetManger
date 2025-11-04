@@ -7,6 +7,7 @@ use Inertia\Inertia;
 
 use App\Http\Requests\AuditWizardStoreRequest;
 use App\Services\AuditService;
+use App\Models\Audit;
 
 class AuditWizardController extends Controller
 {

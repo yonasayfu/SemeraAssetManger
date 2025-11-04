@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\UserStoreRequest;
-use App\Http\Requests\UserUpdateRequest;
+use App\Http\Requests\StaffStoreRequest as UserStoreRequest;
+use App\Http\Requests\StaffUpdateRequest as UserUpdateRequest;
 use App\Http\Resources\Api\UserResource;
-use App\Models\User;
-use App\Support\Users\SyncsStaffAssignment;
+use App\Models\Staff as User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -17,7 +16,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class UserController extends Controller
 {
-    use SyncsStaffAssignment;
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -31,7 +29,6 @@ class UserController extends Controller
         $query = User::query()->with([
             'roles:id,name',
             'permissions:id,name',
-            'staff:id,first_name,last_name,email,status,user_id,job_title,phone,hire_date,avatar_path',
             'approver:id,name',
         ]);
 
@@ -78,7 +75,7 @@ class UserController extends Controller
             $user->syncRoles($data['roles'] ?? []);
             $user->syncPermissions($data['permissions'] ?? []);
 
-            $this->syncStaffAssignment($user, $data['staff_id'] ?? null);
+            // Staff assignment linking not used in current model
 
             return $user;
         });
@@ -86,7 +83,6 @@ class UserController extends Controller
         $user->load([
             'roles:id,name',
             'permissions:id,name',
-            'staff:id,first_name,last_name,email,status,user_id,job_title,phone,hire_date,avatar_path',
             'approver:id,name',
         ]);
 
@@ -102,7 +98,6 @@ class UserController extends Controller
         $user->load([
             'roles:id,name',
             'permissions:id,name',
-            'staff:id,first_name,last_name,email,status,user_id,job_title,phone,hire_date,avatar_path',
             'approver:id,name',
         ]);
 
@@ -142,14 +137,11 @@ class UserController extends Controller
 
             $user->syncRoles($data['roles'] ?? []);
             $user->syncPermissions($data['permissions'] ?? []);
-
-            $this->syncStaffAssignment($user, $data['staff_id'] ?? null);
         });
 
         $user->refresh()->load([
             'roles:id,name',
             'permissions:id,name',
-            'staff:id,first_name,last_name,email,status,user_id,job_title,phone,hire_date,avatar_path',
             'approver:id,name',
         ]);
 

@@ -158,7 +158,7 @@ const printRecord = () => {
                                     class="h-full w-full object-cover"
                                 />
                                 <span v-else class="text-3xl font-semibold text-slate-500 dark:text-slate-400">
-                                    {{ props.staff.first_name.charAt(0) }}{{ props.staff.last_name.charAt(0) }}
+                                    {{ props.staff.full_name.charAt(0) }}
                                 </span>
                             </div>
                             <div class="text-center">
@@ -196,14 +196,8 @@ const printRecord = () => {
                                     Assignment
                                 </p>
                                 <div class="space-y-2 rounded-lg border border-slate-200/70 bg-white/70 p-4 text-sm shadow-sm dark:border-slate-800/50 dark:bg-slate-900/60">
-                                    <div>
-                                        <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Job title</p>
-                                        <p class="font-medium text-slate-900 dark:text-slate-100">{{ props.staff.job_title ?? '-' }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Hire date</p>
-                                        <p class="font-medium text-slate-900 dark:text-slate-100">{{ props.staff.hire_date ?? '-' }}</p>
-                                    </div>
+                                    <div />
+                                    <div />
                                     <div>
                                         <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Linked user</p>
                                         <p class="font-medium text-slate-900 dark:text-slate-100">

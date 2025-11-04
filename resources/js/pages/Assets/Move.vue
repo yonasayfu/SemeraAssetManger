@@ -5,6 +5,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import GlassCard from '@/components/GlassCard.vue';
 import GlassButton from '@/components/GlassButton.vue';
 import InputError from '@/components/InputError.vue';
+import AssetSummaryHeader from '@/components/Asset/AssetSummaryHeader.vue';
 import { useToast } from '@/composables/useToast';
 import { Link } from '@inertiajs/vue3';
 
@@ -33,6 +34,7 @@ const submit = () => {
     <Head :title="`Move ${asset.asset_tag}`" />
     <AppLayout :breadcrumbs="[{ title: 'Assets', href: '/assets' }, { title: props.asset.asset_tag, href: `/assets/${props.asset.id}` }, { title: 'Move', href: `/assets/${props.asset.id}/move` }]">
         <div class="space-y-6">
+            <AssetSummaryHeader :asset="asset" />
             <form @submit.prevent="submit">
                 <GlassCard class="space-y-4">
                     <div>

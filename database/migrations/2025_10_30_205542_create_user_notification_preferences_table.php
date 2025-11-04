@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::create('user_notification_preferences', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('notification_type'); // e.g., NewAssignmentNotification
-            $table->string('channel');           // e.g., mail, database
+            $table->foreignId('user_id')->constrained('staff')->cascadeOnDelete(); // Changed to 'staff' table
+            $table->string('notification_type');
+            $table->string('channel');
             $table->boolean('enabled')->default(true);
             $table->timestamps();
 
-            $table->unique(['user_id', 'notification_type', 'channel'], 'user_notification_channel_unique');
+            $table->unique(['user_id', 'notification_type', 'channel']);
         });
     }
 

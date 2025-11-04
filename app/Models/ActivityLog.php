@@ -23,7 +23,8 @@ class ActivityLog extends Model
 
     public function causer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'causer_id');
+        // Causer is the Staff model in this app
+        return $this->belongsTo(Staff::class, 'causer_id');
     }
 
     public function subject(): MorphTo

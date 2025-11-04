@@ -9,6 +9,7 @@ use App\Models\Staff;
 use App\Support\Exports\ExportConfig;
 use App\Support\Exports\HandlesDataExport;
 use App\Support\Storage\StoragePath;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -32,7 +33,7 @@ class StaffController extends Controller
         }
         $status = $this->extractStatusFilter($request);
 
-        $query = Staff::query()->with('user:id,name,email');
+        $query = Staff::query();
 
         $this->applyFilters($query, $request);
         $this->applySearch($query, $search);
@@ -43,19 +44,12 @@ class StaffController extends Controller
             ->withQueryString()
             ->through(fn (Staff $staff) => [
                 'id' => $staff->id,
-                'first_name' => $staff->first_name,
-                'last_name' => $staff->last_name,
                 'full_name' => $staff->full_name,
                 'email' => $staff->email,
                 'phone' => $staff->phone,
-                'job_title' => $staff->job_title,
                 'status' => $staff->status,
                 'avatar_url' => $staff->avatar_url,
-                'user' => $staff->user ? [
-                    'id' => $staff->user->id,
-                    'name' => $staff->user->name,
-                    'email' => $staff->user->email,
-                ] : null,
+                'user' => null,
             ]);
 
         return Inertia::render('Staff/Index', [
@@ -103,7 +97,30 @@ class StaffController extends Controller
 
     public function export(Request $request)
     {
-        return $this->handleExport($request, Staff::class, ExportConfig::staff(), [
+        // Inline minimal config to avoid external parse issues
+        $config = [
+            'label' => 'Staff Directory',
+            'type' => 'staff',
+            'filename_prefix' => 'staff-directory',
+            'csv' => [
+                'headers' => ['#', 'Full Name', 'Email', 'Phone', 'Job Title', 'Status'],
+                'fields' => [
+                    'index',
+                    'full_name',
+                    'email',
+                    'phone',
+                    'job_title',
+                    [
+                        'field' => 'status',
+                        'transform' => fn ($value) => Str::of($value ?? '')->replace('_', ' ')->title(),
+                        'default' => 'Inactive',
+                    ],
+                ],
+                'filename_prefix' => 'staff-directory',
+            ],
+        ];
+
+        return $this->handleExport($request, Staff::class, $config, [
             'label' => 'Staff Directory',
             'type' => 'staff',
         ]);
@@ -125,7 +142,7 @@ class StaffController extends Controller
     {
         $this->authorize('view', $staff);
 
-        $staff->load('user:id,name,email');
+        // no linked user in current model
 
         $activity = $staff->activityLogs()
             ->with('causer')
@@ -137,35 +154,34 @@ class StaffController extends Controller
             'staff' => [
                 'id' => $staff->id,
                 'full_name' => $staff->full_name,
-                'first_name' => $staff->first_name,
-                'last_name' => $staff->last_name,
                 'email' => $staff->email,
                 'phone' => $staff->phone,
-                'job_title' => $staff->job_title,
                 'status' => $staff->status,
-                'hire_date' => optional($staff->hire_date)->toDateString(),
                 'avatar_url' => $staff->avatar_url,
                 'avatar_label' => $staff->avatar_path ? basename($staff->avatar_path) : null,
-                'user' => $staff->user ? [
-                    'id' => $staff->user->id,
-                    'name' => $staff->user->name,
-                    'email' => $staff->user->email,
-                ] : null,
+                'user' => null,
             ],
             'activity' => ActivityLogResource::collection($activity),
             'breadcrumbs' => [
                 ['title' => 'Staff', 'href' => route('staff.index')],
-                ['title' => $staff->full_name ?: $staff->first_name, 'href' => route('staff.show', $staff)],
+                ['title' => $staff->full_name ?: $staff->name, 'href' => route('staff.show', $staff)],
             ],
             'print' => (bool) $request->boolean('print'),
         ]);
     }
 
-    public function store(StaffStoreRequest $request): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
         $this->authorize('create', Staff::class);
 
-        $data = $request->safe()->except(['avatar']);
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:staff,email'],
+            'phone' => ['nullable', 'string', 'max:255'],
+            'job_title' => ['nullable', 'string', 'max:255'],
+            'status' => ['required', 'in:active,inactive'],
+            'avatar' => ['nullable', 'image', 'max:2048'],
+        ]);
 
         if ($request->hasFile('avatar')) {
             $data['avatar_path'] = $request->file('avatar')->store(
@@ -186,8 +202,6 @@ class StaffController extends Controller
     {
         $this->authorize('update', $staff);
 
-        $staff->load('user:id,name');
-
         $activity = $staff->activityLogs()
             ->with('causer')
             ->latest()
@@ -198,29 +212,33 @@ class StaffController extends Controller
             'staff' => [
                 'id' => $staff->id,
                 'full_name' => $staff->full_name,
-                'first_name' => $staff->first_name,
-                'last_name' => $staff->last_name,
                 'email' => $staff->email,
                 'phone' => $staff->phone,
-                'job_title' => $staff->job_title,
                 'status' => $staff->status,
-                'hire_date' => optional($staff->hire_date)->toDateString(),
                 'avatar_url' => $staff->avatar_url,
                 'avatar_label' => $staff->avatar_path ? basename($staff->avatar_path) : null,
             ],
             'activity' => ActivityLogResource::collection($activity),
             'breadcrumbs' => [
                 ['title' => 'Staff', 'href' => route('staff.index')],
-                ['title' => $staff->full_name ?: $staff->first_name, 'href' => route('staff.edit', $staff)],
+                ['title' => $staff->full_name ?: $staff->name, 'href' => route('staff.edit', $staff)],
             ],
         ]);
     }
 
-    public function update(StaffUpdateRequest $request, Staff $staff): RedirectResponse
+    public function update(Request $request, Staff $staff): RedirectResponse
     {
         $this->authorize('update', $staff);
 
-        $data = $request->safe()->except(['avatar', 'remove_avatar']);
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', \Illuminate\Validation\Rule::unique('staff', 'email')->ignore($staff->id)],
+            'phone' => ['nullable', 'string', 'max:255'],
+            'job_title' => ['nullable', 'string', 'max:255'],
+            'status' => ['required', 'in:active,inactive'],
+            'avatar' => ['nullable', 'image', 'max:2048'],
+            'remove_avatar' => ['sometimes', 'boolean'],
+        ]);
 
         if ($request->hasFile('avatar')) {
             if ($staff->avatar_path) {
@@ -282,10 +300,8 @@ class StaffController extends Controller
 
         $query->where(function (Builder $builder) use ($term) {
             $builder
-                ->where('first_name', 'like', "%{$term}%")
-                ->orWhere('last_name', 'like', "%{$term}%")
-                ->orWhere('email', 'like', "%{$term}%")
-                ->orWhere('job_title', 'like', "%{$term}%");
+                ->where('name', 'like', "%{$term}%")
+                ->orWhere('email', 'like', "%{$term}%");
         });
     }
 
@@ -293,7 +309,7 @@ class StaffController extends Controller
     {
         $sort = $request->query('sort');
         $direction = $request->query('direction', 'asc') === 'desc' ? 'desc' : 'asc';
-        $sortable = ['first_name', 'last_name', 'email', 'status', 'hire_date'];
+        $sortable = ['name', 'email', 'status', 'created_at'];
 
         if ($sort && in_array($sort, $sortable, true)) {
             $query->orderBy($sort, $direction);
@@ -301,7 +317,7 @@ class StaffController extends Controller
             return;
         }
 
-        $query->orderBy('last_name')->orderBy('first_name');
+        $query->orderBy('name');
     }
 
     protected function extractStatusFilter(Request $request): ?string
@@ -311,4 +327,3 @@ class StaffController extends Controller
         return in_array($status, ['active', 'inactive'], true) ? $status : null;
     }
 }
-

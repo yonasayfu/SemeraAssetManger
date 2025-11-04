@@ -1,16 +1,17 @@
-﻿<?php
+<?php
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Checkout extends Model
 {
     use HasFactory;
 
-    protected  = [
+    protected $fillable = [
         'asset_id',
         'assignee_type',
         'assignee_id',
@@ -23,7 +24,7 @@ class Checkout extends Model
         'status',
     ];
 
-    protected  = [
+    protected $casts = [
         'due_at' => 'date',
         'checked_out_at' => 'datetime',
         'checked_in_at' => 'datetime',
@@ -31,6 +32,11 @@ class Checkout extends Model
 
     public function asset(): BelongsTo
     {
-        return ->belongsTo(Asset::class);
+        return $this->belongsTo(Asset::class);
+    }
+
+    public function assignee(): MorphTo
+    {
+        return $this->morphTo('assignee', 'assignee_type', 'assignee_id');
     }
 }

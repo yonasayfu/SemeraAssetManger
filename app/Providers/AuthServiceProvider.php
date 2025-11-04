@@ -19,9 +19,12 @@ class AuthServiceProvider extends ServiceProvider
     /**
      * Register any authentication / authorization services.
      */
-    public function boot(): void
-    {
-        $this->registerPolicies();
+	    public function boot(): void
+	    {
+	        $this->registerPolicies();
+
+	        // Explicitly map Report policy
+	        Gate::policy(\App\Models\Report::class, \App\Policies\ReportPolicy::class);
 
         // Make Admin a true superuser: bypass permission checks
         Gate::before(function ($user, $ability) {

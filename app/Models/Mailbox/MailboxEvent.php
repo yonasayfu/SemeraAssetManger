@@ -2,7 +2,7 @@
 
 namespace App\Models\Mailbox;
 
-use App\Models\User;
+use App\Models\Staff as User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;

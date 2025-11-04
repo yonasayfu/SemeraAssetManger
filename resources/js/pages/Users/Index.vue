@@ -295,7 +295,7 @@ const statTone = (tone?: string) => {
             </div>
         </div>
 
-        <div class="overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm dark:border-slate-800/60 dark:bg-slate-900/50 print:border print:bg-white print:shadow-none">
+        <div v-if="hasResults" class="overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm dark:border-slate-800/60 dark:bg-slate-900/50 print:border print:bg-white print:shadow-none">
             <table class="min-w-full divide-y divide-slate-200 print-table dark:divide-slate-800">
                 <thead class="bg-slate-50/80 dark:bg-slate-900/80">
                     <tr>
@@ -459,6 +459,10 @@ const statTone = (tone?: string) => {
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <div v-else class="rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500 dark:border-slate-700 dark:text-slate-400">
+            No users found.
         </div>
 
         <div class="flex items-center justify-end print:hidden">

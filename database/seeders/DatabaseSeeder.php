@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Staff;
-use App\Models\User;
 use App\Notifications\DataExportReadyNotification;
 use App\Notifications\NewAssignmentNotification;
 use Illuminate\Database\Seeder;
@@ -22,32 +21,24 @@ class DatabaseSeeder extends Seeder
 
         $approvalTimestamp = Carbon::now();
 
-        $admin = User::factory()
+        $adminUser = Staff::factory()
             ->withoutTwoFactor()
             ->create([
                 'name' => 'System Administrator',
                 'email' => 'admin@example.com',
                 'recovery_email' => 'recovery_admin@example.com',
-                'account_status' => User::STATUS_ACTIVE,
-                'account_type' => User::TYPE_INTERNAL,
+                'phone' => '+1-555-0101',
+                'job_title' => 'Administrator',
+                'account_status' => Staff::STATUS_ACTIVE,
+                'account_type' => Staff::TYPE_INTERNAL,
                 'approved_at' => $approvalTimestamp,
                 'approved_by' => null,
             ]);
 
-        $admin->assignRole('Admin');
-
-        Staff::factory()
-            ->for($admin, 'user')
-            ->create([
-                'email' => $admin->email,
-                'first_name' => 'System',
-                'last_name' => 'Administrator',
-                'job_title' => 'Super Administrator',
-                'status' => 'active',
-            ]);
+        $adminUser->assignRole('Admin');
 
         // Seed a sample export notification so the notification bell has data on first login
-        $admin->notify(new DataExportReadyNotification(
+        $adminUser->notify(new DataExportReadyNotification(
             'Initial Asset Export',
             rtrim(config('app.url') ?? 'http://localhost', '/') . '/exports'
         ));
@@ -69,7 +60,7 @@ class DatabaseSeeder extends Seeder
                 'last_name' => 'Manager',
                 'job_title' => 'Operations Manager',
                 'status' => 'active',
-                'account_type' => User::TYPE_INTERNAL,
+                'account_type' => Staff::TYPE_INTERNAL,
             ],
             [
                 'role' => 'Technician',
@@ -79,7 +70,7 @@ class DatabaseSeeder extends Seeder
                 'last_name' => 'Technician',
                 'job_title' => 'Field Technician',
                 'status' => 'active',
-                'account_type' => User::TYPE_INTERNAL,
+                'account_type' => Staff::TYPE_INTERNAL,
             ],
             [
                 'role' => 'Staff',
@@ -89,7 +80,7 @@ class DatabaseSeeder extends Seeder
                 'last_name' => 'Staff',
                 'job_title' => 'Support Specialist',
                 'status' => 'active',
-                'account_type' => User::TYPE_INTERNAL,
+                'account_type' => Staff::TYPE_INTERNAL,
             ],
             [
                 'role' => 'Auditor',
@@ -99,7 +90,7 @@ class DatabaseSeeder extends Seeder
                 'last_name' => 'Auditor',
                 'job_title' => 'Compliance Auditor',
                 'status' => 'active',
-                'account_type' => User::TYPE_INTERNAL,
+                'account_type' => Staff::TYPE_INTERNAL,
             ],
             [
                 'role' => 'ReadOnly',
@@ -109,46 +100,42 @@ class DatabaseSeeder extends Seeder
                 'last_name' => 'Readonly',
                 'job_title' => 'Reporting Analyst',
                 'status' => 'inactive',
-                'account_type' => User::TYPE_INTERNAL,
+                'account_type' => Staff::TYPE_INTERNAL,
             ],
         ];
 
         foreach ($samples as $sample) {
-            $user = User::factory()
+            $sampleUser = Staff::factory()
                 ->withoutTwoFactor()
                 ->create([
                     'name' => $sample['name'],
                     'email' => $sample['email'],
                     'recovery_email' => 'recovery_' . strtolower(str_replace(' ', '', $sample['role'])) . '@example.com',
-                    'account_status' => User::STATUS_ACTIVE,
-                    'account_type' => $sample['account_type'],
-                    'approved_at' => $approvalTimestamp,
-                    'approved_by' => $admin->id,
-                ]);
-
-            $user->assignRole($sample['role']);
-
-            Staff::factory()
-                ->for($user, 'user')
-                ->create([
-                    'email' => $sample['email'],
-                    'first_name' => $sample['first_name'],
-                    'last_name' => $sample['last_name'],
+                    'phone' => '+1-555-01' . rand(10, 99),
                     'job_title' => $sample['job_title'],
                     'status' => $sample['status'],
+                    'account_status' => Staff::STATUS_ACTIVE,
+                    'account_type' => $sample['account_type'],
+                    'approved_at' => $approvalTimestamp,
+                    'approved_by' => $adminUser->id,
                 ]);
+
+            $sampleUser->assignRole($sample['role']);
 
             $assignmentName = $assignmentCatalog[array_rand($assignmentCatalog)];
 
-            $user->notify(new NewAssignmentNotification(
+            $sampleUser->notify(new NewAssignmentNotification(
                 $assignmentName,
-                $admin->name
+                $adminUser->name
             ));
         }
 
         // Seed sample domain data after users exist
         $this->call([
             SampleDataSeeder::class,
+            GallerySampleSeeder::class,
+            DataExportSampleSeeder::class,
+            SupportPageSeeder::class,
         ]);
     }
 }

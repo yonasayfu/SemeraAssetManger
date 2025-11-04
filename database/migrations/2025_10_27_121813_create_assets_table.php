@@ -31,7 +31,7 @@ return new class extends Migration
             $table->foreignId('staff_id')->nullable()->constrained('staff')->onDelete('set null');
             $table->enum('status', ['Available', 'Checked Out', 'Under Repair', 'Leased', 'Disposed', 'Lost', 'Donated', 'Sold']);
             $table->string('photo', 255)->nullable();
-            $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
+            $table->foreignId('created_by')->constrained('staff')->onDelete('cascade');
             $table->timestamps();
         });
     }
