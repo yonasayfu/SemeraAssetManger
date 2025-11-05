@@ -319,6 +319,14 @@ Route::middleware('auth')->group(function () {
             Route::get('warranties-expiring', WarrantiesExpiringController::class)->name('warranties-expiring');
         });
 
+        // Freshservice-style: Vendors, Products, Contracts, POs, Software (Phase 2 - basic CRUD)
+        Route::middleware('permission:vendors.view')->group(function () {
+            Route::resource('vendors', \App\Http\Controllers\VendorController::class)->except(['show']);
+        });
+        Route::middleware('permission:products.view')->group(function () {
+            Route::resource('products', \App\Http\Controllers\ProductController::class)->except(['show']);
+        });
+
         // Lists Module
         Route::prefix('lists')->name('lists.')->middleware('permission:lists.view')->group(function () {
             Route::get('assets', [AssetListController::class, 'index'])->name('assets');
