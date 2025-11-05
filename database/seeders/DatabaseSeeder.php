@@ -135,6 +135,7 @@ class DatabaseSeeder extends Seeder
             SampleDataSeeder::class,
             GallerySampleSeeder::class,
             DataExportSampleSeeder::class,
+            VendorProductContractPoSoftwareSeeder::class,
             SupportPageSeeder::class,
         ]);
     }
