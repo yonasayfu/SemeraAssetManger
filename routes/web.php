@@ -326,6 +326,18 @@ Route::middleware('auth')->group(function () {
         Route::middleware('permission:products.view')->group(function () {
             Route::resource('products', \App\Http\Controllers\ProductController::class)->except(['show']);
         });
+        Route::middleware('permission:contracts.view')->group(function () {
+            Route::resource('contracts', \App\Http\Controllers\ContractController::class)->except(['show']);
+        });
+
+        Route::middleware('permission:purchase-orders.view')->group(function () {
+            Route::resource('purchase-orders', \App\Http\Controllers\PurchaseOrderController::class)->except(['show']);
+            Route::post('purchase-orders/{purchase_order}/receive', [\App\Http\Controllers\PurchaseOrderController::class, 'receive'])->name('purchase-orders.receive');
+        });
+        Route::middleware('permission:software.view')->group(function () {
+            Route::resource('software', \App\Http\Controllers\SoftwareController::class)->except(['show']);
+        });
+
 
         // Lists Module
         Route::prefix('lists')->name('lists.')->middleware('permission:lists.view')->group(function () {
