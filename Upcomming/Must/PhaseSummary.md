@@ -237,7 +237,31 @@ How to test
 * Visit `/assets/create` (or `/assets/{id}/edit`):
   * Pick a Vendor, then select a Product; warranty and cost hints appear.
   * Optionally choose a PO Item (list filters by your vendor/product) to link the asset to a PO line.
-  * Submit; validation covers the new fields.
+* Submit; validation covers the new fields.
+
+---
+
+## Clearance Module — MVP Delivered
+
+What shipped
+- Staff “My Assets” page with multi‑select and landscape print.
+- Staff can create a clearance draft (pre‑filled from selected assets), save, and submit.
+- Admin review page with remarks/comments, human‑readable dates, Approve/Reject, and optional auto check‑in of returned assets.
+- PDF generation with header/logo/footer and clear status (APPROVED/REJECTED), downloadable by staff and admin.
+- Notifications: on submit (to approvers), on approval (to staff + HR via Company hr_email fallback), on reject (to staff).
+- Sidebar entries (gated by permissions): My Assets, My Clearances, Admin Clearances.
+
+Schema
+- clearances, clearance_items tables (see docs/DATABASE_SCHEMA.md for fields and indexes).
+- companies.hr_email added for default HR notifications.
+
+Permissions
+- clearances.view|request|manage|approve seeded; mapped in sidebar and route middleware.
+
+Next polish
+- Inline per‑item edit (action/result/notes) on admin review.
+- E‑signature capture on PDF.
+- Auto close open checkout/lease records on approval.
 
 Notes
 * We display PO items where the PO is `open` and `received_qty` is null or less than `qty`.

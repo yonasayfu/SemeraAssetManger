@@ -8,6 +8,10 @@ type ApplicationEvents = {
         cancelText?: string;
         __resolve: (result: boolean) => void;
     };
+    'toast:show': {
+        message: string;
+        style?: 'success' | 'danger' | 'warning' | 'info';
+    };
 };
 
 export const eventBus = mitt<ApplicationEvents>();

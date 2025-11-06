@@ -181,7 +181,7 @@ const setActiveTab = async (key: TabKey) => {
         <section
             class="rounded-2xl border border-slate-200/70 bg-white/80 p-5 shadow-sm dark:border-slate-800/60 dark:bg-slate-900/60"
         >
-            <component :is="currentComponent" :data="currentData" :loading="currentLoading" />
+            <component :is="currentComponent" :data="currentData" :loading="currentLoading" :asset-id="asset.id" />
         </section>
     </div>
     </AppLayout>

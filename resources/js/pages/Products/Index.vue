@@ -2,6 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue'
 import ResourceToolbar from '@/components/ResourceToolbar.vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { useToast } from '@/composables/useToast'
 import { Edit3, Trash2 } from 'lucide-vue-next'
 import { confirmDialog } from '@/lib/confirm'
 import { ref, watch, computed } from 'vue'
@@ -40,6 +41,12 @@ const apply = () => {
 }
 
 watch([search, perPage], () => apply())
+
+const { show } = useToast()
+const exportCsv = () => {
+  show('Export started…', 'info')
+  window.open(`/products/export${buildQuery()}`, '_blank', 'noopener=yes')
+}
 </script>
 
 <template>
@@ -48,10 +55,10 @@ watch([search, perPage], () => apply())
     <ResourceToolbar
       title="Products"
       description="Catalog of products with warranty and cost."
-      :show-export="true"
+      :show-export="isAdmin || userPermissions.includes('reports.export')"
       :show-print="true"
       @print="printCurrent"
-      @export="() => window.open(`/products/export${buildQuery()}`, '_blank', 'noopener=yes')"
+      @export="exportCsv"
     >
       <template #actions>
         <Link v-if="can('products.create')" href="/products/create" class="btn-glass btn-variant-primary">Add Product</Link>

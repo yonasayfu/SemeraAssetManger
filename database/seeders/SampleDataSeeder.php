@@ -45,7 +45,12 @@ class SampleDataSeeder extends Seeder
             'currency' => 'USD',
             'date_format' => 'Y-m-d',
             'financial_year_start' => Carbon::parse('2025-07-01'),
+            'hr_email' => 'hr@example.com',
         ]);
+        if (empty($company->hr_email)) {
+            $company->hr_email = 'hr@example.com';
+            $company->save();
+        }
 
         // Sites
         $hq = Site::firstOrCreate(['name' => 'Headquarters'], [

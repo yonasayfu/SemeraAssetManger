@@ -83,6 +83,34 @@ This document summarizes the core entities and relationships introduced by the F
 - Software belongsTo Vendor
 - Asset belongsTo Vendor, Product, PurchaseOrderItem
 
+### clearances
+- id (PK)
+- staff_id (FK → staff.id, required): the person being cleared
+- requested_by (FK → staff.id, nullable): who initiated the request
+- status (string enum: draft|submitted|in_review|approved|rejected)
+- submitted_at, approved_at (datetime, nullable)
+- approved_by (FK → staff.id, nullable)
+- hr_email (string, nullable) — optional override; falls back to companies.hr_email
+- pdf_path (string, nullable) — stored path to generated PDF
+- remarks (text, nullable)
+- meta (json, nullable)
+- indexes: (staff_id, status)
+
+### clearance_items
+- id (PK)
+- clearance_id (FK → clearances.id, required)
+- asset_id (FK → assets.id, nullable): optional reference (can be free‑form description)
+- description (string, nullable)
+- action (string enum: return|waive|keep|replace|pay, nullable)
+- result (string enum: ok|missing|damaged|rejected, nullable)
+- condition_note (text, nullable)
+- checked (boolean, default true)
+- resolved_at (datetime, nullable)
+- indexes: (clearance_id, asset_id)
+
+### companies (updated)
+- hr_email (string, nullable): default HR email used for clearance notifications when a request.hr_email is not specified.
+
 ## Reports & Indexes
 - Contracts: index on (type, end_at, vendor_id)
 - POs: index on (vendor_id, expected_delivery_at)
@@ -99,4 +127,5 @@ This document summarizes the core entities and relationships introduced by the F
 - 2025_11_05_000150_create_software_table.php
 - 2025_11_05_000160_add_po_item_to_assets.php
 - 2025_11_05_000170_add_custom_fields_to_assets.php
-
+- 2025_11_06_000500_create_clearances_tables.php
+- 2025_11_06_011000_add_hr_email_to_companies_table.php

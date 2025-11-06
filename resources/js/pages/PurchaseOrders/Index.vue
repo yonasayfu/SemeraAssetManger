@@ -3,6 +3,7 @@
 import AppLayout from '@/layouts/AppLayout.vue'
 import ResourceToolbar from '@/components/ResourceToolbar.vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { useToast } from '@/composables/useToast'
 import { computed, ref, watch } from 'vue'
 import { Edit3, Trash2 } from 'lucide-vue-next'
 import { confirmDialog } from '@/lib/confirm'
@@ -48,6 +49,12 @@ const printCurrent = () => {
   if (d && typeof originalTitle === 'string') d.title = originalTitle
 }
 
+const { show } = useToast()
+const exportCsv = () => {
+  show('Export started…', 'info')
+  window.open(`/purchase-orders/export${buildQuery()}`, '_blank', 'noopener=yes')
+}
+
 const destroyItem = async (id: number) => {
   const accepted = await confirmDialog({
     title: 'Delete purchase order?',
@@ -63,7 +70,7 @@ const destroyItem = async (id: number) => {
 <template>
   <Head title="Purchase Orders" />
   <AppLayout title="Purchase Orders">
-    <ResourceToolbar title="Purchase Orders" description="Track purchase orders and receiving." :show-export="isAdmin" :show-print="true" @print="printCurrent" @export="() => window.open(`/purchase-orders/export${buildQuery()}`, '_blank', 'noopener=yes')">
+    <ResourceToolbar title="Purchase Orders" description="Track purchase orders and receiving." :show-export="isAdmin || userPermissions.includes('reports.export')" :show-print="true" @print="printCurrent" @export="exportCsv">
       <template #actions>
         <Link v-if="can('purchase-orders.create')" href="/purchase-orders/create" class="btn-glass btn-variant-primary">Add PO</Link>
       </template>

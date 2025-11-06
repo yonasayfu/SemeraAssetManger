@@ -181,6 +181,19 @@ const sidebarGroups = ref<Group[]>([
     ]
   },
 
+
+  // Clearance
+  {
+    id: 'clearance',
+    label: "Clearance",
+    icon: ClipboardCheck,
+    items: [
+      { title: "My Assets", href: "/my/assets", icon: ClipboardList, permission: 'clearances.view' },
+      { title: "My Clearances", href: "/clearances", icon: ClipboardCheck, permission: 'clearances.view' },
+      { title: "Clearances (Admin)", href: "/admin/clearances", icon: ClipboardCheck, permission: 'clearances.manage' },
+    ]
+  },
+
   // Inventory (Lists)
   {
     id: 'inventory',

@@ -31,6 +31,7 @@ Core and new Catalog & Procurement permissions seeded:
 - contracts.view|create|update|delete
 - purchase-orders.view|create|update|delete
 - software.view|create|update|delete
+- clearances.view|request|manage|approve
 
 Admin gets all. Managers get view/create/update for new modules. Other roles get subsets.
 
@@ -95,4 +96,7 @@ Admin gets all. Managers get view/create/update for new modules. Other roles get
   - Tools Import/Export endpoints: reject non‑Admin at route level.
 
 - Logs and errors: 403 pages are rendered via Inertia if authorization fails.
-
+- Clearance
+  - Staff: `clearances.view`, `clearances.request` (My Assets, My Clearances, create/submit own requests)
+  - Admin/Manager: `clearances.manage` (review/update), `clearances.approve` (approve/reject + PDF)
+  - Sidebar items are gated accordingly; Admin sees all via bypass

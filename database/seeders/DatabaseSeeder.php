@@ -137,6 +137,8 @@ class DatabaseSeeder extends Seeder
             DataExportSampleSeeder::class,
             VendorProductContractPoSoftwareSeeder::class,
             SupportPageSeeder::class,
+            ClearanceSampleSeeder::class,
+            ClearanceAndAssetsDemoSeeder::class,
         ]);
     }
 }

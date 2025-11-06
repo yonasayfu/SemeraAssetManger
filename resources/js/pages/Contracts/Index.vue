@@ -2,6 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue'
 import ResourceToolbar from '@/components/ResourceToolbar.vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { useToast } from '@/composables/useToast'
 import { computed, ref, watch } from 'vue'
 import { Edit3, Trash2 } from 'lucide-vue-next'
 import { confirmDialog } from '@/lib/confirm'
@@ -49,6 +50,12 @@ const printCurrent = () => {
   if (d && typeof originalTitle === 'string') d.title = originalTitle
 }
 
+const { show } = useToast()
+const exportCsv = () => {
+  show('Export started…', "info")
+  window.open(`/contracts/export${buildQuery()}`, "_blank", "noopener=yes")
+}
+
 const destroyItem = async (id: number) => {
   const accepted = await confirmDialog({
     title: 'Delete contract?',
@@ -64,7 +71,7 @@ const destroyItem = async (id: number) => {
 <template>
   <Head title="Contracts" />
   <AppLayout title="Contracts">
-    <ResourceToolbar title="Contracts" description="Lease, maintenance, license, warranty contracts." :show-export="isAdmin" :show-print="true" @print="printCurrent" @export="() => window.open(`/contracts/export${buildQuery()}`, '_blank', 'noopener=yes')">
+    <ResourceToolbar title="Contracts" description="Lease, maintenance, license, warranty contracts." :show-export="isAdmin || userPermissions.includes('reports.export')" :show-print="true" @print="printCurrent" @export="exportCsv">
       <template #actions>
         <Link v-if="can('contracts.create')" href="/contracts/create" class="btn-glass btn-variant-primary">Add Contract</Link>
       </template>

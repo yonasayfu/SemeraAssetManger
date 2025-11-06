@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use App\Models\Department;
+use App\Models\Asset;
 use App\Models\Customer;
 
 class AppServiceProvider extends ServiceProvider
@@ -39,11 +40,12 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
-        // Map morph types for checkout/lease assignees/lessees
+        // Map morph types for polymorphic relations used across the app
         Relation::enforceMorphMap([
             'staff' => Staff::class,
             'department' => Department::class,
             'customer' => Customer::class,
+            'asset' => Asset::class,
         ]);
     }
 }

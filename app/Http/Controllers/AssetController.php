@@ -379,6 +379,127 @@ class AssetController extends Controller
         ]);
     }
 
+    public function uploadPhoto(Request $request, Asset $asset): JsonResponse
+    {
+        $this->authorize('update', $asset);
+        $request->validate([
+            'photo' => 'required|image|max:4096',
+            'caption' => 'nullable|string|max:150',
+        ]);
+        $path = $request->file('photo')->store('assets', 'public');
+        $asset->photos()->create([
+            'path' => $path,
+            'caption' => $request->input('caption'),
+        ]);
+        return $this->photos($asset);
+    }
+
+    public function updatePhoto(Request $request, Asset $asset, AssetPhoto $photo): JsonResponse
+    {
+        $this->authorize('update', $asset);
+        abort_unless($photo->asset_id === $asset->id, 404);
+        $data = $request->validate([
+            'caption' => 'nullable|string|max:150',
+        ]);
+        $photo->update($data);
+        return $this->photos($asset);
+    }
+
+    public function uploadDocument(Request $request, Asset $asset): JsonResponse
+    {
+        $this->authorize('update', $asset);
+        $request->validate([
+            'file' => 'required|file|max:8192',
+            'title' => 'required|string|max:200',
+        ]);
+        $file = $request->file('file');
+        $path = $file->store('asset-documents', 'public');
+        $asset->documents()->create([
+            'title' => $request->input('title'),
+            'file_path' => $path,
+            'mime_type' => $file->getClientMimeType(),
+            'uploaded_by' => optional($request->user())->id,
+        ]);
+        return $this->documents($asset);
+    }
+
+    public function updateDocument(Request $request, Asset $asset, AssetDocument $document): JsonResponse
+    {
+        $this->authorize('update', $asset);
+        abort_unless($document->asset_id === $asset->id, 404);
+        $data = $request->validate([
+            'title' => 'required|string|max:200',
+        ]);
+        $document->update($data);
+        return $this->documents($asset);
+    }
+
+    public function storeWarranty(Request $request, Asset $asset): JsonResponse
+    {
+        $this->authorize('update', $asset);
+        $data = $request->validate([
+            'provider' => 'required|string|max:150',
+            'description' => 'nullable|string',
+            'length_months' => 'nullable|integer|min:0',
+            'start_date' => 'nullable|date',
+            'expiry_date' => 'nullable|date|after_or_equal:start_date',
+            'active' => 'nullable|boolean',
+            'notes' => 'nullable|string',
+        ]);
+        $asset->warranties()->create(array_merge($data, [
+            'active' => (bool)($data['active'] ?? true),
+        ]));
+        return $this->warranty($asset);
+    }
+
+    public function updateWarranty(Request $request, Asset $asset, Warranty $warranty): JsonResponse
+    {
+        $this->authorize('update', $asset);
+        abort_unless($warranty->asset_id === $asset->id, 404);
+        $data = $request->validate([
+            'provider' => 'nullable|string|max:150',
+            'description' => 'nullable|string',
+            'length_months' => 'nullable|integer|min:0',
+            'start_date' => 'nullable|date',
+            'expiry_date' => 'nullable|date|after_or_equal:start_date',
+            'active' => 'nullable|boolean',
+            'notes' => 'nullable|string',
+        ]);
+        $warranty->fill($data);
+        $warranty->save();
+        return $this->warranty($asset);
+    }
+
+    public function deletePhoto(Asset $asset, AssetPhoto $photo): JsonResponse
+    {
+        $this->authorize('update', $asset);
+        abort_unless($photo->asset_id === $asset->id, 404);
+        if ($photo->path) {
+            Storage::disk('public')->delete($photo->path);
+        }
+        $photo->delete();
+        return $this->photos($asset);
+    }
+
+    public function deleteDocument(Asset $asset, AssetDocument $document): JsonResponse
+    {
+        $this->authorize('update', $asset);
+        abort_unless($document->asset_id === $asset->id, 404);
+        if ($document->file_path) {
+            Storage::disk('public')->delete($document->file_path);
+        }
+        $document->delete();
+        return $this->documents($asset);
+    }
+
+    public function destroyWarranty(Asset $asset, Warranty $warranty): JsonResponse
+    {
+        $this->authorize('update', $asset);
+        abort_unless($warranty->asset_id === $asset->id, 404);
+        $warranty->delete();
+        return $this->warranty($asset);
+    }
+
     public function warranty(Asset $asset): JsonResponse
     {
         $this->authorize('view', $asset);

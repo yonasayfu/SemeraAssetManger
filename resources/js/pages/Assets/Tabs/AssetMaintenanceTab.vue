@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
 
 interface MaintenanceItem {
     id: number | string;
@@ -16,6 +17,7 @@ const props = withDefaults(
     defineProps<{
         data: { maintenances?: MaintenanceItem[] } | null;
         loading: boolean;
+        assetId?: number;
     }>(),
     {
         data: null,
@@ -28,6 +30,9 @@ const maintenances = computed<MaintenanceItem[]>(() => props.data?.maintenances 
 
 <template>
     <div>
+        <div class="mb-3 text-right">
+            <Link v-if="props.assetId" :href="`/assets/${props.assetId}/maintenance/create`" class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500">Add Maintenance</Link>
+        </div>
         <div v-if="loading" class="space-y-3">
             <div v-for="i in 4" :key="i" class="h-14 animate-pulse rounded-xl bg-slate-200/70 dark:bg-slate-700/50" />
         </div>

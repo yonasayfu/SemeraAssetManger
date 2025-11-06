@@ -83,6 +83,9 @@ use App\Http\Controllers\Alert\MaintenanceDueController;
 use App\Http\Controllers\Alert\MaintenanceOverdueController;
 use App\Http\Controllers\Alert\WarrantiesExpiringController;
 use App\Http\Controllers\AlertController;
+use App\Http\Controllers\Clearance\MyAssetsController;
+use App\Http\Controllers\Clearance\ClearanceController as StaffClearanceController;
+use App\Http\Controllers\Clearance\Admin\ClearanceAdminController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -276,6 +279,27 @@ Route::middleware('auth')->group(function () {
             Route::get('reserve-select', [AssetOperationController::class, 'select'])->name('reserve.select')->defaults('operation', 'reserve');
         });
 
+        // Clearance (Staff)
+        Route::middleware('permission:clearances.view')->group(function () {
+            Route::get('/my/assets', MyAssetsController::class)->name('my.assets');
+            Route::get('/clearances', [StaffClearanceController::class, 'index'])->name('clearances.index');
+            Route::post('/clearances', [StaffClearanceController::class, 'store'])->name('clearances.store')->middleware('permission:clearances.request');
+            Route::get('/clearances/{clearance}', [StaffClearanceController::class, 'show'])->name('clearances.show');
+            Route::put('/clearances/{clearance}', [StaffClearanceController::class, 'update'])->name('clearances.update');
+            Route::post('/clearances/{clearance}/submit', [StaffClearanceController::class, 'submit'])->name('clearances.submit');
+            Route::get('/clearances/{clearance}/pdf', [StaffClearanceController::class, 'pdf'])->name('clearances.pdf');
+        });
+
+        // Clearance (Admin)
+        Route::prefix('admin')->middleware('permission:clearances.manage')->group(function () {
+            Route::get('/clearances', [ClearanceAdminController::class, 'index'])->name('admin.clearances.index');
+            Route::get('/clearances/{clearance}', [ClearanceAdminController::class, 'show'])->name('admin.clearances.show');
+            Route::put('/clearances/{clearance}', [ClearanceAdminController::class, 'update'])->name('admin.clearances.update');
+            Route::post('/clearances/{clearance}/approve', [ClearanceAdminController::class, 'approve'])->name('admin.clearances.approve')->middleware('permission:clearances.approve');
+            Route::post('/clearances/{clearance}/reject', [ClearanceAdminController::class, 'reject'])->name('admin.clearances.reject');
+            Route::get('/clearances/{clearance}/pdf', [ClearanceAdminController::class, 'pdf'])->name('admin.clearances.pdf');
+        });
+
         // Asset Specific Routes (requiring {asset} parameter)
         Route::prefix('assets/{asset}')->middleware('permission:assets.view')->group(function () {
             Route::get('/', [AssetController::class, 'show'])->name('show');
@@ -297,14 +321,23 @@ Route::middleware('auth')->group(function () {
             Route::post('move', [StoreAssetMoveController::class, 'store'])->name('move.store');
             Route::get('reserve', AssetReserveController::class)->name('reserve.create');
             Route::post('reserve', [StoreAssetReserveController::class, 'store'])->name('reserve.store');
-            Route::resource('maintenance', AssetMaintenanceController::class)->except(['index', 'create', 'store']); // Resource routes for asset-specific maintenance
+            Route::resource('maintenance', AssetMaintenanceController::class); // Resource routes for asset-specific maintenance
 
             Route::prefix('tabs')->name('tabs.')->group(function () {
                 Route::get('details', [AssetController::class, 'details'])->name('details');
                 Route::get('history', [AssetController::class, 'history'])->name('history');
                 Route::get('photos', [AssetController::class, 'photos'])->name('photos');
+                Route::post('photos', [AssetController::class, 'uploadPhoto'])->name('photos.store')->middleware('permission:assets.update');
+                Route::patch('photos/{photo}', [AssetController::class, 'updatePhoto'])->name('photos.update')->middleware('permission:assets.update');
+                Route::delete('photos/{photo}', [AssetController::class, 'deletePhoto'])->name('photos.destroy')->middleware('permission:assets.update');
                 Route::get('documents', [AssetController::class, 'documents'])->name('documents');
+                Route::post('documents', [AssetController::class, 'uploadDocument'])->name('documents.store')->middleware('permission:assets.update');
+                Route::patch('documents/{document}', [AssetController::class, 'updateDocument'])->name('documents.update')->middleware('permission:assets.update');
+                Route::delete('documents/{document}', [AssetController::class, 'deleteDocument'])->name('documents.destroy')->middleware('permission:assets.update');
                 Route::get('warranty', [AssetController::class, 'warranty'])->name('warranty');
+                Route::post('warranty', [AssetController::class, 'storeWarranty'])->name('warranty.store')->middleware('permission:warranty.view');
+                Route::patch('warranty/{warranty}', [AssetController::class, 'updateWarranty'])->name('warranty.update')->middleware('permission:warranty.view');
+                Route::delete('warranty/{warranty}', [AssetController::class, 'destroyWarranty'])->name('warranty.destroy')->middleware('permission:warranty.view');
                 Route::get('maintenance', [AssetController::class, 'maintenance'])->name('maintenance');
                 Route::get('reservations', [AssetController::class, 'reservations'])->name('reservations');
                 Route::get('audits', [AssetController::class, 'audits'])->name('audits');
@@ -329,33 +362,33 @@ Route::middleware('auth')->group(function () {
         // Freshservice-style: Vendors, Products, Contracts, POs, Software (Phase 2 - basic CRUD)
         Route::middleware('permission:vendors.view')->group(function () {
             Route::resource('vendors', \App\Http\Controllers\VendorController::class)->except(['show']);
-            Route::get('vendors/export', [\App\Http\Controllers\VendorController::class, 'export'])->name('vendors.export')->middleware('role:Admin');
+            Route::get('vendors/export', [\App\Http\Controllers\VendorController::class, 'export'])->name('vendors.export')->middleware('permission:reports.export');
         });
         Route::middleware('permission:products.view')->group(function () {
             Route::resource('products', \App\Http\Controllers\ProductController::class)->except(['show']);
-            Route::get('products/export', [\App\Http\Controllers\ProductController::class, 'export'])->name('products.export')->middleware('role:Admin');
+            Route::get('products/export', [\App\Http\Controllers\ProductController::class, 'export'])->name('products.export')->middleware('permission:reports.export');
         });
         Route::middleware('permission:contracts.view')->group(function () {
             Route::resource('contracts', \App\Http\Controllers\ContractController::class)->except(['show']);
             Route::get('contracts/board', [\App\Http\Controllers\ContractController::class, 'board'])->name('contracts.board');
-            Route::get('contracts/export', [\App\Http\Controllers\ContractController::class, 'export'])->name('contracts.export')->middleware('role:Admin');
+            Route::get('contracts/export', [\App\Http\Controllers\ContractController::class, 'export'])->name('contracts.export')->middleware('permission:reports.export');
         });
 
         Route::middleware('permission:purchase-orders.view')->group(function () {
             Route::resource('purchase-orders', \App\Http\Controllers\PurchaseOrderController::class)->except(['show']);
             Route::post('purchase-orders/{purchase_order}/receive', [\App\Http\Controllers\PurchaseOrderController::class, 'receive'])->name('purchase-orders.receive');
-            Route::get('purchase-orders/export', [\App\Http\Controllers\PurchaseOrderController::class, 'export'])->name('purchase-orders.export')->middleware('role:Admin');
+            Route::get('purchase-orders/export', [\App\Http\Controllers\PurchaseOrderController::class, 'export'])->name('purchase-orders.export')->middleware('permission:reports.export');
         });
         Route::middleware('permission:software.view')->group(function () {
             Route::resource('software', \App\Http\Controllers\SoftwareController::class)->except(['show']);
-            Route::get('software/export', [\App\Http\Controllers\SoftwareController::class, 'export'])->name('software.export')->middleware('role:Admin');
+            Route::get('software/export', [\App\Http\Controllers\SoftwareController::class, 'export'])->name('software.export')->middleware('permission:reports.export');
         });
 
 
         // Lists Module
         Route::prefix('lists')->name('lists.')->middleware('permission:lists.view')->group(function () {
             Route::get('assets', [AssetListController::class, 'index'])->name('assets');
-            Route::get('assets/export', [AssetListController::class, 'export'])->name('assets.export')->middleware('role:Admin');
+            Route::get('assets/export', [AssetListController::class, 'export'])->name('assets.export')->middleware('permission:lists.export');
             Route::get('audits', [AuditListController::class, 'index'])->name('audits');
             Route::get('audits/export', [AuditListController::class, 'export'])->name('audits.export')->middleware('role:Admin');
             Route::get('maintenances', [MaintenanceListController::class, 'index'])->name('maintenances');

@@ -2,6 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue'
 import ResourceToolbar from '@/components/ResourceToolbar.vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { useToast } from '@/composables/useToast'
 import { Edit3, Trash2 } from 'lucide-vue-next'
 import { confirmDialog } from '@/lib/confirm'
 import { ref, watch, computed } from 'vue'
@@ -41,6 +42,13 @@ const destroyVendor = async (id: number) => {
   if (!accepted) return
   router.delete(`/vendors/${id}`)
 }
+
+const { show } = useToast()
+const exportCsv = () => {
+  const q = search.value ? `?search=${encodeURIComponent(search.value)}` : ''
+  show('Export started…', 'info')
+  window.open(`/vendors/export${q}`, '_blank', 'noopener=yes')
+}
 </script>
 
 <template>
@@ -49,10 +57,10 @@ const destroyVendor = async (id: number) => {
     <ResourceToolbar
       title="Vendors"
       description="Manage vendor records for products, contracts, and purchase orders."
-      :show-export="true"
+      :show-export="isAdmin || userPermissions.includes('reports.export')"
       :show-print="true"
       @print="printCurrent"
-      @export="() => window.open(`/vendors/export${search ? `?search=${encodeURIComponent(search)}` : ''}`, '_blank', 'noopener=yes')"
+      @export="exportCsv"
     >
       <template #actions>
         <Link v-if="can('vendors.create')" href="/vendors/create" class="btn-glass btn-variant-primary">Add Vendor</Link>

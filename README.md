@@ -27,6 +27,7 @@ pm run lint (see GitHub Actions pipelines .github/workflows/*.yml).
 - Tools: Import (Admin) for core taxonomies + Catalog (vendors/products/contracts/POs/software). Export CSV for most lists.
 - Alerts & Notifications: Daily alerts for maintenance/warranty, contracts expiring, and POs due/overdue; mail + in‑app notifications.
 - Dashboard: Overview widgets, calendar, charts, and Catalog & Procurement summary (expiring contracts, POs due, software seats).
+- Clearance: Staff “My Assets” with selection → request clearance; Admin review (remarks, approve/reject) with optional auto check‑in and PDF generation; email to staff + HR (falls back to Company hr_email).
 
 ## API Clients
 - Sanctum-protected endpoints are documented in Upcomming/Must/ApiIntegrationGuide.md with an OpenAPI spec under docs/api/openapi.yaml.
@@ -47,6 +48,7 @@ GitHub Actions provide lint + test pipelines (.github/workflows/lint.yml and 	es
   - warranties.check-expiry
   - alerts.generate (builds alert rows)
   - alerts.send-pending (sends notifications for unsent alerts)
+  - notifications for clearance approvals run through the normal queue (ensure a worker is active)
 
 ## Documentation Hub
 - Database Schema: `docs/DATABASE_SCHEMA.md`

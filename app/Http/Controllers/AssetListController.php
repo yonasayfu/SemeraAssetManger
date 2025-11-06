@@ -180,6 +180,13 @@ class AssetListController extends Controller
                     'label' => $department->name,
                     'value' => (string) $department->id,
                 ]),
+            // Back-compat: also provide *Choices props expected by the Vue page
+            'statusChoices' => collect(self::STATUSES)->map(fn (string $status) => [ 'label' => $status, 'value' => $status ])->prepend(['label' => 'All statuses', 'value' => null])->values(),
+            'conditionChoices' => collect(self::CONDITIONS)->map(fn (string $condition) => [ 'label' => $condition, 'value' => $condition ])->prepend(['label' => 'All conditions', 'value' => null])->values(),
+            'siteChoices' => Site::query()->select(['id','name'])->orderBy('name')->get()->map(fn (Site $site) => [ 'label' => $site->name, 'value' => (string) $site->id ]),
+            'locationChoices' => Location::query()->select(['id','name'])->orderBy('name')->get()->map(fn (Location $location) => [ 'label' => $location->name, 'value' => (string) $location->id ]),
+            'categoryChoices' => Category::query()->select(['id','name'])->orderBy('name')->get()->map(fn (Category $category) => [ 'label' => $category->name, 'value' => (string) $category->id ]),
+            'departmentChoices' => Department::query()->select(['id','name'])->orderBy('name')->get()->map(fn (Department $department) => [ 'label' => $department->name, 'value' => (string) $department->id ]),
             'breadcrumbs' => [
                 ['title' => 'Lists', 'href' => '/lists'],
                 ['title' => 'Asset Inventory', 'href' => route('lists.assets')],

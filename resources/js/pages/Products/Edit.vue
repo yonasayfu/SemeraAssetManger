@@ -3,8 +3,7 @@ import AppLayout from '@/layouts/AppLayout.vue'
 import ResourceToolbar from '@/components/ResourceToolbar.vue'
 import { Head, useForm } from '@inertiajs/vue3'
 
-const props = defineProps<{ product:any; vendors: { id: number; name: string }[] }>()
-const props = defineProps<{ product: any; vendors: { id:number; name:string }[] }>()
+const props = defineProps<{ product: any; vendors: { id: number; name: string }[] }>()
 const form = useForm({ vendor_id: props.product.vendor_id, name: props.product.name, sku: props.product.sku, warranty_months: props.product.warranty_months, unit_cost_minor: props.product.unit_cost_minor, currency: props.product.currency, notes: props.product.notes })
 const submit = () => form.put(`/products/${props.product.id}`)
 </script>

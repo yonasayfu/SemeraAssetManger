@@ -221,4 +221,10 @@ class Staff extends Authenticatable
 
         return null;
     }
+
+    // Relationships for Clearance
+    public function clearances()
+    {
+        return $this->hasMany(\App\Models\Clearance::class, 'staff_id');
+    }
 }

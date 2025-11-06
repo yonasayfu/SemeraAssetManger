@@ -18,6 +18,7 @@
 - Alerts & Notifications: Daily alerts for maintenance/warranty; contracts expiring; POs due/overdue; mail + in‑app notifications.
 - Import/Export: Admin‑only; templates for vendors/products/contracts/POs/software; CSV export on lists.
 - Global search & access control: Sanctum + spatie/permission; Admin visibility tuned for Catalog.
+- Clearance: Staff “My Assets” with selection → request; Admin review (remarks, approve/reject) with optional auto check‑in; PDF with header/footer; emails to staff + HR (Company hr_email fallback).
 
 ## Comparison: AssetTiger vs ASLM App
 - Core Inventory
@@ -42,11 +43,13 @@
 - Lists: asset/maintenance/warranty/audit lists with export (Admin‑only).
 - Tools: import/export center (Admin‑only).
 - Team: staff management; roles & permissions.
+- Clearance: Staff → My Assets (select) → Request; Staff submits draft; Admin reviews/remarks → Approve (auto check‑in optional) → PDF generated & emailed; Staff downloads PDF from Clearances.
 
 ## Roadmap (near‑term)
 - Validation hardening across CRUD + import jobs.
 - Download Center for batched exports; XLSX output where needed.
 - CMDB relationships + licensing; discovery import.
+- Clearance: e‑signature capture, per‑item inline edit and auto check‑in of open checkouts/leases.
 - Ticketing/ITSM: incidents, requests, automation (Freshdesk‑inspired).
 
 ## Risks & Mitigations

@@ -16,6 +16,7 @@ Deliverables:
 - Assets CRUD with status machine (available, checked_out, leased, reserved, under_repair, terminal)
 - Documents & Images attachments
 - Lifecycle services: checkout/checkin, lease/return, reserve, move, dispose
+- Clearance (MVP): Staff “My Assets” selection → request; Admin review (remarks) with approve/reject, optional auto check‑in, PDF + email to staff/HR
 
 Deliverables:
 - List/detail pages, import template, export to CSV/XLSX
@@ -43,10 +44,10 @@ Deliverables:
 - Customers & commerce polish (purchases, invoices)
 - Advanced search (Scout/Meilisearch/Algolia)
 - PWA/mobile API endpoints
+- Clearance enhancements: e‑signature capture, auto close open checkouts/leases, multi‑step approvals
 
 ## Links
 - Features: `Upcomming/MyNewProjectRoadmap.md`
 - Schema: `Upcomming/MyNewDatabaseSchema.md`
 - Sidebar: `Upcomming/MyNewAppsidebar.md`
 - Backlog: `Upcomming/TASKS.md`
-

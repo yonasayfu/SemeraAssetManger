@@ -21,5 +21,6 @@ class Company extends Model
         'date_format',
         'financial_year_start',
         'logo',
+        'hr_email',
     ];
 }

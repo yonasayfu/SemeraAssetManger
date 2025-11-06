@@ -41,6 +41,8 @@ class RolePermissionSeeder extends Seeder
             'contracts.view', 'contracts.create', 'contracts.update', 'contracts.delete',
             'purchase-orders.view', 'purchase-orders.create', 'purchase-orders.update', 'purchase-orders.delete',
             'software.view', 'software.create', 'software.update', 'software.delete',
+            // Clearances
+            'clearances.view', 'clearances.request', 'clearances.manage', 'clearances.approve',
         ])->map(function (string $name) {
             return Permission::firstOrCreate(
                 ['name' => $name, 'guard_name' => 'web'],
@@ -70,6 +72,7 @@ class RolePermissionSeeder extends Seeder
                 'contracts.view', 'contracts.create', 'contracts.update',
                 'purchase-orders.view', 'purchase-orders.create', 'purchase-orders.update',
                 'software.view', 'software.create', 'software.update',
+                'clearances.view', 'clearances.manage', 'clearances.approve',
             ],
             'Technician' => [
                 'dashboard.view',
@@ -83,6 +86,7 @@ class RolePermissionSeeder extends Seeder
                 'audits.view',
                 'staff.view',
                 'vendors.view', 'products.view', 'contracts.view', 'purchase-orders.view', 'software.view',
+                'clearances.view',
             ],
             'Staff' => [
                 'dashboard.view',
@@ -92,6 +96,7 @@ class RolePermissionSeeder extends Seeder
                 'advanced.view',
                 'staff.view',
                 'vendors.view', 'products.view', 'contracts.view', 'purchase-orders.view', 'software.view',
+                'clearances.view', 'clearances.request',
             ],
             'Auditor' => [
                 'dashboard.view',
@@ -102,6 +107,7 @@ class RolePermissionSeeder extends Seeder
                 'advanced.view',
                 'staff.view',
                 'vendors.view', 'products.view', 'contracts.view', 'purchase-orders.view', 'software.view',
+                'clearances.view',
             ],
             'ReadOnly' => [
                 'dashboard.view',
@@ -111,6 +117,7 @@ class RolePermissionSeeder extends Seeder
                 'advanced.view',
                 'staff.view',
                 'vendors.view', 'products.view', 'contracts.view', 'purchase-orders.view', 'software.view',
+                'clearances.view',
             ],
             'External' => [
                 'dashboard.view',
