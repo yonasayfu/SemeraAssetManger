@@ -7,6 +7,8 @@ use App\Models\Asset;
 use App\Models\Checkout;
 use App\Models\Lease;
 use App\Models\Maintenance;
+use App\Models\Contract;
+use App\Models\PurchaseOrder;
 use App\Models\Staff as User;
 use App\Models\Warranty;
 use Carbon\Carbon;
@@ -221,6 +223,92 @@ class AlertService
                 [
                     'due_date' => $lease->end_at,
                     'message' => 'Lease for asset ' . $lease->asset->asset_tag . ' is expiring on ' . $lease->end_at->format('Y-m-d') . '.',
+                ]
+            );
+        }
+    }
+
+    /**
+     * Contracts expiring in the next N days (default 60).
+     */
+    public function checkContractsExpiring(int $days = 60): void
+    {
+        $now = Carbon::now();
+        $until = $now->copy()->addDays($days);
+
+        $contracts = Contract::whereNotNull('end_at')
+            ->whereBetween('end_at', [$now, $until])
+            ->with(['vendor:id,name', 'product:id,name'])
+            ->get();
+
+        foreach ($contracts as $contract) {
+            $label = trim(implode(' – ', array_filter([
+                optional($contract->vendor)->name,
+                optional($contract->product)->name,
+                strtoupper($contract->type ?? ''),
+            ])));
+
+            Alert::firstOrCreate(
+                [
+                    'type' => 'Contract Expiring',
+                    'asset_id' => $contract->asset_id,
+                    'source_id' => $contract->id,
+                    'source_type' => Contract::class,
+                ],
+                [
+                    'due_date' => $contract->end_at,
+                    'message' => $label !== ''
+                        ? "Contract ({$label}) expires on " . $contract->end_at->format('Y-m-d') . '.'
+                        : 'A contract is expiring soon.',
+                ]
+            );
+        }
+    }
+
+    /**
+     * Purchase Orders that are due soon (next N days) or overdue (past expected date), with status open.
+     */
+    public function checkPurchaseOrdersDue(int $days = 14): void
+    {
+        $now = Carbon::now();
+        $soon = $now->copy()->addDays($days);
+
+        $overdue = PurchaseOrder::where('status', 'open')
+            ->whereNotNull('expected_delivery_at')
+            ->where('expected_delivery_at', '<', $now)
+            ->with('vendor:id,name')
+            ->get();
+
+        foreach ($overdue as $po) {
+            Alert::firstOrCreate(
+                [
+                    'type' => 'PO Overdue',
+                    'source_id' => $po->id,
+                    'source_type' => PurchaseOrder::class,
+                ],
+                [
+                    'due_date' => $po->expected_delivery_at,
+                    'message' => 'PO ' . ($po->number ?? $po->id) . ' for ' . (optional($po->vendor)->name ?? 'vendor') . ' is overdue (expected ' . optional($po->expected_delivery_at)->format('Y-m-d') . ').',
+                ]
+            );
+        }
+
+        $dueSoon = PurchaseOrder::where('status', 'open')
+            ->whereNotNull('expected_delivery_at')
+            ->whereBetween('expected_delivery_at', [$now, $soon])
+            ->with('vendor:id,name')
+            ->get();
+
+        foreach ($dueSoon as $po) {
+            Alert::firstOrCreate(
+                [
+                    'type' => 'PO Due Soon',
+                    'source_id' => $po->id,
+                    'source_type' => PurchaseOrder::class,
+                ],
+                [
+                    'due_date' => $po->expected_delivery_at,
+                    'message' => 'PO ' . ($po->number ?? $po->id) . ' for ' . (optional($po->vendor)->name ?? 'vendor') . ' is due soon (' . optional($po->expected_delivery_at)->format('Y-m-d') . ').',
                 ]
             );
         }

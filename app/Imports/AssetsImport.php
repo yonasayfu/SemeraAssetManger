@@ -17,6 +17,20 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
 class AssetsImport implements ToModel, WithHeadingRow
 {
+    /** @var array<string,string> mapping from incoming header key to internal field key */
+    protected array $mapping = [];
+
+    /** @var array<string,mixed> */
+    protected array $options = [];
+
+    protected bool $createMissingTaxonomy = true;
+
+    public function __construct(array $mapping = [], array $options = [])
+    {
+        $this->mapping = $mapping;
+        $this->options = $options;
+        $this->createMissingTaxonomy = (bool)($options['create_missing_taxonomy'] ?? true);
+    }
     /**
     * @param array $row
     *
@@ -24,6 +38,7 @@ class AssetsImport implements ToModel, WithHeadingRow
     */
     public function model(array $row)
     {
+        $row = $this->applyMapping($row);
         $r = $this->normalize($row);
 
         // Resolve foreign keys by name or id. Create taxonomy if missing (except staff).
@@ -113,7 +128,10 @@ class AssetsImport implements ToModel, WithHeadingRow
         if ($this->isValidId($id)) return (int) $id;
         $n = trim((string) $name);
         if ($n === '') return null;
-        return Site::firstOrCreate(['name' => $n])->id;
+        if ($this->createMissingTaxonomy) {
+            return Site::firstOrCreate(['name' => $n])->id;
+        }
+        return optional(Site::where('name', $n)->first())->id;
     }
 
     protected function resolveLocationId($id, $name, ?int $siteId): ?int
@@ -125,6 +143,7 @@ class AssetsImport implements ToModel, WithHeadingRow
         if ($siteId) $query->where('site_id', $siteId);
         $existing = $query->first();
         if ($existing) return $existing->id;
+        if (!$this->createMissingTaxonomy) return null;
         return Location::create(['name' => $n, 'site_id' => $siteId])->id;
     }
 
@@ -133,7 +152,10 @@ class AssetsImport implements ToModel, WithHeadingRow
         if ($this->isValidId($id)) return (int) $id;
         $n = trim((string) $name);
         if ($n === '') return null;
-        return Category::firstOrCreate(['name' => $n])->id;
+        if ($this->createMissingTaxonomy) {
+            return Category::firstOrCreate(['name' => $n])->id;
+        }
+        return optional(Category::where('name', $n)->first())->id;
     }
 
     protected function resolveDepartmentId($id, $name): ?int
@@ -141,7 +163,10 @@ class AssetsImport implements ToModel, WithHeadingRow
         if ($this->isValidId($id)) return (int) $id;
         $n = trim((string) $name);
         if ($n === '') return null;
-        return Department::firstOrCreate(['name' => $n])->id;
+        if ($this->createMissingTaxonomy) {
+            return Department::firstOrCreate(['name' => $n])->id;
+        }
+        return optional(Department::where('name', $n)->first())->id;
     }
 
     protected function resolveStaffId($id, $value)
@@ -173,5 +198,40 @@ class AssetsImport implements ToModel, WithHeadingRow
     protected function isValidId($value): bool
     {
         return is_numeric($value) && (int) $value > 0;
+    }
+
+    /**
+     * Apply user-provided mapping to row keys.
+     * Accepts mapping keys in any case/format by normalizing both sides.
+     */
+    protected function applyMapping(array $row): array
+    {
+        if (empty($this->mapping)) {
+            return $row;
+        }
+
+        $normalizedRow = [];
+        foreach ($row as $key => $value) {
+            $normalizedRow[$this->normalizeHeading($key)] = $value;
+        }
+
+        foreach ($this->mapping as $from => $to) {
+            $fromKey = $this->normalizeHeading($from);
+            $toKey = $this->normalizeHeading($to);
+            if (!array_key_exists($toKey, $normalizedRow) && array_key_exists($fromKey, $normalizedRow)) {
+                $normalizedRow[$toKey] = $normalizedRow[$fromKey];
+            }
+        }
+
+        return $normalizedRow;
+    }
+
+    protected function normalizeHeading(string $key): string
+    {
+        // Convert to snake-like: lowercase, non-alnum to underscores, collapse repeats
+        $k = strtolower($key);
+        $k = preg_replace('/[^a-z0-9]+/i', '_', $k ?? '') ?? '';
+        $k = trim($k, '_');
+        return $k;
     }
 }

@@ -24,6 +24,9 @@ import {
     Calendar,
     Wrench,
     Trash2,
+    FileSignature,
+    ClipboardList,
+    Layers,
 } from 'lucide-vue-next';
 
 type Metric = {
@@ -69,6 +72,11 @@ const props = defineProps<{
     calendarEvents: Array<any>;
     assetValueByCategoryChartData: any;
     fiscalYearData: any;
+    catalogSummary?: {
+        contracts: { d30: number; d60: number; d90: number };
+        purchaseOrders: { openDueThisMonth: number };
+        software: { totalSeats: number; usedSeats: number; utilization: number };
+    };
 }>();
 
 const breadcrumbs: BreadcrumbItemType[] = [
@@ -89,6 +97,9 @@ const iconRegistry = {
     Calendar,
     Wrench,
     Trash2,
+    FileSignature,
+    ClipboardList,
+    Layers,
 } as const;
 
 const resolvedMetrics = computed(() =>
@@ -136,6 +147,48 @@ const maintenanceTone = (status: string) => {
             </div>
 
             <div class="grid gap-4 lg:grid-cols-3">
+                <GlassCard variant="lite" padding="p-0" class="lg:col-span-3">
+                    <div class="border-b border-slate-200/70 px-5 py-4 dark:border-slate-800/60">
+                        <div class="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                            <FileSignature class="size-5 text-indigo-500" />
+                            Catalog & Procurement Summary
+                        </div>
+                    </div>
+                    <div class="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
+                        <div class="rounded-xl border border-slate-200/70 bg-white/80 p-4 dark:border-slate-800/60 dark:bg-slate-900/60">
+                            <div class="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                <FileSignature class="size-4 text-indigo-500" />
+                                Contracts Expiring
+                            </div>
+                            <div class="flex flex-wrap gap-2 text-xs">
+                                <span class="rounded-full bg-amber-100 px-2 py-1 font-medium text-amber-700 dark:bg-amber-500/20 dark:text-amber-200">30d: {{ catalogSummary?.contracts.d30 ?? 0 }}</span>
+                                <span class="rounded-full bg-orange-100 px-2 py-1 font-medium text-orange-700 dark:bg-orange-500/20 dark:text-orange-200">31–60d: {{ catalogSummary?.contracts.d60 ?? 0 }}</span>
+                                <span class="rounded-full bg-rose-100 px-2 py-1 font-medium text-rose-700 dark:bg-rose-500/20 dark:text-rose-200">61–90d: {{ catalogSummary?.contracts.d90 ?? 0 }}</span>
+                            </div>
+                        </div>
+                        <div class="rounded-xl border border-slate-200/70 bg-white/80 p-4 dark:border-slate-800/60 dark:bg-slate-900/60">
+                            <div class="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                <ClipboardList class="size-4 text-indigo-500" />
+                                Open POs Due This Month
+                            </div>
+                            <div class="text-3xl font-semibold text-slate-800 dark:text-slate-100">{{ catalogSummary?.purchaseOrders.openDueThisMonth ?? 0 }}</div>
+                        </div>
+                        <div class="rounded-xl border border-slate-200/70 bg-white/80 p-4 dark:border-slate-800/60 dark:bg-slate-900/60">
+                            <div class="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                <Layers class="size-4 text-indigo-500" />
+                                Software Seat Utilization
+                            </div>
+                            <div class="text-sm text-slate-700 dark:text-slate-300">
+                                <span class="text-2xl font-semibold text-slate-800 dark:text-slate-100">{{ catalogSummary?.software.usedSeats ?? 0 }}</span>
+                                / {{ catalogSummary?.software.totalSeats ?? 0 }}
+                            </div>
+                            <div class="mt-1 text-xs text-slate-500 dark:text-slate-400">Utilization: {{ (catalogSummary?.software.utilization ?? 0) }}%</div>
+                        </div>
+                    </div>
+                </GlassCard>
+            </div>
+
+            <div class="grid gap-4 lg:grid-cols-3">
                 <DashboardCalendar :events="calendarEvents" class="lg:col-span-1" />
                 <DashboardChart :chartData="assetValueByCategoryChartData" class="lg:col-span-2" />
             </div>
@@ -180,7 +233,7 @@ const maintenanceTone = (status: string) => {
                             <div class="flex flex-wrap items-center gap-2 text-xs">
                                 <span class="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                                     <Clock class="size-3.5" />
-                                    Scheduled: {{ item.scheduled_for }}
+                                    Scheduled: {{ item.scheduled_for ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(item.scheduled_for as string)) : '—' }}
                                 </span>
                                 <span class="rounded-full px-2 py-1 font-medium" :class="maintenanceTone(item.status)">
                                     {{ item.status }}

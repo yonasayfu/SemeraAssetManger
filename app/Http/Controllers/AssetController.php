@@ -34,27 +34,60 @@ class AssetController extends Controller
     public function index(Request $request)
     {
         $this->authorize('viewAny', Asset::class);
+        $search = trim((string) $request->query('search', ''));
+        $sort = (string) $request->query('sort', 'asset_tag');
+        $direction = strtolower((string) $request->query('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+        $perPage = (int) $request->query('per_page', 10);
+
         $assets = Asset::query()
-            ->when($request->input('search'), function ($query, $search) {
+            ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($inner) use ($search) {
                     $inner->where('asset_tag', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%");
+                          ->orWhere('description', 'like', "%{$search}%");
                 });
             })
-            ->orderBy('asset_tag')
-            ->paginate(10)
+            ->when($request->filled('vendor_id'), fn ($q) => $q->where('vendor_id', $request->integer('vendor_id')))
+            ->when($request->filled('product_id'), fn ($q) => $q->where('product_id', $request->integer('product_id')))
+            ->when($request->filled('staff_id'), fn ($q) => $q->where('staff_id', $request->integer('staff_id')))
+            ->when($request->query('used_by') === 'assigned', fn ($q) => $q->whereNotNull('staff_id'))
+            ->when($request->query('used_by') === 'unassigned', fn ($q) => $q->whereNull('staff_id'))
+            ->when(in_array($sort, ['asset_tag','description','status']), fn ($q) => $q->orderBy($sort, $direction), fn ($q) => $q->orderBy('asset_tag'))
+            ->paginate($perPage)
             ->withQueryString();
 
         return Inertia::render('Assets/Index', [
             'assets' => $assets,
-            'filters' => $request->only(['search']),
+            'filters' => [
+                'search' => $search,
+                'sort' => $sort,
+                'direction' => $direction,
+                'per_page' => $perPage,
+                'vendor_id' => $request->query('vendor_id'),
+                'product_id' => $request->query('product_id'),
+                'staff_id' => $request->query('staff_id'),
+                'used_by' => $request->query('used_by'),
+            ],
+            'exportColumns' => data_get(auth()->user()?->list_preferences, 'assets.export.columns', []),
+            'vendors' => \App\Models\Vendor::select('id','name')->orderBy('name')->get(),
+            'products' => \App\Models\Product::select('id','name','vendor_id')->orderBy('name')->get(),
+            'staff' => \App\Models\Staff::select('id','name')->orderBy('name')->get(),
         ]);
     }
 
     public function export()
     {
         $this->authorize('viewAny', Asset::class);
-        return Excel::download(new AssetsExport, 'assets.xlsx');
+        // Optional column selection via query string (?columns=Asset%20Tag%20ID,Description,...)
+        $selected = request()->query('columns');
+        $columns = [];
+        if (is_string($selected)) {
+            // Split by comma and trim spaces
+            $columns = array_filter(array_map('trim', explode(',', $selected)), fn ($v) => $v !== '');
+        } elseif (is_array($selected)) {
+            $columns = array_values(array_filter(array_map('trim', $selected), fn ($v) => $v !== ''));
+        }
+
+        return Excel::download(new AssetsExport($columns), 'assets.xlsx');
     }
 
     /**
@@ -63,12 +96,41 @@ class AssetController extends Controller
     public function create()
     {
         $this->authorize('create', Asset::class);
+        $poItems = \App\Models\PurchaseOrderItem::select('id','purchase_order_id','product_id','qty','received_qty','unit_cost_minor','currency')
+            ->with([
+                'purchaseOrder:id,number,vendor_id,status',
+                'product:id,name,vendor_id',
+            ])
+            ->whereHas('purchaseOrder', fn ($q) => $q->where('status', 'open'))
+            ->where(function ($q) {
+                $q->whereNull('received_qty')->orWhereColumn('received_qty', '<', 'qty');
+            })
+            ->orderByDesc('id')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'purchase_order_id' => $item->purchase_order_id,
+                    'po_number' => optional($item->purchaseOrder)->number,
+                    'vendor_id' => optional($item->purchaseOrder)->vendor_id,
+                    'product_id' => $item->product_id,
+                    'product_name' => optional($item->product)->name,
+                    'qty' => $item->qty,
+                    'received_qty' => $item->received_qty,
+                    'unit_cost_minor' => $item->unit_cost_minor,
+                    'currency' => $item->currency,
+                ];
+            });
+
         return Inertia::render('Assets/Create', [
             'sites' => Site::select('id', 'name')->orderBy('name')->get(),
             'locations' => Location::select('id', 'name', 'site_id')->orderBy('name')->get(),
             'categories' => Category::select('id', 'name')->orderBy('name')->get(),
             'departments' => Department::select('id', 'name')->orderBy('name')->get(),
             'staff' => Staff::select('id', 'name')->orderBy('name')->get(),
+            'vendors' => \App\Models\Vendor::select('id','name')->orderBy('name')->get(),
+            'products' => \App\Models\Product::select('id','name','vendor_id','warranty_months','unit_cost_minor','currency')->orderBy('name')->get(),
+            'poItems' => $poItems,
         ]);
     }
 
@@ -90,6 +152,9 @@ class AssetController extends Controller
             'serial_no' => 'nullable|string|max:150',
             'project_code' => 'nullable|string|max:150',
             'asset_condition' => 'nullable|in:New,Good,Fair,Poor,Broken',
+            'vendor_id' => 'nullable|exists:vendors,id',
+            'product_id' => 'nullable|exists:products,id',
+            'purchase_order_item_id' => 'nullable|exists:purchase_order_items,id',
             'site_id' => 'nullable|exists:sites,id',
             'location_id' => 'nullable|exists:locations,id',
             'category_id' => 'nullable|exists:categories,id',
@@ -97,6 +162,7 @@ class AssetController extends Controller
             'staff_id' => 'nullable|exists:staff,id',
             'status' => 'required|in:Available,Checked Out,Under Repair,Leased,Disposed,Lost,Donated,Sold',
             'photo' => 'nullable|image|max:2048',
+            'custom_fields' => 'nullable|array',
         ]);
 
         $asset = Asset::create(
@@ -163,6 +229,32 @@ class AssetController extends Controller
     public function edit(Asset $asset)
     {
         $this->authorize('update', $asset);
+        $poItems = \App\Models\PurchaseOrderItem::select('id','purchase_order_id','product_id','qty','received_qty','unit_cost_minor','currency')
+            ->with([
+                'purchaseOrder:id,number,vendor_id,status',
+                'product:id,name,vendor_id',
+            ])
+            ->whereHas('purchaseOrder', fn ($q) => $q->where('status', 'open'))
+            ->where(function ($q) {
+                $q->whereNull('received_qty')->orWhereColumn('received_qty', '<', 'qty');
+            })
+            ->orderByDesc('id')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'purchase_order_id' => $item->purchase_order_id,
+                    'po_number' => optional($item->purchaseOrder)->number,
+                    'vendor_id' => optional($item->purchaseOrder)->vendor_id,
+                    'product_id' => $item->product_id,
+                    'product_name' => optional($item->product)->name,
+                    'qty' => $item->qty,
+                    'received_qty' => $item->received_qty,
+                    'unit_cost_minor' => $item->unit_cost_minor,
+                    'currency' => $item->currency,
+                ];
+            });
+
         return Inertia::render('Assets/Edit', [
             'asset' => $asset,
             'sites' => Site::select('id', 'name')->orderBy('name')->get(),
@@ -170,6 +262,9 @@ class AssetController extends Controller
             'categories' => Category::select('id', 'name')->orderBy('name')->get(),
             'departments' => Department::select('id', 'name')->orderBy('name')->get(),
             'staff' => Staff::select('id', 'name')->orderBy('name')->get(),
+            'vendors' => \App\Models\Vendor::select('id','name')->orderBy('name')->get(),
+            'products' => \App\Models\Product::select('id','name','vendor_id','warranty_months','unit_cost_minor','currency')->orderBy('name')->get(),
+            'poItems' => $poItems,
         ]);
     }
 
@@ -191,6 +286,9 @@ class AssetController extends Controller
             'serial_no' => 'nullable|string|max:150',
             'project_code' => 'nullable|string|max:150',
             'asset_condition' => 'nullable|in:New,Good,Fair,Poor,Broken',
+            'vendor_id' => 'nullable|exists:vendors,id',
+            'product_id' => 'nullable|exists:products,id',
+            'purchase_order_item_id' => 'nullable|exists:purchase_order_items,id',
             'site_id' => 'nullable|exists:sites,id',
             'location_id' => 'nullable|exists:locations,id',
             'category_id' => 'nullable|exists:categories,id',
@@ -198,6 +296,7 @@ class AssetController extends Controller
             'staff_id' => 'nullable|exists:staff,id',
             'status' => 'required|in:Available,Checked Out,Under Repair,Leased,Disposed,Lost,Donated,Sold',
             'photo' => 'nullable|image|max:2048',
+            'custom_fields' => 'nullable|array',
         ]);
 
         $asset->update($request->except('photo'));

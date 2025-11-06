@@ -6,6 +6,7 @@ use App\Models\Software;
 use App\Models\Vendor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response as HttpResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,18 +16,28 @@ class SoftwareController extends Controller
     {
         $perPage = (int) $request->query('per_page', 10);
         $search = trim((string) $request->query('search', ''));
+        $vendorId = $request->integer('vendor_id');
+        $type = (string) $request->query('type', '');
 
         $software = Software::with('vendor:id,name')
             ->when($search !== '', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%");
             })
+            ->when($request->filled('vendor_id'), fn($q) => $q->where('vendor_id', $vendorId))
+            ->when(in_array($type, ['saas','on-prem']), fn($q) => $q->where('type', $type))
             ->latest()
             ->paginate($perPage)
             ->withQueryString();
 
         return Inertia::render('Software/Index', [
             'software' => $software,
-            'filters' => [ 'search' => $search, 'per_page' => $perPage ],
+            'filters' => [
+                'search' => $search,
+                'per_page' => $perPage,
+                'vendor_id' => $request->query('vendor_id'),
+                'type' => $request->query('type'),
+            ],
+            'vendors' => Vendor::select('id','name')->orderBy('name')->get(),
         ]);
     }
 
@@ -80,5 +91,46 @@ class SoftwareController extends Controller
     {
         $software->delete();
         return redirect()->route('software.index')->with('bannerStyle','info')->with('banner','Software deleted.');
+    }
+
+    public function export(Request $request)
+    {
+        $perPage = (int) $request->query('per_page', 10);
+        $search = trim((string) $request->query('search', ''));
+        $vendorId = $request->integer('vendor_id');
+        $type = (string) $request->query('type', '');
+
+        $query = Software::with('vendor:id,name')
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            })
+            ->when($request->filled('vendor_id'), fn($q) => $q->where('vendor_id', $vendorId))
+            ->when(in_array($type, ['saas','on-prem']), fn($q) => $q->where('type', $type))
+            ->orderBy('name');
+
+        $filename = 'software-'.now()->format('Ymd_His').'.csv';
+
+        $callback = function () use ($query) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['Name','Vendor','Type','SeatsTotal','SeatsUsed','Status']);
+            $query->chunk(1000, function ($chunk) use ($handle) {
+                foreach ($chunk as $s) {
+                    fputcsv($handle, [
+                        $s->name,
+                        optional($s->vendor)->name,
+                        $s->type,
+                        $s->seats_total,
+                        $s->seats_used,
+                        $s->status,
+                    ]);
+                }
+            });
+            fclose($handle);
+        };
+
+        return HttpResponse::stream($callback, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
     }
 }

@@ -25,6 +25,12 @@ npm ci && npm run build
 ## Queues & Scheduler
 - Run worker: `php artisan queue:work --tries=3`
 - Scheduler (cron): `* * * * * php /path/to/artisan schedule:run >> /dev/null 2>&1`
+- Key scheduled jobs:
+  - reports.run-scheduled (saved reports)
+  - maintenance.generate-recurring (recurring work orders)
+  - warranties.check-expiry (daily)
+  - alerts.generate (daily; builds alert rows for contracts/POs/maintenance/warranty)
+  - alerts.send-pending (daily; sends notifications and marks alerts as sent)
 
 ## Caching
 php artisan config:cache
@@ -37,4 +43,4 @@ php artisan view:cache
 
 ## Deploy
 - Zero-downtime strategy: build assets off-box, run migrations, cache config/routes/views, restart queue workers.
-
+- After deploy: `php artisan migrate --force && php artisan optimize:clear && php artisan optimize`

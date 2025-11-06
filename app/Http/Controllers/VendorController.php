@@ -6,6 +6,7 @@ use App\Models\Vendor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Response as HttpResponse;
 use Inertia\Response;
 
 class VendorController extends Controller
@@ -82,5 +83,42 @@ class VendorController extends Controller
         $vendor->delete();
 
         return redirect()->route('vendors.index')->with('bannerStyle', 'info')->with('banner', 'Vendor deleted.');
+    }
+
+    public function export(Request $request)
+    {
+        $search = trim((string) $request->query('search', ''));
+
+        $query = Vendor::query()
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            })
+            ->orderBy('name');
+
+        $filename = 'vendors-'.now()->format('Ymd_His').'.csv';
+
+        $callback = function () use ($query) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['Name','Contact','Email','Phone','Website','Notes']);
+            $query->chunk(1000, function ($chunk) use ($handle) {
+                foreach ($chunk as $v) {
+                    fputcsv($handle, [
+                        $v->name,
+                        $v->contact_name,
+                        $v->email,
+                        $v->phone,
+                        $v->website,
+                        $v->notes,
+                    ]);
+                }
+            });
+            fclose($handle);
+        };
+
+        return HttpResponse::stream($callback, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
     }
 }

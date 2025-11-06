@@ -191,7 +191,7 @@ class SampleDataSeeder extends Seeder
             ]);
         }
 
-        // Leases on a few assets (ensure at least one expires within 30 days)
+        // Leases on a few assets (randomized)
         foreach (array_slice($assets, 0, 5) as $leased) {
             Lease::firstOrCreate([
                 'asset_id' => $leased->id,
@@ -205,6 +205,26 @@ class SampleDataSeeder extends Seeder
                 'terms' => 'Standard lease terms',
                 'status' => 'active',
             ]);
+        }
+
+        // Ensure at least one lease ends within 30 days deterministically for alerts
+        $targetAsset = $assets[0] ?? null;
+        if ($targetAsset) {
+            Lease::updateOrCreate([
+                'asset_id' => $targetAsset->id,
+                'lessee_type' => 'department',
+                'lessee_id' => $departments['IT']->id,
+            ], [
+                'start_at' => Carbon::now()->subDays(20)->toDateString(),
+                'end_at' => Carbon::now()->addDays(10)->toDateString(),
+                'rate_minor' => 500,
+                'currency' => 'USD',
+                'terms' => 'Seeded near-term lease',
+                'status' => 'active',
+            ]);
+
+            // Keep asset status consistent
+            $targetAsset->update(['status' => 'Leased']);
         }
 
         // Reservations spread out

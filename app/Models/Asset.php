@@ -25,6 +25,9 @@ class Asset extends Model
         'serial_no',
         'project_code',
         'asset_condition',
+        'vendor_id',
+        'product_id',
+        'purchase_order_item_id',
         'site_id',
         'location_id',
         'category_id',
@@ -32,11 +35,13 @@ class Asset extends Model
         'staff_id',
         'status',
         'photo',
+        'custom_fields',
         'created_by',
     ];
 
     protected $casts = [
         'purchase_date' => 'date',
+        'custom_fields' => 'array',
     ];
 
     public function maintenances(): HasMany
@@ -127,5 +132,20 @@ class Asset extends Model
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'staff_id');
+    }
+
+    public function vendor(): BelongsTo
+    {
+        return $this->belongsTo(Vendor::class);
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    public function purchaseOrderItem(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrderItem::class);
     }
 }

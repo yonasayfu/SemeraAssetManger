@@ -7,6 +7,7 @@ use App\Models\Vendor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Response as HttpResponse;
 use Inertia\Response;
 
 class ProductController extends Controller
@@ -88,5 +89,47 @@ class ProductController extends Controller
     {
         $product->delete();
         return redirect()->route('products.index')->with('bannerStyle', 'info')->with('banner', 'Product deleted.');
+    }
+
+    public function export(Request $request)
+    {
+        $perPage = (int) $request->query('per_page', 10); // unused but kept for consistency
+        $search = trim((string) $request->query('search', ''));
+        $vendorId = $request->integer('vendor_id');
+
+        $query = Product::query()
+            ->with('vendor')
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('sku', 'like', "%{$search}%");
+            })
+            ->when($request->filled('vendor_id'), fn($q) => $q->where('vendor_id', $vendorId))
+            ->orderBy('name');
+
+        $filename = 'products-'.now()->format('Ymd_His').'.csv';
+
+        $callback = function () use ($query) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['Name','Vendor','SKU','WarrantyMonths','UnitCost','Currency','Notes']);
+            $query->chunk(1000, function ($chunk) use ($handle) {
+                foreach ($chunk as $p) {
+                    fputcsv($handle, [
+                        $p->name,
+                        optional($p->vendor)->name,
+                        $p->sku,
+                        $p->warranty_months,
+                        $p->unit_cost_minor,
+                        $p->currency,
+                        $p->notes,
+                    ]);
+                }
+            });
+            fclose($handle);
+        };
+
+        return HttpResponse::stream($callback, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
     }
 }

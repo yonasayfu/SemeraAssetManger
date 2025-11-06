@@ -79,6 +79,7 @@ class DashboardController extends Controller
             'assetValueByCategoryChartData' => $this->getAssetValueByCategoryChartData(),
             'staffTrend' => $this->buildStaffTrend($now),
             'fiscalYearData' => $this->getFiscalYearData($now),
+            'catalogSummary' => $this->getCatalogAndProcurementSummary($now),
         ]);
     }
 
@@ -258,6 +259,54 @@ class DashboardController extends Controller
             'direction' => $direction,
             'percentage' => abs($pct),
             'label' => $label,
+        ];
+    }
+
+    private function getCatalogAndProcurementSummary(Carbon $now): array
+    {
+        // Contracts expiring: 0-30, 31-60, 61-90 days
+        $d0 = $now->copy();
+        $d30 = $now->copy()->addDays(30);
+        $d60 = $now->copy()->addDays(60);
+        $d90 = $now->copy()->addDays(90);
+
+        $contracts0to30 = \App\Models\Contract::whereNotNull('end_at')
+            ->whereBetween('end_at', [$d0, $d30])
+            ->count();
+
+        $contracts31to60 = \App\Models\Contract::whereNotNull('end_at')
+            ->whereBetween('end_at', [$d30->copy()->addDay(), $d60])
+            ->count();
+
+        $contracts61to90 = \App\Models\Contract::whereNotNull('end_at')
+            ->whereBetween('end_at', [$d60->copy()->addDay(), $d90])
+            ->count();
+
+        // Open POs due this month
+        $openPosDueThisMonth = \App\Models\PurchaseOrder::where('status', 'open')
+            ->whereMonth('expected_delivery_at', $now->month)
+            ->whereYear('expected_delivery_at', $now->year)
+            ->count();
+
+        // Software seats utilisation
+        $totalSeats = (int) \App\Models\Software::sum('seats_total');
+        $usedSeats = (int) \App\Models\Software::sum('seats_used');
+        $utilization = $totalSeats > 0 ? round(($usedSeats / max($totalSeats, 1)) * 100) : 0;
+
+        return [
+            'contracts' => [
+                'd30' => $contracts0to30,
+                'd60' => $contracts31to60,
+                'd90' => $contracts61to90,
+            ],
+            'purchaseOrders' => [
+                'openDueThisMonth' => $openPosDueThisMonth,
+            ],
+            'software' => [
+                'totalSeats' => $totalSeats,
+                'usedSeats' => $usedSeats,
+                'utilization' => $utilization,
+            ],
         ];
     }
 }

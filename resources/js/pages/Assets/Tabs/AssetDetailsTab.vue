@@ -117,7 +117,7 @@ const statToneClass = (tone?: string) => {
                     >
                         <p class="font-medium text-slate-700 dark:text-slate-200">{{ warranty.provider ?? 'Unknown provider' }}</p>
                         <p class="text-xs text-slate-500 dark:text-slate-400">
-                            Expires {{ warranty.expiry_date ?? 'N/A' }}
+                            Expires {{ warranty.expiry_date ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(warranty.expiry_date as string)) : 'N/A' }}
                         </p>
                         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
                             Status: {{ warranty.is_active ? 'Active' : 'Inactive' }}

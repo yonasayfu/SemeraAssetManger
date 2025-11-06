@@ -46,6 +46,11 @@ const can = (perm: string) => ((page.props as any).auth?.permissions || []).incl
               <option value="departments">Departments</option>
               <option value="maintenances">Maintenances</option>
               <option value="warranties">Warranties</option>
+              <option value="vendors">Vendors</option>
+              <option value="products">Products</option>
+              <option value="contracts">Contracts</option>
+              <option value="purchase-orders">Purchase Orders</option>
+              <option value="software">Software</option>
             </select>
           </div>
           <div>
@@ -75,4 +80,3 @@ const can = (perm: string) => ((page.props as any).auth?.permissions || []).incl
     </div>
   </AppLayout>
 </template>
-

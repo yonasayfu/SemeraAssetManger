@@ -1,4 +1,5 @@
 <script setup>
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 
@@ -39,7 +40,8 @@ const markAsProcessed = () => {
 <template>
     <Head :title="`Mailbox - ${message.subject}`" />
 
-    <div class="p-6 md:p-10">
+    <AppLayout :breadcrumbs="[{ title: 'Mailbox', href: '/mailbox' }, { title: 'Message', href: `/mailbox/${message.id}` }]">
+    <div class="p-2 md:p-0">
         <div class="mb-4">
             <Link href="/mailbox" class="text-sm text-indigo-600 hover:text-indigo-900">&larr; Back to Inbox</Link>
         </div>
@@ -121,4 +123,5 @@ const markAsProcessed = () => {
             </div>
         </div>
     </div>
+    </AppLayout>
 </template>

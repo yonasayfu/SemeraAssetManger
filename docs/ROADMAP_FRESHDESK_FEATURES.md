@@ -2,6 +2,8 @@
 
 Goal: Differentiate from AssetTiger by adding IT/Service Management capabilities that ASLM needs.
 
+Note: Core Catalog & Procurement (Vendors, Products, Contracts, Purchase Orders, Software) has been delivered in the main app; this roadmap focuses on next‑phase ITSM features (tickets, CMDB, discovery).
+
 ## Phase A — Ticketing & Service Desk
 - Tickets: incidents/requests with priorities, SLA timers, statuses, assignee, watchers.
 - Categories: issue types, request catalog with dynamic forms.

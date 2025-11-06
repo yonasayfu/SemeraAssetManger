@@ -31,7 +31,7 @@ const props = defineProps<{
                                 <div>
                                     <p class="text-lg font-semibold">{{ alert.message }}</p>
                                     <p class="text-sm text-gray-500">Asset: {{ alert.asset.asset_tag }} - {{ alert.asset.description }}</p>
-                                    <p class="text-sm text-gray-500">Expires On: {{ alert.due_date }}</p>
+                                    <p class="text-sm text-gray-500">Expires On: {{ alert.due_date ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(alert.due_date)) : '—' }}</p>
                                 </div>
                                 <Link :href="`/assets/${alert.asset.id}`" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
                                     View Asset
@@ -55,9 +55,12 @@ const props = defineProps<{
                             </template>
                         </div>
                     </div>
-                    <div v-else class="text-center text-gray-500 py-8">
-                        No leases expiring alerts found.
-            </div>
+                    <div v-else class="text-center text-gray-500 py-8 space-y-3">
+                        <div>No leases ending in the next 30 days.</div>
+                        <Link href="/assets/lease-select" class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+                            Lease an asset
+                        </Link>
+                    </div>
         </div>
         </div>
     </AppLayout>

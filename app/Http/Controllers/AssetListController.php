@@ -98,6 +98,8 @@ class AssetListController extends Controller
 
         return Inertia::render('Lists/Assets/Index', [
             'assets' => $assets,
+            // Persisted export defaults per user
+            'exportColumns' => data_get(auth()->user()?->list_preferences, 'assets.export.columns', []),
             'stats' => [
                 [
                     'label' => 'Total Assets',

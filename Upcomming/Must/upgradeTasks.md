@@ -99,5 +99,65 @@ This document outlines the remaining tasks for finalizing the UI/UX of the Semer
 
 ---
 
-**Last Updated:** 2025-10-29
-**Status:** In Progress
+## Phase 3 — Asset Form Enhancements (Freshservice Upgrade)
+
+- [x] Add Vendor selector on Assets Create/Edit
+- [x] Add Product selector filtered by Vendor
+- [x] Auto-calc warranty expiry hint from purchase_date + warranty_months
+- [x] Show inline cost hint from product.unit_cost_minor + currency
+- [x] Optional: Link Asset to PO line item (add `purchase_order_item_id` FK, UI selector)
+
+---
+
+**Last Updated:** 2025-11-05
+**Status:** In Progress (Phase 3 nearly complete)
+
+## Phase 4 — Filters & Lists
+
+- [x] Assets: add filters for Vendor, Product, Used By (staff) + presets (Assigned/Unassigned)
+- [x] Contracts: add filters for Vendor, Product, Used By (via asset)
+- [x] Purchase Orders: add filters for Vendor, Product (via line items)
+- [x] Software: add filters for Vendor, Type (SaaS/On‑prem)
+- [ ] Optional: extend export to honor applied filters server-side
+
+## Phase 5 — Reports (Contracts/POs/Software)
+
+- [x] Add ReportService queries for Contracts, POs, Software
+- [x] Add Report pages using ReportBuilder
+- [x] Add controllers + routes under `/reports`
+- [x] Wire sidebar links under Reports (RBAC: `reports.view`)
+- [x] CSV export via RunReportController streaming
+
+## Phase 6 — Tools Import/Export
+
+- [x] Add import endpoints for Vendors, Products, Contracts, Purchase Orders (+ items), Software
+- [x] Update Tools Import UI to include new entities
+- [x] Update Tools Export UI to include new entities
+- [ ] Implement parsing logic in import jobs (map columns, validations, upsert)
+- [ ] Wire Download Center exports for new entities (or extend ReportService exports)
+
+## Phase 7 — Dashboard Cards
+
+- [x] Contracts expiring soon (30/60/90)
+- [x] POs due this month (open)
+- [x] Software seat usage (used/total, %)
+
+## Phase 8 — Alerts & Notifications
+
+- [x] Add alert generation for contracts expiring and POs due/overdue
+- [x] Add Mail + in-app notifications for new alerts
+- [x] Schedule send job daily; mark alerts as sent
+- [ ] Optional: add alert-specific pages/filters if needed
+
+## Phase 9 — Permissions & Policies
+
+- [x] Verify seeding for vendors/products/contracts/purchase-orders/software abilities
+- [x] Map policies in AuthServiceProvider
+- [x] Guard routes with permission middleware
+- [x] Sidebar entries RBAC-gated
+
+## Phase 10 — Optional Enhancements
+
+- [x] Add asset custom_fields (JSON) + UI repeater on Create/Edit
+- [x] Add Contracts Board page with grouped columns
+- [ ] Optional: category-level custom schema for dynamic fields

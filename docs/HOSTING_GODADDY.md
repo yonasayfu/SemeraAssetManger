@@ -48,11 +48,17 @@ php artisan db:seed --force
 ```
 
 ## 7) Queues & Scheduler
-- For queues on shared hosting, use `database` driver and a cron running every minute:
+- Set QUEUE_CONNECTION=database (shared hosting) or redis (VPS).
+- Add a cron to run the scheduler every minute:
 ```
 * * * * * php /home/<user>/laravel_app/artisan schedule:run >> /dev/null 2>&1
 ```
-- For long‑running workers (preferred), use VPS with Supervisor.
+- On shared hosting you can add another cron to process the queue periodically:
+```
+* * * * * php /home/<user>/laravel_app/artisan queue:work --stop-when-empty >> /dev/null 2>&1
+```
+- On VPS, prefer a long‑running worker with Supervisor (`php artisan queue:work`).
+- Scheduled jobs include alerts and notifications (contracts/POs), warranty checks, recurring maintenance, and saved reports.
 
 ## 8) File uploads
 - Ensure `FILESYSTEM_DISK=public`.
@@ -70,3 +76,4 @@ php artisan db:seed --force
 - 500 errors: check `storage/logs/laravel.log`.
 - 404 to `/public`: ensure document root points to `public/`.
 - Missing extensions: switch PHP version in cPanel → select extensions.
+- Mail not sending: set MAIL_MAILER=smtp and provide MAIL_* variables; verify port 587 is open on the host.

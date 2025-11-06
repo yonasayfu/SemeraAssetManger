@@ -21,6 +21,17 @@ const props = defineProps<{ alerts: { data: AlertItem[]; links?: PaginationLink[
 
 const rows = () => props.alerts?.data ?? []
 const links = () => props.alerts?.links ?? []
+
+function formatDate(value?: string) {
+  if (!value) return '—'
+  try {
+    const d = new Date(value)
+    if (isNaN(d.getTime())) return value
+    return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(d)
+  } catch {
+    return value
+  }
+}
 </script>
 
 <template>
@@ -48,7 +59,7 @@ const links = () => props.alerts?.links ?? []
             <div class="text-xs text-slate-500 dark:text-slate-400">{{ item.asset?.description || '' }}</div>
           </td>
           <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ item.message }}</td>
-          <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ item.due_date || '—' }}</td>
+          <td class="px-4 py-3 text-slate-700 dark:text-slate-200">{{ formatDate(item.due_date) }}</td>
           <td class="px-4 py-3 text-right">
             <Link v-if="item.asset?.id" :href="`/assets/${item.asset.id}`" class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500">
               View Asset
@@ -72,4 +83,3 @@ const links = () => props.alerts?.links ?? []
     </div>
   </div>
 </template>
-

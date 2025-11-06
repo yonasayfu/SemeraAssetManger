@@ -8,6 +8,9 @@ use App\Models\Checkout;
 use App\Models\Lease;
 use App\Models\Maintenance;
 use App\Models\Reservation;
+use App\Models\Contract;
+use App\Models\PurchaseOrder;
+use App\Models\Software;
 use App\Models\ActivityLog; // Assuming ActivityLog is used for transactions/status changes
 use App\Models\SavedReport;
 use Illuminate\Database\Eloquent\Builder;
@@ -127,6 +130,58 @@ class ReportService
                 Carbon::parse($filters['date_range']['end']),
             ]))
             ->with(['asset']);
+    }
+
+    /**
+     * Base query for Contract Reports.
+     */
+    public function getContractReportQuery(array $filters = []): Builder
+    {
+        return Contract::query()
+            ->when(isset($filters['type']) && $filters['type'] !== '', fn ($q) => $q->where('type', $filters['type']))
+            ->when(isset($filters['status']) && $filters['status'] !== '', fn ($q) => $q->where('status', $filters['status']))
+            ->when(isset($filters['vendor_id']), fn ($q) => $q->where('vendor_id', $filters['vendor_id']))
+            ->when(isset($filters['product_id']), fn ($q) => $q->where('product_id', $filters['product_id']))
+            ->when(isset($filters['asset_id']), fn ($q) => $q->where('asset_id', $filters['asset_id']))
+            ->when(isset($filters['date_range']), fn ($q) => $q->whereBetween('end_at', [
+                Carbon::parse($filters['date_range']['start']),
+                Carbon::parse($filters['date_range']['end']),
+            ]))
+            ->with(['vendor:id,name', 'product:id,name', 'asset:id,asset_tag,description']);
+    }
+
+    /**
+     * Base query for Purchase Order Reports.
+     */
+    public function getPurchaseOrderReportQuery(array $filters = []): Builder
+    {
+        return PurchaseOrder::query()
+            ->when(isset($filters['status']) && $filters['status'] !== '', fn ($q) => $q->where('status', $filters['status']))
+            ->when(isset($filters['vendor_id']), fn ($q) => $q->where('vendor_id', $filters['vendor_id']))
+            ->when(isset($filters['product_id']), function ($q) use ($filters) {
+                $q->whereHas('items', fn ($iq) => $iq->where('product_id', $filters['product_id']));
+            })
+            ->when(isset($filters['date_range']), fn ($q) => $q->whereBetween('expected_delivery_at', [
+                Carbon::parse($filters['date_range']['start']),
+                Carbon::parse($filters['date_range']['end']),
+            ]))
+            ->with(['vendor:id,name', 'items' => function ($q) {
+                $q->with(['product:id,name']);
+            }]);
+    }
+
+    /**
+     * Base query for Software Reports.
+     */
+    public function getSoftwareReportQuery(array $filters = []): Builder
+    {
+        return Software::query()
+            ->when(isset($filters['vendor_id']), fn ($q) => $q->where('vendor_id', $filters['vendor_id']))
+            ->when(isset($filters['type']) && in_array($filters['type'], ['saas','on-prem']), fn ($q) => $q->where('type', $filters['type']))
+            ->when(isset($filters['status']) && $filters['status'] !== '', fn ($q) => $q->where('status', $filters['status']))
+            ->when(isset($filters['seats_min']), fn ($q) => $q->where('seats_total', '>=', (int) $filters['seats_min']))
+            ->when(isset($filters['seats_max']), fn ($q) => $q->where('seats_total', '<=', (int) $filters['seats_max']))
+            ->with(['vendor:id,name']);
     }
 
     /**

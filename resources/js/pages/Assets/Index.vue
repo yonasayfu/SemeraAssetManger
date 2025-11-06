@@ -16,19 +16,33 @@ interface LinkItem {
     label: string;
     active: boolean;
 }
+interface Option {
+    id: number;
+    name: string;
+    vendor_id?: number | null;
+}
+
 interface Props {
     assets: {
         data: Asset[];
         links: LinkItem[];
         meta?: { from?: number | null };
     };
+    exportColumns?: string[];
     filters: {
         search?: string;
         sort?: string;
         direction?: 'asc' | 'desc';
         per_page?: number;
+        vendor_id?: number | null;
+        product_id?: number | null;
+        staff_id?: number | null;
+        used_by?: string | null;
     };
     stats?: StatCard[];
+    vendors?: Option[];
+    products?: Option[];
+    staff?: Option[];
 }
 
 interface StatCard {
@@ -43,17 +57,39 @@ const page = usePage();
 const userPermissions = computed<string[]>(() => (page.props as any).auth?.permissions || []);
 const can = (perm: string) => userPermissions.value.includes(perm);
 
+const vendorId = ref<number | null>((props.filters?.vendor_id as number | null) ?? null);
+const productId = ref<number | null>((props.filters?.product_id as number | null) ?? null);
+const staffId = ref<number | null>((props.filters?.staff_id as number | null) ?? null);
+const usedBy = ref<string | null>((props.filters?.used_by as string | null) ?? null);
+
 const tableFilters = useTableFilters({
     route: '/assets',
     initial: {
         search: props.filters?.search ?? '',
         sort: props.filters?.sort ?? '',
         direction: props.filters?.direction ?? 'asc',
-        per_page: props.filters?.per_page ?? 5,
+        per_page: props.filters?.per_page ?? 10,
     },
+    extra: () => ({
+        vendor_id: vendorId.value || undefined,
+        product_id: productId.value || undefined,
+        staff_id: staffId.value || undefined,
+        used_by: usedBy.value || undefined,
+    }),
 });
 
 const { search, sort, direction, perPage, apply, toggleSort } = tableFilters;
+
+const vendors = computed<Option[]>(() => props.vendors ?? []);
+const products = computed<Option[]>(() => props.products ?? []);
+const staff = computed<Option[]>(() => props.staff ?? []);
+
+const filteredProducts = computed<Option[]>(() => {
+    if (!vendorId.value) return products.value;
+    return products.value.filter(p => (p.vendor_id ?? null) === vendorId.value);
+});
+
+watch([vendorId, productId, staffId, usedBy], () => apply());
 
 const printDocumentTitle = 'Asset Management - Asset List';
 const printTimestamp = new Intl.DateTimeFormat(undefined, {
@@ -118,7 +154,14 @@ const buildQueryString = (extra: Record<string, unknown> = {}) => {
 };
 
 const exportCsv = () => {
-    const query = buildQueryString();
+    const query = buildQueryString({
+        vendor_id: vendorId.value || undefined,
+        product_id: productId.value || undefined,
+        staff_id: staffId.value || undefined,
+        used_by: usedBy.value || undefined,
+        // Only include columns param if at least one is selected
+        columns: exportColumns.value.length ? exportColumns.value.join(',') : undefined,
+    });
     window.open(`/assets/export${query}`, '_blank', 'noopener=yes');
 };
 
@@ -159,6 +202,52 @@ const statTone = (tone?: string) => {
             return 'text-indigo-600 dark:text-indigo-300';
     }
 };
+
+// Export column picker
+const allExportColumns = [
+    'Asset Photo',
+    'Asset Tag ID',
+    'Description',
+    'Purchase Date',
+    'Cost',
+    'Status',
+    'Purchased from',
+    'Serial No',
+    'Site',
+    'Location',
+    'Category',
+    'Department',
+    'Assigned to',
+    'Project code',
+];
+const EXPORT_COLUMNS_KEY = 'assets-export-columns';
+const showColumnPicker = ref(false);
+const exportColumns = ref<string[]>([]);
+try {
+    const serverDefault = (props as any).exportColumns as string[] | undefined;
+    if (serverDefault && serverDefault.length > 0) {
+        exportColumns.value = serverDefault.slice();
+    } else {
+        const saved = localStorage.getItem(EXPORT_COLUMNS_KEY);
+        exportColumns.value = saved ? JSON.parse(saved) : allExportColumns.slice();
+    }
+} catch {
+    exportColumns.value = allExportColumns.slice();
+}
+const toggleAllColumns = () => {
+    if (exportColumns.value.length === allExportColumns.length) {
+        exportColumns.value = [];
+    } else {
+        exportColumns.value = allExportColumns.slice();
+    }
+};
+watch(exportColumns, () => {
+    try { localStorage.setItem(EXPORT_COLUMNS_KEY, JSON.stringify(exportColumns.value)); } catch {}
+}, { deep: true });
+
+const saveExportColumns = () => {
+    router.post('/assets/export-preferences', { columns: exportColumns.value }, { preserveScroll: true });
+};
 </script>
 
 <template>
@@ -171,9 +260,28 @@ const statTone = (tone?: string) => {
                 :create-route="can('assets.create') ? '/assets/create' : undefined"
                 create-text="Add New Asset"
                 :show-create="can('assets.create')"
+                :custom-actions="true"
                 @export="exportCsv"
                 @print="printCurrent"
             />
+
+            <!-- Export column picker -->
+            <div v-if="showColumnPicker" class="rounded-xl border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800/60 dark:bg-slate-900/60 print:hidden">
+                <div class="mb-2 flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Choose export columns</h3>
+                    <button type="button" @click="toggleAllColumns" class="text-xs text-indigo-600 hover:underline">{{ exportColumns.length === allExportColumns.length ? 'Deselect All' : 'Select All' }}</button>
+                </div>
+                <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                    <label v-for="col in allExportColumns" :key="col" class="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                        <input type="checkbox" :value="col" v-model="exportColumns" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                        <span>{{ col }}</span>
+                    </label>
+                </div>
+                <div class="mt-3 flex items-center gap-2">
+                    <button type="button" @click="saveExportColumns()" class="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-500">Save as default</button>
+                    <button type="button" @click="showColumnPicker=false" class="rounded-md bg-slate-200 px-3 py-1.5 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-200">Close</button>
+                </div>
+            </div>
 
             <div class="hidden print:block text-center text-slate-800">
                 <img src="/images/asset-logo.svg" alt="Asset Management" class="mx-auto mb-3 h-12 w-auto print-logo" />
@@ -213,6 +321,39 @@ const statTone = (tone?: string) => {
                     />
                 </div>
 
+                <div class="flex flex-1 flex-wrap items-center gap-2">
+                    <select
+                        v-model.number="vendorId"
+                        class="rounded-lg border border-transparent bg-white/80 px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-300 focus:ring-0 dark:bg-slate-900/70 dark:text-slate-200"
+                    >
+                        <option :value="null">All Vendors</option>
+                        <option v-for="v in vendors" :key="v.id" :value="v.id">{{ v.name }}</option>
+                    </select>
+                    <select
+                        v-model.number="productId"
+                        class="rounded-lg border border-transparent bg-white/80 px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-300 focus:ring-0 dark:bg-slate-900/70 dark:text-slate-200"
+                    >
+                        <option :value="null">All Products</option>
+                        <option v-for="p in filteredProducts" :key="p.id" :value="p.id">{{ p.name }}</option>
+                    </select>
+                    <select
+                        v-model.number="staffId"
+                        class="rounded-lg border border-transparent bg-white/80 px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-300 focus:ring-0 dark:bg-slate-900/70 dark:text-slate-200"
+                    >
+                        <option :value="null">Used By (any)</option>
+                        <option v-for="s in staff" :key="s.id" :value="s.id">{{ s.name }}</option>
+                    </select>
+                    <select
+                        v-model="usedBy"
+                        class="rounded-lg border border-transparent bg-white/80 px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-300 focus:ring-0 dark:bg-slate-900/70 dark:text-slate-200"
+                    >
+                        <option :value="null">Preset: All</option>
+                        <option value="assigned">Preset: Assigned</option>
+                        <option value="unassigned">Preset: Unassigned</option>
+                    </select>
+                    <button type="button" @click="apply" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Apply</button>
+                </div>
+
                 <div class="flex items-center gap-2">
                     <label for="perPage" class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Per Page</label>
                     <select
@@ -226,6 +367,7 @@ const statTone = (tone?: string) => {
                         <option :value="50">50</option>
                         <option :value="100">100</option>
                     </select>
+                    <button type="button" @click="showColumnPicker = !showColumnPicker" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Columns</button>
                 </div>
             </div>
 

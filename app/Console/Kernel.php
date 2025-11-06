@@ -39,6 +39,12 @@ class Kernel extends ConsoleKernel
             ->job(new \App\Jobs\GenerateAlertsJob())
             ->daily()
             ->name('alerts.generate');
+
+        $schedule
+            ->job(new \App\Jobs\SendPendingAlertsJob())
+            ->dailyAt('08:00')
+            ->onOneServer()
+            ->name('alerts.send-pending');
     }
 
     /**

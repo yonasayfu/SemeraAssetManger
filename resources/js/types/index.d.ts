@@ -137,6 +137,9 @@ export type Asset = {
     serial_no: string;
     project_code: string;
     asset_condition: 'New' | 'Good' | 'Fair' | 'Poor' | 'Broken';
+    vendor_id: number | null;
+    product_id: number | null;
+    purchase_order_item_id?: number | null;
     site_id: number | null;
     location_id: number | null;
     category_id: number | null;
@@ -144,7 +147,35 @@ export type Asset = {
     staff_id: number | null;
     status: 'Available' | 'Checked Out' | 'Under Repair' | 'Leased' | 'Disposed' | 'Lost' | 'Donated' | 'Sold';
     photo: string | null;
+    custom_fields?: Record<string, unknown> | null;
     created_by: number;
+};
+
+export type VendorOption = {
+    id: number;
+    name: string;
+};
+
+export type ProductOption = {
+    id: number;
+    vendor_id: number | null;
+    name: string;
+    warranty_months: number | null;
+    unit_cost_minor: number | null;
+    currency: string | null;
+};
+
+export type PurchaseOrderItemOption = {
+    id: number;
+    purchase_order_id: number;
+    po_number: string | null;
+    vendor_id: number | null;
+    product_id: number | null;
+    product_name: string | null;
+    qty: number;
+    received_qty: number | null;
+    unit_cost_minor: number | null;
+    currency: string | null;
 };
 
 export type Checkout = {

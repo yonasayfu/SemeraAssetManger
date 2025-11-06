@@ -24,6 +24,17 @@ const props = withDefaults(
 );
 
 const warranties = computed<WarrantyItem[]>(() => props.data?.warranties ?? []);
+
+function formatDate(value?: string | null) {
+    if (!value) return '—';
+    try {
+        const d = new Date(value);
+        if (isNaN(d.getTime())) return value as string;
+        return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(d);
+    } catch {
+        return value as string;
+    }
+}
 </script>
 
 <template>
@@ -58,10 +69,10 @@ const warranties = computed<WarrantyItem[]>(() => props.data?.warranties ?? []);
                             {{ warranty.length_months ? `${warranty.length_months} months` : '—' }}
                         </td>
                         <td class="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
-                            {{ warranty.start_date ?? '—' }}
+                            {{ formatDate(warranty.start_date) }}
                         </td>
                         <td class="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
-                            {{ warranty.expiry_date ?? '—' }}
+                            {{ formatDate(warranty.expiry_date) }}
                         </td>
                         <td class="px-4 py-3">
                             <span

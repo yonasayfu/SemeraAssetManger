@@ -7,7 +7,18 @@ import { useAsyncAction } from '@/composables/useAsyncAction';
 import { useToast } from '@/composables/useToast';
 
 const form = useForm({
-  entity: 'staff' as 'staff' | 'sites' | 'locations' | 'categories' | 'departments' | 'maintenances' | 'warranties',
+  entity: 'staff' as 'staff'
+    | 'sites'
+    | 'locations'
+    | 'categories'
+    | 'departments'
+    | 'maintenances'
+    | 'warranties'
+    | 'vendors'
+    | 'products'
+    | 'contracts'
+    | 'purchase-orders'
+    | 'software',
   file: null as File | null,
 });
 
@@ -55,6 +66,11 @@ const can = (perm: string) => ((page.props as any).auth?.permissions || []).incl
               <option value="departments">Departments</option>
               <option value="maintenances">Maintenances</option>
               <option value="warranties">Warranties</option>
+              <option value="vendors">Vendors</option>
+              <option value="products">Products</option>
+              <option value="contracts">Contracts</option>
+              <option value="purchase-orders">Purchase Orders</option>
+              <option value="software">Software</option>
             </select>
           </div>
           <div>

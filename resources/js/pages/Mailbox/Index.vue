@@ -1,4 +1,5 @@
 <script setup>
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { reactive, watch, onMounted, onUnmounted } from 'vue';
 import { router } from '@inertiajs/vue3';
@@ -40,7 +41,8 @@ const getToRecipients = (recipients) => {
 <template>
   <Head title="Mailbox" />
 
-  <div class="p-6 md:p-10">
+  <AppLayout :breadcrumbs="[{ title: 'Mailbox', href: '/mailbox' }]">
+  <div class="p-2 md:p-0">
       <div class="flex justify-between items-center mb-6">
           <h1 class="text-3xl font-bold text-gray-800">Mailbox</h1>
       </div>
@@ -92,4 +94,5 @@ const getToRecipients = (recipients) => {
       </div>
       <!-- TODO: Add Pagination links -->
   </div>
+  </AppLayout>
 </template>

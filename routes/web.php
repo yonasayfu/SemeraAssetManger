@@ -56,6 +56,9 @@ use App\Http\Controllers\StoreAssetCheckoutController;
 use App\Http\Controllers\StoreAssetCheckinController;
 use App\Http\Controllers\StoreAssetDisposeController;
 use App\Http\Controllers\StoreAssetImportController;
+use App\Http\Controllers\StoreAssetExportPreferencesController;
+use App\Http\Controllers\AssetImportPreviewController;
+use App\Http\Controllers\AssetImportDryRunController;
 use App\Http\Controllers\StoreAssetLeaseController;
 use App\Http\Controllers\StoreAssetLeaseReturnController;
 use App\Http\Controllers\StoreAssetMoveController;
@@ -255,7 +258,11 @@ Route::middleware('auth')->group(function () {
             Route::get('/create', [AssetController::class, 'create'])->middleware('permission:assets.create')->name('create');
             Route::post('/', [AssetController::class, 'store'])->middleware('permission:assets.create')->name('store');
             Route::get('/export', [AssetController::class, 'export'])->name('export');
+            Route::post('/export-preferences', StoreAssetExportPreferencesController::class)->name('export-preferences');
             Route::get('/import', AssetImportController::class)->name('import');
+            Route::get('/import/template', [AssetImportController::class, 'template'])->name('import.template');
+            Route::post('/import/preview', AssetImportPreviewController::class)->name('import.preview');
+            Route::post('/import/dry-run', AssetImportDryRunController::class)->name('import.dry-run');
             Route::post('/import', StoreAssetImportController::class)->name('import.store');
 
             // Asset Operation Select Pages
@@ -322,20 +329,26 @@ Route::middleware('auth')->group(function () {
         // Freshservice-style: Vendors, Products, Contracts, POs, Software (Phase 2 - basic CRUD)
         Route::middleware('permission:vendors.view')->group(function () {
             Route::resource('vendors', \App\Http\Controllers\VendorController::class)->except(['show']);
+            Route::get('vendors/export', [\App\Http\Controllers\VendorController::class, 'export'])->name('vendors.export')->middleware('role:Admin');
         });
         Route::middleware('permission:products.view')->group(function () {
             Route::resource('products', \App\Http\Controllers\ProductController::class)->except(['show']);
+            Route::get('products/export', [\App\Http\Controllers\ProductController::class, 'export'])->name('products.export')->middleware('role:Admin');
         });
         Route::middleware('permission:contracts.view')->group(function () {
             Route::resource('contracts', \App\Http\Controllers\ContractController::class)->except(['show']);
+            Route::get('contracts/board', [\App\Http\Controllers\ContractController::class, 'board'])->name('contracts.board');
+            Route::get('contracts/export', [\App\Http\Controllers\ContractController::class, 'export'])->name('contracts.export')->middleware('role:Admin');
         });
 
         Route::middleware('permission:purchase-orders.view')->group(function () {
             Route::resource('purchase-orders', \App\Http\Controllers\PurchaseOrderController::class)->except(['show']);
             Route::post('purchase-orders/{purchase_order}/receive', [\App\Http\Controllers\PurchaseOrderController::class, 'receive'])->name('purchase-orders.receive');
+            Route::get('purchase-orders/export', [\App\Http\Controllers\PurchaseOrderController::class, 'export'])->name('purchase-orders.export')->middleware('role:Admin');
         });
         Route::middleware('permission:software.view')->group(function () {
             Route::resource('software', \App\Http\Controllers\SoftwareController::class)->except(['show']);
+            Route::get('software/export', [\App\Http\Controllers\SoftwareController::class, 'export'])->name('software.export')->middleware('role:Admin');
         });
 
 
@@ -372,6 +385,9 @@ Route::middleware('auth')->group(function () {
             Route::get('checkout', CheckoutReportController::class)->name('checkout');
             Route::get('leased-assets', LeasedAssetReportController::class)->name('leased-assets');
             Route::get('maintenance', MaintenanceReportController::class)->name('maintenance');
+            Route::get('contracts', \App\Http\Controllers\Report\ContractReportController::class)->name('contracts');
+            Route::get('purchase-orders', \App\Http\Controllers\Report\PurchaseOrderReportController::class)->name('purchase-orders');
+            Route::get('software', \App\Http\Controllers\Report\SoftwareReportController::class)->name('software');
             Route::get('reservations', ReservationReportController::class)->name('reservations');
             Route::get('status', StatusReportController::class)->name('status');
             Route::get('transactions', TransactionReportController::class)->name('transactions');
@@ -391,6 +407,11 @@ Route::middleware('auth')->group(function () {
             Route::post('import/departments', DepartmentImportController::class)->name('import.departments')->middleware('role:Admin');
             Route::post('import/maintenances', MaintenanceImportController::class)->name('import.maintenances')->middleware('role:Admin');
             Route::post('import/warranties', WarrantyImportController::class)->name('import.warranties')->middleware('role:Admin');
+            Route::post('import/vendors', \App\Http\Controllers\VendorImportController::class)->name('import.vendors')->middleware('role:Admin');
+            Route::post('import/products', \App\Http\Controllers\ProductImportController::class)->name('import.products')->middleware('role:Admin');
+            Route::post('import/contracts', \App\Http\Controllers\ContractImportController::class)->name('import.contracts')->middleware('role:Admin');
+            Route::post('import/purchase-orders', \App\Http\Controllers\PurchaseOrderImportController::class)->name('import.purchase-orders')->middleware('role:Admin');
+            Route::post('import/software', \App\Http\Controllers\SoftwareImportController::class)->name('import.software')->middleware('role:Admin');
             Route::get('documents', DocumentGalleryController::class)->name('documents');
             Route::get('images', ImageGalleryController::class)->name('images');
             Route::resource('audits', AuditController::class);

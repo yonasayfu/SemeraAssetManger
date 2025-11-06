@@ -166,6 +166,21 @@ const sidebarGroups = ref<Group[]>([
     ]
   },
 
+  // Catalog & Procurement (Freshservice-style)
+  {
+    id: 'catalog',
+    label: "Catalog & Procurement",
+    icon: List,
+    items: [
+      { title: "Vendors", href: "/vendors", icon: Building2, permission: 'vendors.view' },
+      { title: "Products", href: "/products", icon: Tags, permission: 'products.view' },
+      { title: "Contracts", href: "/contracts", icon: FileSignature, permission: 'contracts.view' },
+      { title: "Contracts Board", href: "/contracts/board", icon: FileSignature, permission: 'contracts.view' },
+      { title: "Purchase Orders", href: "/purchase-orders", icon: ClipboardList, permission: 'purchase-orders.view' },
+      { title: "Software", href: "/software", icon: Layers, permission: 'software.view' },
+    ]
+  },
+
   // Inventory (Lists)
   {
     id: 'inventory',
@@ -192,6 +207,9 @@ const sidebarGroups = ref<Group[]>([
       { title: "Check-Out Reports", href: "/reports/checkout", icon: LogOut, permission: 'reports.view' },
       { title: "Leased Asset Reports", href: "/reports/leased-assets", icon: FileSignature, permission: 'reports.view' },
       { title: "Maintenance Reports", href: "/reports/maintenance", icon: Wrench, permission: 'reports.view' },
+      { title: "Contract Reports", href: "/reports/contracts", icon: FileSignature, permission: 'reports.view' },
+      { title: "Purchase Order Reports", href: "/reports/purchase-orders", icon: ClipboardList, permission: 'reports.view' },
+      { title: "Software Reports", href: "/reports/software", icon: Layers, permission: 'reports.view' },
       { title: "Reservation Reports", href: "/reports/reservations", icon: CalendarRange, permission: 'reports.view' },
       { title: "Status Reports", href: "/reports/status", icon: Info, permission: 'reports.view' },
       { title: "Transaction Reports", href: "/reports/transactions", icon: ArrowLeftRight, permission: 'reports.view' },
@@ -274,6 +292,8 @@ const userPerms = computed<string[]>(() => auth.value?.permissions || [])
 const userRoles = computed<string[]>(() => auth.value?.roles || [])
 
 const hasPermission = (perm?: string | string[] | null): boolean => {
+  // Admins see all items regardless of explicit permission flags
+  if (userRoles.value.includes('Admin')) return true
   if (!perm) return true
   if (Array.isArray(perm)) return perm.some(p => userPerms.value.includes(p))
   return userPerms.value.includes(perm)

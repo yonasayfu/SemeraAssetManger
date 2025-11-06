@@ -11,12 +11,13 @@
 - Extensibility: Add ITSM‑style features (Freshdesk/Freshworks inspirations) not offered in our current plan.
 
 ## Highlights Delivered
-- Assets domain: CRUD, check‑out/in, lease/return, reserve, move, dispose, maintenance, warranty.
-- Realtime dashboard: live metrics, donut chart by category, calendar of upcoming events.
-- Import/Export: Admin‑only; export headers match AssetTiger legacy file; import resolves names/IDs, creates taxonomy.
-- Global search: unified search across assets and staff.
-- Access control: spatie/permission with admin‑gated import/export.
-- UX polish: card widgets, empty states, confirmation dialogs; Inertia‑based 403/404/500 pages.
+- Assets: CRUD + operations (checkout/in, lease/return, reserve, move, dispose), maintenance, warranty.
+- Catalog & Procurement: Vendors, Products, Contracts, Purchase Orders (items + receive), Software inventory.
+- Reports: Contracts, Purchase Orders, Software via ReportBuilder, CSV export (chunked streaming).
+- Dashboard: Realtime metrics + Catalog summary (contracts expiring, POs due, software seats).
+- Alerts & Notifications: Daily alerts for maintenance/warranty; contracts expiring; POs due/overdue; mail + in‑app notifications.
+- Import/Export: Admin‑only; templates for vendors/products/contracts/POs/software; CSV export on lists.
+- Global search & access control: Sanctum + spatie/permission; Admin visibility tuned for Catalog.
 
 ## Comparison: AssetTiger vs ASLM App
 - Core Inventory
@@ -43,9 +44,9 @@
 - Team: staff management; roles & permissions.
 
 ## Roadmap (near‑term)
-- Validation hardening across all CRUD endpoints.
-- More dashboard insights (trends per card, inline sparklines).
-- CMDB relationships + software licensing.
+- Validation hardening across CRUD + import jobs.
+- Download Center for batched exports; XLSX output where needed.
+- CMDB relationships + licensing; discovery import.
 - Ticketing/ITSM: incidents, requests, automation (Freshdesk‑inspired).
 
 ## Risks & Mitigations
@@ -56,4 +57,3 @@
 ## Call to Action
 - Approve pilot rollout to staging → GoDaddy hosting.
 - Green‑light phase 2 (ITSM features) after pilot feedback.
-

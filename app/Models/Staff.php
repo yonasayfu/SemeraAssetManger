@@ -94,6 +94,7 @@ class Staff extends Authenticatable
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'approved_at' => 'datetime',
+            'list_preferences' => 'array',
         ];
     }
 

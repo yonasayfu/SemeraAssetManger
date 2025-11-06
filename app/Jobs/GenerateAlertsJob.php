@@ -33,5 +33,8 @@ class GenerateAlertsJob implements ShouldQueue
         $alertService->checkWarrantiesExpiring();
         $alertService->checkAssetsDue();
         $alertService->checkAssetsPastDue();
+        // Freshservice-style
+        $alertService->checkContractsExpiring();
+        $alertService->checkPurchaseOrdersDue();
     }
 }

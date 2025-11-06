@@ -10,7 +10,7 @@ class LeasesExpiringController extends Controller
 {
     public function __invoke()
     {
-        $alerts = Alert::where('type', 'Expiring Lease')
+        $alerts = Alert::where('type', 'Lease Expiring')
             ->with('asset')
             ->paginate(10);
 

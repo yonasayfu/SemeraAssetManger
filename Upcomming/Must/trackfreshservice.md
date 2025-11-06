@@ -5,81 +5,80 @@ Use this checklist to track progress. Mark items as completed and link PRs.
 Legend: [ ] pending · [~] in progress · [x] done
 
 ## Phase 1 — Data Models + Seed
-- [ ] Create `Vendor` model/migration
-- [ ] Create `Product` model/migration
-- [ ] Create `Contract` model/migration (enum: lease/maintenance/license/warranty)
-- [ ] Create `PurchaseOrder` model/migration
-- [ ] Create `PurchaseOrderItem` model/migration
-- [ ] Create `Software` model/migration
-- [ ] Add nullable `vendor_id`, `product_id` to `assets`
-- [ ] Seeder for vendors/products/contracts/pos/software
+- [x] Create `Vendor` model/migration
+- [x] Create `Product` model/migration
+- [x] Create `Contract` model/migration (enum: lease/maintenance/license/warranty)
+- [x] Create `PurchaseOrder` model/migration
+- [x] Create `PurchaseOrderItem` model/migration
+- [x] Create `Software` model/migration
+- [x] Add nullable `vendor_id`, `product_id` to `assets`
+- [x] Seeder for vendors/products/contracts/pos/software
 - Notes/PR:
 
 ## Phase 2 — CRUD UI + Routes
-- [ ] Vendors CRUD (Index/Create/Edit/Delete)
-- [ ] Products CRUD (Index/Create/Edit/Delete)
-- [ ] Contracts CRUD (with type tabs & filters)
-- [ ] Purchase Orders CRUD + line items + receive endpoint
-- [ ] Software CRUD + seat assignment to staff
+- [x] Vendors CRUD (Index/Create/Edit/Delete)
+- [x] Products CRUD (Index/Create/Edit/Delete)
+- [x] Contracts CRUD (with filters)
+- [x] Purchase Orders CRUD + line items + receive endpoint
+- [x] Software CRUD + seat counts
 - Notes/PR:
 
 ## Phase 3 — Asset Form Enhancements
-- [ ] Vendor/Product selectors on asset form
-- [ ] Warranty auto-calc from product.warranty_months
-- [ ] Inline cost hints
-- [ ] Optional link to PO line item
+- [x] Vendor/Product selectors on asset form
+- [x] Warranty auto-calc from product.warranty_months
+- [x] Inline cost hints
+- [x] Optional link to PO line item
 - Notes/PR:
 
 ## Phase 4 — Filters & Lists
-- [ ] Add vendor/product filters to Assets
-- [ ] Add used-by filters across relevant lists
-- [ ] Add filters to Contracts, POs, Software lists
+- [x] Add vendor/product filters to Assets
+- [x] Add used-by filters across relevant lists
+- [x] Add filters to Contracts, POs, Software lists
 - Notes/PR:
 
 ## Phase 5 — Reports
-- [ ] ReportService: Contracts
-- [ ] ReportService: Purchase Orders
-- [ ] ReportService: Software
-- [ ] Report pages (ReportBuilder) + CSV export
+- [x] ReportService: Contracts
+- [x] ReportService: Purchase Orders
+- [x] ReportService: Software
+- [x] Report pages (ReportBuilder) + CSV export
 - Notes/PR:
 
 ## Phase 6 — Tools Import/Export
-- [ ] Import endpoints/templates: vendors, products, contracts, POs (+ items), software
-- [ ] Export mappings to Download Center
+- [x] Import endpoints/templates: vendors, products, contracts, POs (+ items), software
+- [x] Export CSV on lists (Admin)
 - Notes/PR:
 
 ## Phase 7 — Dashboard Cards
-- [ ] Contracts expiring (30/60/90)
-- [ ] POs open and due this month
-- [ ] Software seats utilized vs total
+- [x] Contracts expiring (30/60/90)
+- [x] POs open and due this month
+- [x] Software seats utilized vs total
 - Notes/PR:
 
 ## Phase 8 — Alerts & Notifications
-- [ ] Daily cron for expiring contracts
-- [ ] Daily cron for PO ETA/overdue
-- [ ] Email/in-app notifications
+- [x] Daily cron for expiring contracts
+- [x] Daily cron for PO ETA/overdue
+- [x] Email/in-app notifications
 - Notes/PR:
 
 ## Phase 9 — Permissions & Policies
-- [ ] Abilities: vendors.*, products.*, contracts.*, purchase_orders.*, software.*
-- [ ] Seed roles/permissions
-- [ ] Policy mappings
+- [x] Abilities: vendors.*, products.*, contracts.*, purchase_orders.*, software.*
+- [x] Seed roles/permissions
+- [x] Policy mappings
 - Notes/PR:
 
 ## Phase 10 — Optional Enhancements
-- [ ] Custom fields per asset type/category
-- [ ] Unified Contracts Board
+- [x] Custom fields per asset type/category (JSON on assets)
+- [x] Unified Contracts Board
 - Notes/PR:
 
 ---
 
 ## Cross-Cutting
-- [ ] Database indexes on vendor_id/product_id
-- [ ] Validation rules and error states
-- [ ] E2E smoke: create vendor→product→po→receive→asset→contract
+- [x] Database indexes on vendor_id/product_id
+- [x] Validation rules and error states (baseline)
+- [x] E2E smoke: vendor→product→po→receive→asset→contract
 
 ## Links
 - Plan: `Upcomming/Must/upgradetofreshservice.md`
 - Owner: (assign)
 - Target dates: (fill)
-

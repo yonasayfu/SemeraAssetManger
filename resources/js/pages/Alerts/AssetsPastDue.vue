@@ -31,7 +31,7 @@ const props = defineProps<{
                                 <div>
                                     <p class="text-lg font-semibold">{{ alert.message }}</p>
                                     <p class="text-sm text-gray-500">Asset: {{ alert.asset.asset_tag }} - {{ alert.asset.description }}</p>
-                                    <p class="text-sm text-gray-500">Due Date: {{ alert.due_date }}</p>
+                                    <p class="text-sm text-gray-500">Due Date: {{ alert.due_date ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(alert.due_date)) : '—' }}</p>
                                 </div>
                                 <Link :href="`/assets/${alert.asset.id}`" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
                                     View Asset
