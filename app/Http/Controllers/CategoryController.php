@@ -60,7 +60,7 @@ class CategoryController extends Controller
         $this->authorize('create', Category::class);
         Category::create($request->all());
 
-        return redirect()->route('categories.index');
+        return redirect()->route('setup.categories.index');
     }
 
     /**
@@ -88,7 +88,7 @@ class CategoryController extends Controller
         $this->authorize('update', $category);
         $category->update($request->all());
 
-        return redirect()->route('categories.index');
+        return redirect()->route('setup.categories.index');
     }
 
     /**
@@ -99,6 +99,6 @@ class CategoryController extends Controller
         $this->authorize('delete', $category);
         $category->delete();
 
-        return redirect()->route('categories.index');
+        return redirect()->route('setup.categories.index');
     }
 }

@@ -11,12 +11,23 @@ use App\Models\Staff;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Concerns\SkipsFailures;
+use Maatwebsite\Excel\Concerns\SkipsOnFailure;
+use Maatwebsite\Excel\Concerns\SkipsOnError;
+use Maatwebsite\Excel\Concerns\SkipsErrors;
+use Maatwebsite\Excel\Concerns\WithUpserts;
+use Maatwebsite\Excel\Concerns\WithUpsertColumns;
+use Maatwebsite\Excel\Validators\Failure;
 
-class AssetsImport implements ToModel, WithHeadingRow
+class AssetsImport implements ToModel, WithHeadingRow, SkipsOnFailure, SkipsOnError, WithUpserts, WithUpsertColumns
 {
+    use SkipsFailures, SkipsErrors;
+
     /** @var array<string,string> mapping from incoming header key to internal field key */
     protected array $mapping = [];
 
@@ -31,6 +42,30 @@ class AssetsImport implements ToModel, WithHeadingRow
         $this->options = $options;
         $this->createMissingTaxonomy = (bool)($options['create_missing_taxonomy'] ?? true);
     }
+
+    public function onFailure(Failure ...$failures)
+    {
+        // Handle the failures how you'd like. For now, we'll just store them.
+        $this->failures = array_merge($this->failures, $failures);
+    }
+
+    public function uniqueBy()
+    {
+        // Upsert based on asset_tag to avoid duplicate constraint failures
+        return 'asset_tag';
+    }
+
+    public function upsertColumns(): array
+    {
+        // Only update mutable columns, avoid changing creator and primary identifiers
+        return [
+            'description', 'purchase_date', 'cost', 'currency', 'purchased_from',
+            'brand', 'model', 'serial_no', 'project_code', 'asset_condition',
+            'site_id', 'location_id', 'category_id', 'department_id', 'staff_id',
+            'status', 'photo', 'custom_fields', 'updated_at',
+        ];
+    }
+
     /**
     * @param array $row
     *
@@ -38,11 +73,28 @@ class AssetsImport implements ToModel, WithHeadingRow
     */
     public function model(array $row)
     {
+        \Illuminate\Support\Facades\Log::info('AssetsImport model method hit for row:', $row);
         $row = $this->applyMapping($row);
         $r = $this->normalize($row);
 
         // Resolve foreign keys by name or id. Create taxonomy if missing (except staff).
         $siteId = $this->resolveSiteId(Arr::get($r, 'site_id'), Arr::get($r, 'site'));
+
+        // If a location is provided but no site is resolved, create a default site if createMissingTaxonomy is enabled.
+        if (is_null($siteId) && !empty(Arr::get($r, 'location')) && $this->createMissingTaxonomy) {
+            $siteId = Site::firstOrCreate(
+                ['name' => 'Default Site for Imports'],
+                [
+                    'description' => 'Automatically created for imported locations without a specified site.',
+                    'address' => 'N/A',
+                    'city' => 'N/A',
+                    'state' => 'N/A',
+                    'postal_code' => 'N/A',
+                    'country' => 'N/A',
+                ]
+            )->id;
+        }
+
         $locationId = $this->resolveLocationId(Arr::get($r, 'location_id'), Arr::get($r, 'location'), $siteId);
         $categoryId = $this->resolveCategoryId(Arr::get($r, 'category_id'), Arr::get($r, 'category'));
         $departmentId = $this->resolveDepartmentId(Arr::get($r, 'department_id'), Arr::get($r, 'department'));
@@ -55,7 +107,7 @@ class AssetsImport implements ToModel, WithHeadingRow
             'asset_tag' => Arr::get($r, 'asset_tag'),
             'description' => Arr::get($r, 'description'),
             'purchase_date' => $purchaseDate,
-            'cost' => Arr::get($r, 'cost'),
+            'cost' => $this->parseCost(Arr::get($r, 'cost')),
             'currency' => Arr::get($r, 'currency'),
             'purchased_from' => Arr::get($r, 'purchased_from'),
             'brand' => Arr::get($r, 'brand'),
@@ -68,7 +120,7 @@ class AssetsImport implements ToModel, WithHeadingRow
             'category_id' => $categoryId,
             'department_id' => $departmentId,
             'staff_id' => $staffId,
-            'status' => Arr::get($r, 'status') ?: 'Available',
+            'status' => $this->normalizeStatus(Arr::get($r, 'status')),
             'photo' => Arr::get($r, 'photo') ?: Arr::get($r, 'asset_photo'),
             'created_by' => Auth::id(),
         ]);
@@ -125,59 +177,101 @@ class AssetsImport implements ToModel, WithHeadingRow
 
     protected function resolveSiteId($id, $name): ?int
     {
+        \Illuminate\Support\Facades\Log::info('Resolving Site: ', ['id' => $id, 'name' => $name]);
         if ($this->isValidId($id)) return (int) $id;
         $n = trim((string) $name);
         if ($n === '') return null;
         if ($this->createMissingTaxonomy) {
-            return Site::firstOrCreate(['name' => $n])->id;
+            // Sites table requires several non-null fields; create minimal placeholders.
+            $site = Site::firstOrCreate(
+                ['name' => $n],
+                [
+                    'description' => null,
+                    'address' => '',
+                    'suite' => null,
+                    'city' => '',
+                    'state' => '',
+                    'postal_code' => '',
+                    'country' => '',
+                ]
+            );
+            \Illuminate\Support\Facades\Log::info('Site resolved/created: ', ['name' => $n, 'id' => $site->id]);
+            return $site->id;
         }
+        $site = Site::where('name', $n)->first();
+        \Illuminate\Support\Facades\Log::info('Site resolved: ', ['name' => $n, 'id' => optional($site)->id]);
         return optional(Site::where('name', $n)->first())->id;
     }
 
     protected function resolveLocationId($id, $name, ?int $siteId): ?int
     {
+        \Illuminate\Support\Facades\Log::info('Resolving Location: ', ['id' => $id, 'name' => $name, 'site_id' => $siteId]);
         if ($this->isValidId($id)) return (int) $id;
         $n = trim((string) $name);
         if ($n === '') return null;
         $query = Location::query()->where('name', $n);
         if ($siteId) $query->where('site_id', $siteId);
         $existing = $query->first();
-        if ($existing) return $existing->id;
+        if ($existing) {
+            \Illuminate\Support\Facades\Log::info('Location resolved: ', ['name' => $n, 'id' => $existing->id]);
+            return $existing->id;
+        }
         if (!$this->createMissingTaxonomy) return null;
-        return Location::create(['name' => $n, 'site_id' => $siteId])->id;
+        if (is_null($siteId)) {
+            \Illuminate\Support\Facades\Log::warning('Cannot create location without a site_id: '.$n);
+            return null;
+        }
+        $location = Location::create(['name' => $n, 'site_id' => $siteId]);
+        \Illuminate\Support\Facades\Log::info('Location created: ', ['name' => $n, 'id' => $location->id, 'site_id' => $siteId]);
+        return $location->id;
     }
 
     protected function resolveCategoryId($id, $name): ?int
     {
+        \Illuminate\Support\Facades\Log::info('Resolving Category: ', ['id' => $id, 'name' => $name]);
         if ($this->isValidId($id)) return (int) $id;
         $n = trim((string) $name);
         if ($n === '') return null;
         if ($this->createMissingTaxonomy) {
-            return Category::firstOrCreate(['name' => $n])->id;
+            $category = Category::firstOrCreate(['name' => $n]);
+            \Illuminate\Support\Facades\Log::info('Category resolved/created: ', ['name' => $n, 'id' => $category->id]);
+            return $category->id;
         }
+        $category = Category::where('name', $n)->first();
+        \Illuminate\Support\Facades\Log::info('Category resolved: ', ['name' => $n, 'id' => optional($category)->id]);
         return optional(Category::where('name', $n)->first())->id;
     }
 
     protected function resolveDepartmentId($id, $name): ?int
     {
+        \Illuminate\Support\Facades\Log::info('Resolving Department: ', ['id' => $id, 'name' => $name]);
         if ($this->isValidId($id)) return (int) $id;
         $n = trim((string) $name);
         if ($n === '') return null;
         if ($this->createMissingTaxonomy) {
-            return Department::firstOrCreate(['name' => $n])->id;
+            $department = Department::firstOrCreate(['name' => $n]);
+            \Illuminate\Support\Facades\Log::info('Department resolved/created: ', ['name' => $n, 'id' => $department->id]);
+            return $department->id;
         }
+        $department = Department::where('name', $n)->first();
+        \Illuminate\Support\Facades\Log::info('Department resolved: ', ['name' => $n, 'id' => optional($department)->id]);
         return optional(Department::where('name', $n)->first())->id;
     }
 
     protected function resolveStaffId($id, $value)
     {
+        \Illuminate\Support\Facades\Log::info('Resolving Staff: ', ['id' => $id, 'value' => $value]);
         if ($this->isValidId($id)) return (int) $id;
         $v = trim((string) $value);
         if ($v === '') return null;
         // Try by email first, then by name. Do NOT create user automatically (password required).
         $byEmail = Staff::where('email', $v)->first();
-        if ($byEmail) return $byEmail->id;
+        if ($byEmail) {
+            \Illuminate\Support\Facades\Log::info('Staff resolved by email: ', ['email' => $v, 'id' => $byEmail->id]);
+            return $byEmail->id;
+        }
         $byName = Staff::where('name', $v)->first();
+        \Illuminate\Support\Facades\Log::info('Staff resolved by name: ', ['name' => $v, 'id' => optional($byName)->id]);
         return $byName?->id;
     }
 
@@ -193,6 +287,46 @@ class AssetsImport implements ToModel, WithHeadingRow
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    protected function parseCost($value): ?float
+    {
+        if ($value === null || $value === '') return null;
+        if (is_numeric($value)) return (float) $value;
+        $v = (string) $value;
+        // Strip currency symbols and thousand separators
+        $v = preg_replace('/[^0-9.,-]/', '', $v ?? '') ?? '';
+        // If both comma and dot present, assume comma is thousands
+        if (str_contains($v, ',') && str_contains($v, '.')) {
+            $v = str_replace(',', '', $v);
+        } else {
+            // If only comma present, treat it as decimal separator
+            if (str_contains($v, ',') && !str_contains($v, '.')) {
+                $v = str_replace(',', '.', $v);
+            }
+        }
+        // Remove any remaining thousand separators spaces
+        $v = str_replace([' '], '', $v);
+        if ($v === '' || $v === '.' || $v === ',') return null;
+        return (float) $v;
+    }
+
+    protected function normalizeStatus($value): string
+    {
+        $default = 'Available';
+        if (!$value) return $default;
+        $map = [
+            'available' => 'Available',
+            'checked out' => 'Checked Out',
+            'under repair' => 'Under Repair',
+            'leased' => 'Leased',
+            'disposed' => 'Disposed',
+            'lost' => 'Lost',
+            'donated' => 'Donated',
+            'sold' => 'Sold',
+        ];
+        $k = strtolower(trim((string) $value));
+        return $map[$k] ?? $default;
     }
 
     protected function isValidId($value): bool

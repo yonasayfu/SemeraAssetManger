@@ -8,7 +8,7 @@ import { initializeTheme } from './composables/useAppearance';
 import { route } from 'ziggy'; // Corrected named import
 import { Ziggy } from './ziggy'; // Ensure Ziggy is imported for use in the provide function
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || 'ASLM';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),

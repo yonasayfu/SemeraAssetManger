@@ -298,12 +298,17 @@ const paginationLinks = computed(() => props.audits.links ?? []);
         <ResourceToolbar
             title="Audit Tracker"
             description="Monitor audit status across sites and locations."
-            :show-create="false"
+            :show-create="userPermissions.includes('audits.create')"
             :show-export="can('lists.view')"
             :show-print="can('lists.view')"
             @export="exportCsv"
             @print="() => openWindow('/lists/audits', buildQueryString({ print: 1 }))"
         />
+        <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 print:hidden" v-if="userPermissions.includes('audits.create')">
+            <div class="text-right">
+                <a href="/audits/wizard" class="btn-glass btn-variant-primary">Create Audit</a>
+            </div>
+        </div>
 
         <div class="mx-auto mt-6 flex w-full max-w-6xl flex-col gap-6 px-4 pb-12 sm:px-6 lg:px-8">
             <div v-if="stats?.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

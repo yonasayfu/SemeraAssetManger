@@ -22,16 +22,18 @@ class AssetImportDryRunController extends Controller
         $data = $request->validate([
             'token' => ['required', 'string'],
             'mapping' => ['required', 'array'],
-            'options' => ['nullable', 'array'],
+            'options' => ['nullable', 'string'],
         ]);
 
-        $token = $data['token'];
+        $options = isset($data['options']) ? json_decode($data['options'], true) : [];
+        $createMissing = (bool)($options['create_missing_taxonomy'] ?? false);
+        $token = (string) $data['token'];
         $path = $this->resolveTokenPath($token);
-        if (!$path || !Storage::disk('local')->exists($path)) {
-            return back()->with('error', 'Preview file not found or expired.');
+        if (!$path) {
+            return back()
+                ->with('flash.banner', 'Import file not found for the provided token. Please re-upload your file and try again.')
+                ->with('flash.bannerStyle', 'danger');
         }
-
-        $createMissing = (bool)($data['options']['create_missing_taxonomy'] ?? false);
 
         $absolute = Storage::disk('local')->path($path);
         $spreadsheet = IOFactory::load($absolute);
@@ -144,6 +146,8 @@ class AssetImportDryRunController extends Controller
             'token' => $token,
             'dryRun' => $results,
             'preview' => [ 'headers' => $headers ],
+            'suggestedMapping' => $data['mapping'], // persist chosen mapping on page reload
+            'options' => [ 'create_missing_taxonomy' => $createMissing ],
         ]);
     }
 
@@ -171,4 +175,3 @@ class AssetImportDryRunController extends Controller
         }
     }
 }
-

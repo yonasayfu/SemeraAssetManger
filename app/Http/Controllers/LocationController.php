@@ -45,7 +45,7 @@ class LocationController extends Controller
         $this->authorize('create', Location::class);
         Location::create($request->all());
 
-        return redirect()->route('locations.index');
+        return redirect()->route('setup.locations.index');
     }
 
     /**
@@ -73,7 +73,7 @@ class LocationController extends Controller
         $this->authorize('update', $location);
         $location->update($request->all());
 
-        return redirect()->route('locations.index');
+        return redirect()->route('setup.locations.index');
     }
 
     /**
@@ -84,6 +84,6 @@ class LocationController extends Controller
         $this->authorize('delete', $location);
         $location->delete();
 
-        return redirect()->route('locations.index');
+        return redirect()->route('setup.locations.index');
     }
 }

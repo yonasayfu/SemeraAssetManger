@@ -34,7 +34,7 @@ class RolePermissionSeeder extends Seeder
             'setup.manage',
             'maintenance.view',
             'warranty.view',
-            'audits.view',
+            'audits.view', 'audits.create', 'audits.update', 'audits.delete',
             // New modules
             'vendors.view', 'vendors.create', 'vendors.update', 'vendors.delete',
             'products.view', 'products.create', 'products.update', 'products.delete',
@@ -65,7 +65,7 @@ class RolePermissionSeeder extends Seeder
                 'advanced.view',
                 'maintenance.view',
                 'warranty.view',
-                'audits.view',
+                'audits.view', 'audits.create', 'audits.update', 'audits.delete',
                 'staff.view', 'staff.create', 'staff.update',
                 'vendors.view', 'vendors.create', 'vendors.update',
                 'products.view', 'products.create', 'products.update',

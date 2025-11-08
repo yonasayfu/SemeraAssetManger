@@ -266,6 +266,13 @@ Route::middleware('auth')->group(function () {
             Route::get('/import/template', [AssetImportController::class, 'template'])->name('import.template');
             Route::post('/import/preview', AssetImportPreviewController::class)->name('import.preview');
             Route::post('/import/dry-run', AssetImportDryRunController::class)->name('import.dry-run');
+            // UX fallback: visiting these endpoints by GET should redirect back to the import page
+            Route::get('/import/preview', function () {
+                return redirect()->route('assets.import');
+            });
+            Route::get('/import/dry-run', function () {
+                return redirect()->route('assets.import');
+            });
             Route::post('/import', StoreAssetImportController::class)->name('import.store');
 
             // Asset Operation Select Pages
@@ -308,19 +315,19 @@ Route::middleware('auth')->group(function () {
             Route::delete('/', [AssetController::class, 'destroy'])->middleware('permission:assets.delete')->name('destroy');
 
             Route::get('checkout', AssetCheckoutController::class)->name('checkout.create');
-            Route::post('checkout', [StoreAssetCheckoutController::class, 'store'])->name('checkout.store');
+            Route::post('checkout', StoreAssetCheckoutController::class)->name('checkout.store');
             Route::get('checkin', AssetCheckinController::class)->name('checkin.create');
-            Route::post('checkin', [StoreAssetCheckinController::class, 'store'])->name('checkin.store');
+            Route::post('checkin', StoreAssetCheckinController::class)->name('checkin.store');
             Route::get('lease', AssetLeaseController::class)->name('lease.create');
-            Route::post('lease', [StoreAssetLeaseController::class, 'store'])->name('lease.store');
+            Route::post('lease', StoreAssetLeaseController::class)->name('lease.store');
             Route::get('lease-return', AssetLeaseReturnController::class)->name('lease-return.create');
-            Route::post('lease-return', [StoreAssetLeaseReturnController::class, 'store'])->name('lease-return.store');
+            Route::post('lease-return', StoreAssetLeaseReturnController::class)->name('lease-return.store');
             Route::get('dispose', AssetDisposeController::class)->name('dispose.create');
-            Route::post('dispose', [StoreAssetDisposeController::class, 'store'])->name('dispose.store');
+            Route::post('dispose', StoreAssetDisposeController::class)->name('dispose.store');
             Route::get('move', AssetMoveController::class)->name('move.create');
-            Route::post('move', [StoreAssetMoveController::class, 'store'])->name('move.store');
+            Route::post('move', StoreAssetMoveController::class)->name('move.store');
             Route::get('reserve', AssetReserveController::class)->name('reserve.create');
-            Route::post('reserve', [StoreAssetReserveController::class, 'store'])->name('reserve.store');
+            Route::post('reserve', StoreAssetReserveController::class)->name('reserve.store');
             Route::resource('maintenance', AssetMaintenanceController::class); // Resource routes for asset-specific maintenance
 
             Route::prefix('tabs')->name('tabs.')->group(function () {
@@ -335,9 +342,9 @@ Route::middleware('auth')->group(function () {
                 Route::patch('documents/{document}', [AssetController::class, 'updateDocument'])->name('documents.update')->middleware('permission:assets.update');
                 Route::delete('documents/{document}', [AssetController::class, 'deleteDocument'])->name('documents.destroy')->middleware('permission:assets.update');
                 Route::get('warranty', [AssetController::class, 'warranty'])->name('warranty');
-                Route::post('warranty', [AssetController::class, 'storeWarranty'])->name('warranty.store')->middleware('permission:warranty.view');
-                Route::patch('warranty/{warranty}', [AssetController::class, 'updateWarranty'])->name('warranty.update')->middleware('permission:warranty.view');
-                Route::delete('warranty/{warranty}', [AssetController::class, 'destroyWarranty'])->name('warranty.destroy')->middleware('permission:warranty.view');
+                Route::post('warranty', [AssetController::class, 'storeWarranty'])->name('warranty.store')->middleware('permission:assets.update');
+                Route::patch('warranty/{warranty}', [AssetController::class, 'updateWarranty'])->name('warranty.update')->middleware('permission:assets.update');
+                Route::delete('warranty/{warranty}', [AssetController::class, 'destroyWarranty'])->name('warranty.destroy')->middleware('permission:assets.update');
                 Route::get('maintenance', [AssetController::class, 'maintenance'])->name('maintenance');
                 Route::get('reservations', [AssetController::class, 'reservations'])->name('reservations');
                 Route::get('audits', [AssetController::class, 'audits'])->name('audits');
@@ -445,8 +452,14 @@ Route::middleware('auth')->group(function () {
             Route::post('import/contracts', \App\Http\Controllers\ContractImportController::class)->name('import.contracts')->middleware('role:Admin');
             Route::post('import/purchase-orders', \App\Http\Controllers\PurchaseOrderImportController::class)->name('import.purchase-orders')->middleware('role:Admin');
             Route::post('import/software', \App\Http\Controllers\SoftwareImportController::class)->name('import.software')->middleware('role:Admin');
-            Route::get('documents', DocumentGalleryController::class)->name('documents');
-            Route::get('images', ImageGalleryController::class)->name('images');
+            Route::get('documents', DocumentGalleryController::class)
+                ->name('documents')
+                ->withoutMiddleware('permission:tools.view')
+                ->middleware('permission:assets.view');
+            Route::get('images', ImageGalleryController::class)
+                ->name('images')
+                ->withoutMiddleware('permission:tools.view')
+                ->middleware('permission:assets.view');
             Route::resource('audits', AuditController::class);
         });
 
@@ -475,6 +488,10 @@ Route::middleware('auth')->group(function () {
             Route::get('videos', StaticPageController::class)->name('videos')->defaults('page', 'Videos');
             Route::get('reviews', StaticPageController::class)->name('reviews')->defaults('page', 'User Reviews');
             Route::get('changelog', StaticPageController::class)->name('changelog')->defaults('page', 'Changelog');
+            // Support page management (Admin)
+            Route::resource('pages', \App\Http\Controllers\SupportPageController::class)
+                ->middleware('role:Admin')
+                ->except(['show']);
         });
 
         // Sidebar menu metadata (left here for UI composition reference only).

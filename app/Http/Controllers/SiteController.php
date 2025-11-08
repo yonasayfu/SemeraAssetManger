@@ -42,7 +42,7 @@ class SiteController extends Controller
         $this->authorize('create', Site::class);
         Site::create($request->all());
 
-        return redirect()->route('sites.index');
+        return redirect()->route('setup.sites.index');
     }
 
     /**
@@ -69,7 +69,7 @@ class SiteController extends Controller
         $this->authorize('update', $site);
         $site->update($request->all());
 
-        return redirect()->route('sites.index');
+        return redirect()->route('setup.sites.index');
     }
 
     /**
@@ -80,6 +80,6 @@ class SiteController extends Controller
         $this->authorize('delete', $site);
         $site->delete();
 
-        return redirect()->route('sites.index');
+        return redirect()->route('setup.sites.index');
     }
 }

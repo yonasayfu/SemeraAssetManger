@@ -14,6 +14,7 @@ const props = defineProps<{
     warnings: number;
     rows: { row: number; errors: string[]; warnings: string[] }[];
   };
+  options?: { create_missing_taxonomy?: boolean };
 }>();
 
 // Step 1: Upload
@@ -28,14 +29,14 @@ const mapping = ref<Record<string, string>>({ ...(props.suggestedMapping || {}) 
 const setAllSkip = () => { mapping.value = {}; };
 
 // Options
-const createMissingTaxonomy = ref<boolean>(true);
+const createMissingTaxonomy = ref<boolean>(props.options?.create_missing_taxonomy ?? true);
 
 // Step 3: Dry run
 const runDryRun = () => {
   router.post('/assets/import/dry-run', {
     token: props.token,
     mapping: mapping.value,
-    options: { create_missing_taxonomy: createMissingTaxonomy.value },
+    options: JSON.stringify({ create_missing_taxonomy: createMissingTaxonomy.value }),
   }, { preserveScroll: true });
 };
 
@@ -44,7 +45,7 @@ const importNow = () => {
   router.post('/assets/import', {
     token: props.token,
     mapping: mapping.value,
-    options: { create_missing_taxonomy: createMissingTaxonomy.value },
+    options: JSON.stringify({ create_missing_taxonomy: createMissingTaxonomy.value }),
   }, { preserveScroll: true });
 };
 
@@ -94,6 +95,7 @@ const dryRun = computed(() => props.dryRun);
         <div class="mt-3 flex items-center gap-2">
           <button type="button" @click="setAllSkip" class="rounded-md bg-slate-200 px-3 py-1.5 text-sm">Clear</button>
           <button type="button" @click="runDryRun" class="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white">Run Dry Run</button>
+          <button type="button" @click="importNow" class="rounded-md bg-green-600 px-4 py-2 text-sm text-white">Import Now</button>
         </div>
       </div>
 

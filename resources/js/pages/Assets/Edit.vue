@@ -111,9 +111,8 @@ const onPhoto = (e: Event) => {
 
 const submit = () => {
     syncCustomFields();
-    form.post(`/assets/${props.asset.id}`, {
+    form.put(`/assets/${props.asset.id}`, {
         forceFormData: true,
-        method: 'put',
         onSuccess: () => show('Asset updated successfully.', 'success'),
         onError: () => show('Failed to update asset.', 'danger'),
     });

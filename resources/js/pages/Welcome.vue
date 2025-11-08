@@ -49,8 +49,8 @@ import { Head, Link } from '@inertiajs/vue3';
                 >
                     <h1 class="mb-1 font-medium">Let's get started</h1>
                     <p class="mb-2 text-[#706f6c] dark:text-[#A1A09A]">
-                        Laravel has an incredibly rich ecosystem. <br />We
-                        suggest starting with the following.
+                        ASLM helps you manage the full asset lifecycle.
+                        <br />Start with the essentials below.
                     </p>
                     <ul class="mb-4 flex flex-col lg:mb-6">
                         <li

@@ -6,6 +6,8 @@ use App\Imports\AssetsImport;
 use App\Models\Asset;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class StoreAssetImportController extends Controller
 {
@@ -14,37 +16,88 @@ class StoreAssetImportController extends Controller
      */
     public function __invoke(Request $request)
     {
+        Log::info('StoreAssetImportController __invoke method hit.');
         $this->authorize('create', Asset::class);
         $validated = $request->validate([
             'file' => 'nullable|file|mimes:xlsx,xls,csv',
             'token' => 'nullable|string',
             'mapping' => 'nullable|array',
-            'options' => 'nullable|array',
+            'options' => 'nullable|string',
         ]);
 
-        // Resolve file to import: either newly uploaded or by preview token
-        $path = null;
-        if ($request->hasFile('file')) {
-            $uploaded = $request->file('file');
-            $path = $uploaded->getRealPath();
-        } elseif (!empty($validated['token'])) {
-            $token = $validated['token'];
-            $path = $this->resolveTokenPath($token);
-            if ($path) {
-                $path = storage_path('app/'.$path);
-            }
-        }
-
-        if (!$path || !file_exists($path)) {
-            return back()->with('error', 'No import file provided.');
-        }
-
         $mapping = (array) ($validated['mapping'] ?? []);
-        $options = (array) ($validated['options'] ?? []);
+        $options = isset($validated['options']) ? json_decode($validated['options'], true) : [];
 
-        Excel::import(new AssetsImport($mapping, $options), $path);
+        // Resolve input file: prefer token from preview flow; otherwise accept direct upload
+        $disk = \Illuminate\Support\Facades\Storage::disk('local');
+        $relativePath = null;
 
-        return redirect()->route('assets.index')->with('success', 'Import completed.');
+        if (!empty($validated['token'])) {
+            $relativePath = $this->resolveTokenPath((string) $validated['token']);
+            if (!$relativePath) {
+                return back()
+                    ->with('flash.banner', 'Import file not found for the provided token. Please re-upload your file and try again.')
+                    ->with('flash.bannerStyle', 'danger');
+            }
+        } elseif ($request->hasFile('file')) {
+            $uploaded = $request->file('file');
+            $token = 'imp_'.\Illuminate\Support\Str::random(20);
+            $ext = $uploaded->getClientOriginalExtension() ?: 'xlsx';
+            $relativePath = 'imports/tmp/'.$token.'.'.$ext;
+            $disk->put($relativePath, file_get_contents($uploaded->getRealPath()));
+        } else {
+            return back()
+                ->with('flash.banner', 'No file provided. Please upload a CSV/XLSX or use the preview flow first.')
+                ->with('flash.bannerStyle', 'danger');
+        }
+
+        $assetsImport = new AssetsImport($mapping, $options);
+
+        $before = Asset::count();
+        Log::info('Assets count before import: '.$before);
+        try {
+            // Use the local disk so Excel can resolve the file by relative path
+            Excel::import($assetsImport, $relativePath, 'local');
+        } catch (\Throwable $e) {
+            return back()
+                ->with('flash.banner', 'Import failed: '.$e->getMessage())
+                ->with('flash.bannerStyle', 'danger');
+        }
+
+        $imported = max(0, Asset::count() - $before);
+        $failures = $assetsImport->failures();
+        $errors = method_exists($assetsImport, 'errors') ? $assetsImport->errors() : collect();
+
+        if (count($failures) > 0 || count($errors) > 0) {
+            $failureMessages = $failures->map(function ($failure) {
+                return 'Row ' . $failure->row() . ': ' . implode(', ', $failure->errors()) . ' (Value: ' . implode(', ', $failure->values()) . ')';
+            });
+            $errorMessages = $errors->map(function ($e) {
+                return e(class_basename($e)).': '.e($e->getMessage());
+            });
+            $allMessages = $failureMessages->merge($errorMessages)->implode('<br>');
+
+            $successMessage = '';
+            if ($imported > 0) {
+                $successMessage = 'Successfully created ' . $imported . ' new record(s). ';
+            } else {
+                $successMessage = 'Import completed (existing assets updated where tags matched). ';
+            }
+
+            return redirect()
+                ->route('assets.index')
+                ->with('flash.banner', $successMessage . 'Import completed with ' . (count($failures) + count($errors)) . ' issue(s):<br>' . $allMessages)
+                ->with('flash.bannerStyle', 'warning');
+        }
+
+        $message = $imported > 0
+            ? ('Import completed. Imported '.$imported.' record(s).')
+            : 'Import completed. Existing assets updated where tags matched.';
+
+        return redirect()
+            ->route('assets.index')
+            ->with('flash.banner', $message)
+            ->with('flash.bannerStyle', 'success');
     }
 
     protected function resolveTokenPath(string $token): ?string

@@ -13,7 +13,6 @@ class CompanyController extends Controller
      */
     public function index()
     {
-        $this->authorize('manage-companies');
         return Inertia::render('Setup/Company/Index', [
             'company' => Company::first(),
         ]);
@@ -21,7 +20,6 @@ class CompanyController extends Controller
 
     public function create()
     {
-        $this->authorize('manage-companies');
         return Inertia::render('Setup/Company/Create');
     }
 
@@ -30,10 +28,8 @@ class CompanyController extends Controller
      */
     public function store(Request $request)
     {
-        $this->authorize('manage-companies');
         Company::create($request->all());
-
-        return redirect()->route('companies.index');
+        return redirect()->route('setup.companies.index');
     }
 
     /**
@@ -46,7 +42,6 @@ class CompanyController extends Controller
 
     public function edit(Company $company)
     {
-        $this->authorize('manage-companies');
         return Inertia::render('Setup/Company/Edit', [
             'company' => $company,
         ]);
@@ -57,10 +52,8 @@ class CompanyController extends Controller
      */
     public function update(Request $request, Company $company)
     {
-        $this->authorize('manage-companies');
         $company->update($request->all());
-
-        return redirect()->route('companies.index');
+        return redirect()->route('setup.companies.index');
     }
 
     /**
@@ -68,9 +61,7 @@ class CompanyController extends Controller
      */
     public function destroy(Company $company)
     {
-        $this->authorize('manage-companies');
         $company->delete();
-
-        return redirect()->route('companies.index');
+        return redirect()->route('setup.companies.index');
     }
 }

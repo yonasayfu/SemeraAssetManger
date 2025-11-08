@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ImportRequest;
-use App\Jobs\ImportPersonsJob;
+use App\Jobs\ImportStaffJob;
 
 class StaffImportController extends Controller
 {
@@ -11,7 +11,7 @@ class StaffImportController extends Controller
     {
         $path = $request->file('file')->store('imports');
 
-        ImportPersonsJob::dispatch($path, $request->user());
+        ImportStaffJob::dispatch($path, $request->user());
 
         return redirect()->back()->with('success', 'Your import has been queued.');
     }

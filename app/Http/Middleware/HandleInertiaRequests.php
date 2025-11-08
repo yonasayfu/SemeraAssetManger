@@ -80,6 +80,11 @@ class HandleInertiaRequests extends Middleware
                 'sidebar' => config('sidebar.groups', []),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            // Share flash messages for Toast component
+            'flash' => [
+                'banner' => fn () => $request->session()->get('flash.banner'),
+                'bannerStyle' => fn () => $request->session()->get('flash.bannerStyle'),
+            ],
         ];
     }
 }

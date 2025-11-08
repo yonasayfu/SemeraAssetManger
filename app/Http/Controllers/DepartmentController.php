@@ -60,7 +60,7 @@ class DepartmentController extends Controller
         $this->authorize('create', Department::class);
         Department::create($request->all());
 
-        return redirect()->route('departments.index');
+        return redirect()->route('setup.departments.index');
     }
 
     /**
@@ -88,7 +88,7 @@ class DepartmentController extends Controller
         $this->authorize('update', $department);
         $department->update($request->all());
 
-        return redirect()->route('departments.index');
+        return redirect()->route('setup.departments.index');
     }
 
     /**
@@ -99,6 +99,6 @@ class DepartmentController extends Controller
         $this->authorize('delete', $department);
         $department->delete();
 
-        return redirect()->route('departments.index');
+        return redirect()->route('setup.departments.index');
     }
 }

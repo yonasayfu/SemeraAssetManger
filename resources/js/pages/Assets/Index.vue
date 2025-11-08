@@ -263,7 +263,11 @@ const saveExportColumns = () => {
                 :custom-actions="true"
                 @export="exportCsv"
                 @print="printCurrent"
-            />
+            >
+                <template #actions>
+                    <Link v-if="can('assets.create')" href="/assets/import" class="btn-glass btn-variant-secondary">Import CSV/XLSX</Link>
+                </template>
+            </ResourceToolbar>
 
             <!-- Export column picker -->
             <div v-if="showColumnPicker" class="rounded-xl border border-slate-200/70 bg-white/80 p-4 shadow-sm dark:border-slate-800/60 dark:bg-slate-900/60 print:hidden">

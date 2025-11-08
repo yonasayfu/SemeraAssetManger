@@ -46,6 +46,13 @@ class AppServiceProvider extends ServiceProvider
             'department' => Department::class,
             'customer' => Customer::class,
             'asset' => Asset::class,
+            // Add common domain models that record activity or participate in morphs
+            'maintenance' => \App\Models\Maintenance::class,
+            'warranty' => \App\Models\Warranty::class,
+            'lease' => \App\Models\Lease::class,
+            'reservation' => \App\Models\Reservation::class,
+            'move' => \App\Models\Move::class,
+            'checkout' => \App\Models\Checkout::class,
         ]);
     }
 }
