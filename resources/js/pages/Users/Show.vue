@@ -166,8 +166,8 @@ const printRecord = () => {
         </div>
 
         <div class="hidden print:block text-center text-slate-800">
-            <img src="/images/asset-logo.svg" alt="Asset Management" class="mx-auto mb-3 h-12 w-auto print-logo" />
-            <h1 class="text-xl font-semibold">Asset Management</h1>
+            <img :src="(usePage().props as any).branding?.logo_url || '/images/asset-logo.svg'" :alt="(usePage().props as any).branding?.name || 'Asset Management'" class="mx-auto mb-3 h-12 w-auto print-logo" />
+            <h1 class="text-xl font-semibold">{{ (usePage().props as any).branding?.name || 'Asset Management' }}</h1>
             <p class="text-sm">User Profile: {{ props.user.name }}</p>
             <p class="text-xs text-slate-500">Printed {{ printTimestamp }}</p>
             <hr class="print-divider" />

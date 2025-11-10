@@ -41,10 +41,14 @@ const apply = () => {
 
 watch([search, vendorId, productId, perPage], () => apply())
 
+const branding = computed<any>(() => (page.props as any).branding || {})
+const printLogo = computed<string>(() => branding.value.logo_url || '/images/asset-logo.svg')
+const brandName = computed<string>(() => branding.value.name || 'Asset Management')
+
 const printCurrent = () => {
   const d: Document | undefined = typeof document !== 'undefined' ? document : undefined
   const originalTitle = d?.title
-  if (d) d.title = 'Purchase Orders'
+  if (d) d.title = `${brandName.value} - Purchase Orders`
   window.print()
   if (d && typeof originalTitle === 'string') d.title = originalTitle
 }
@@ -77,8 +81,8 @@ const destroyItem = async (id: number) => {
     </ResourceToolbar>
 
     <div class="hidden print:block text-center text-slate-800">
-      <img src="/images/asset-logo.svg" alt="Asset Management" class="mx-auto mb-3 h-12 w-auto print-logo" />
-      <h1 class="text-xl font-semibold">Asset Management</h1>
+      <img :src="printLogo" :alt="brandName" class="mx-auto mb-3 h-12 w-auto print-logo" />
+      <h1 class="text-xl font-semibold">{{ brandName }}</h1>
       <p class="text-sm">Purchase Orders</p>
       <p class="text-xs text-slate-500">Printed {{ new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date()) }}</p>
       <hr class="print-divider" />

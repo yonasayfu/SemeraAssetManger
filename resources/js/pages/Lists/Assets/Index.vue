@@ -98,6 +98,11 @@ const props = defineProps<{
     print?: boolean;
 }>();
 
+const page = usePage();
+const branding = computed<any>(() => (page.props as any).branding || {})
+const printLogo = computed<string>(() => branding.value.logo_url || '/images/asset-logo.svg')
+const brandName = computed<string>(() => branding.value.name || 'Asset Management')
+
 const status = ref<string | null>(props.filters?.status ?? null);
 const condition = ref<string | null>(props.filters?.condition ?? null);
 const site = ref<string | null>(props.filters?.site ?? null);
@@ -132,8 +137,8 @@ const tableFilters = useTableFilters({
 
 const { search, sort, direction, perPage, toggleSort } = tableFilters;
 
-const page = usePage();
-const userPermissions = computed<string[]>(() => (page.props as any).auth?.permissions || []);
+const page2 = usePage();
+const userPermissions = computed<string[]>(() => (page2.props as any).auth?.permissions || []);
 const can = (perm: string) => userPermissions.value.includes(perm);
 
 const assetsRows = computed(() => props.assets.data ?? []);
@@ -382,15 +387,28 @@ const statusTone = (status: string) => {
 <template>
     <Head title="Asset Inventory" />
     <AppLayout title="Asset Inventory">
+        <div class="hidden print:block text-center text-slate-800">
+            <img :src="printLogo" :alt="brandName" class="mx-auto mb-3 h-12 w-auto print-logo" />
+            <h1 class="text-xl font-semibold">{{ brandName }}</h1>
+            <p class="text-sm">Assets (List)</p>
+            <p class="text-xs text-slate-500">Printed {{ new Date().toLocaleString() }}</p>
+            <hr class="print-divider" />
+        </div>
         <ResourceToolbar
             title="Asset Inventory"
             description="Search, filter, and export your entire asset catalog."
             :show-create="false"
             :show-export="can('lists.view')"
             :show-print="can('lists.view')"
+            :custom-actions="true"
             @export="exportCsv"
             @print="() => openWindow('/lists/assets', buildQueryString({ print: 1 }))"
-        />
+        >
+            <template #actions>
+                <Link href="/assets" class="btn-glass">Open Asset Manager</Link>
+                <Link href="/assets/import" class="btn-glass btn-variant-secondary">Import Assets</Link>
+            </template>
+        </ResourceToolbar>
 
         <div class="mx-auto mt-6 flex w-full max-w-7xl flex-col gap-6 px-4 pb-12 sm:px-6 lg:px-8">
             <div v-if="stats?.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

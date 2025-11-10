@@ -71,6 +71,13 @@ const destroyItem = async (id: number) => {
 <template>
   <Head title="Contracts" />
   <AppLayout title="Contracts">
+    <div class="hidden print:block text-center text-slate-800">
+      <img :src="(usePage().props as any).branding?.logo_url || '/images/asset-logo.svg'" :alt="(usePage().props as any).branding?.name || 'Asset Management'" class="mx-auto mb-3 h-12 w-auto print-logo" />
+      <h1 class="text-xl font-semibold">{{ (usePage().props as any).branding?.name || 'Asset Management' }}</h1>
+      <p class="text-sm">Contracts</p>
+      <p class="text-xs text-slate-500">Printed {{ new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date()) }}</p>
+      <hr class="print-divider" />
+    </div>
     <ResourceToolbar title="Contracts" description="Lease, maintenance, license, warranty contracts." :show-export="isAdmin || userPermissions.includes('reports.export')" :show-print="true" @print="printCurrent" @export="exportCsv">
       <template #actions>
         <Link v-if="can('contracts.create')" href="/contracts/create" class="btn-glass btn-variant-primary">Add Contract</Link>

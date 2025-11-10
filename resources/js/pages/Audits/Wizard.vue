@@ -1,7 +1,7 @@
 <template>
   <Head title="Audit Wizard" />
 
-  <AppLayout :breadcrumbs="[{ title: 'Audits', href: '/audits' }, { title: 'Audit Wizard', href: '/audits/wizard' }]">
+  <AppLayout :breadcrumbs="[{ title: 'Audits', href: '/tools/audits' }, { title: 'Audit Wizard', href: '/audits/wizard' }]">
     <div class="space-y-6">
       <ResourceToolbar
         :title="resourceTitle"

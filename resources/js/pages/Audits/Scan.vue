@@ -1,5 +1,5 @@
 <template>
-    <AppLayout :breadcrumbs="[{ title: 'Audits', href: route('audits.index') }, { title: 'Scan Audit', href: route('audits.scan', audit.id) }]">
+    <AppLayout :breadcrumbs="[{ title: 'Audits', href: '/tools/audits' }, { title: 'Scan Audit', href: `/audits/${audit.id}/scan` }]">
         <Head :title="`Scan Audit · ${audit.name}`" />
 
         <div class="space-y-6 p-6">
@@ -58,10 +58,10 @@
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-right">
-                                        <div class="flex justify-end gap-2">
+                                        <div class="flex items-center justify-end gap-2">
                                             <button
                                                 type="button"
-                                                class="inline-flex items-center rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-indigo-300"
+                                                class="inline-flex items-center rounded-md p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-indigo-300"
                                                 @click="markAsFound(auditAsset)"
                                                 title="Mark as Found"
                                             >
@@ -70,7 +70,7 @@
                                             </button>
                                             <button
                                                 type="button"
-                                                class="inline-flex items-center rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-red-600 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-red-300"
+                                                class="inline-flex items-center rounded-md p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-red-600 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-red-300"
                                                 @click="markAsMissing(auditAsset)"
                                                 title="Mark as Missing"
                                             >
@@ -81,7 +81,7 @@
                                                 v-model="auditAsset.notes"
                                                 type="text"
                                                 placeholder="Add notes..."
-                                                class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                                class="block w-56 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                                                 @blur="updateNotes(auditAsset)"
                                             />
                                         </div>
@@ -98,7 +98,7 @@
                     <div class="flex justify-end mt-4">
                         <button
                             type="button"
-                            class="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/70 focus:ring-offset-2"
+                            class="btn-glass btn-variant-primary"
                             @click="completeAudit"
                         >
                             Complete Audit
@@ -120,6 +120,7 @@ import { ref, computed } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
 import { CheckCircle, XCircle } from 'lucide-vue-next';
 import { Audit, AuditAsset } from '@/types';
+import axios from 'axios';
 
 interface Props {
     audit: Audit & {
@@ -131,50 +132,40 @@ const props = defineProps<Props>();
 
 const audit = computed(() => props.audit);
 const searchQuery = ref('');
-const searchedAssets = ref(props.audit.audit_assets);
+const searchedAssets = ref<Array<AuditAsset & { asset: any }>>(props.audit.audit_assets ?? []);
 
-const searchAssets = () => {
-    if (searchQuery.value.trim() === '') {
-        searchedAssets.value = props.audit.audit_assets;
-        return;
-    }
-    router.get(
-        `/audits/${audit.value.id}/scan/search`,
-        { query: searchQuery.value },
-        {
-            preserveState: true,
-            replace: true,
-            onSuccess: (page) => {
-                searchedAssets.value = (page.props as any).assets;
-            },
-        },
-    );
+const searchAssets = async () => {
+  const q = searchQuery.value.trim();
+  if (!q) {
+    searchedAssets.value = props.audit.audit_assets ?? [];
+    return;
+  }
+  try {
+    const { data } = await axios.get(`/audits/${audit.value.id}/scan/search`, { params: { query: q } });
+    searchedAssets.value = data;
+  } catch (e) {
+    // ignore
+  }
 };
 
 const debouncedSearchAssets = useDebounceFn(searchAssets, 300);
 
-const markAsFound = (auditAsset: AuditAsset) => {
-    router.post(
-        `/audits/${audit.value.id}/scan/assets/${auditAsset.id}`,
-        { found: true },
-        { preserveState: true, replace: true },
-    );
+const markAsFound = async (auditAsset: any) => {
+  try {
+    await axios.post(`/audits/${audit.value.id}/scan/assets/${auditAsset.id}`, { found: true });
+    auditAsset.found = true;
+  } catch {}
 };
 
-const markAsMissing = (auditAsset: AuditAsset) => {
-    router.post(
-        `/audits/${audit.value.id}/scan/assets/${auditAsset.id}`,
-        { found: false },
-        { preserveState: true, replace: true },
-    );
+const markAsMissing = async (auditAsset: any) => {
+  try { 
+    await axios.post(`/audits/${audit.value.id}/scan/assets/${auditAsset.id}`, { found: false });
+    auditAsset.found = false; 
+  } catch {}
 };
 
-const updateNotes = (auditAsset: AuditAsset) => {
-    router.post(
-        `/audits/${audit.value.id}/scan/assets/${auditAsset.id}`,
-        { notes: auditAsset.notes },
-        { preserveState: true, replace: true },
-    );
+const updateNotes = async (auditAsset: any) => {
+  try { await axios.post(`/audits/${audit.value.id}/scan/assets/${auditAsset.id}`, { notes: auditAsset.notes }); } catch {}
 };
 
 const completeAudit = () => {

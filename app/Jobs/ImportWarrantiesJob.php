@@ -15,7 +15,9 @@ class ImportWarrantiesJob implements ShouldQueue
 
     public function __construct(
         public string $path,
-        public User $user
+        public User $user,
+        public array $mapping = [],
+        public array $options = []
     ) {
     }
 

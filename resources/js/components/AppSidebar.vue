@@ -139,6 +139,7 @@ const sidebarGroups = ref<Group[]>([
       { title: "Password", href: "/settings/password", icon: KeyRound, permission: null },
       { title: "Two-Factor", href: "/settings/two-factor", icon: Shield, permission: null },
       { title: "Appearance", href: "/settings/appearance", icon: Palette, permission: null },
+      { title: "Branding", href: "/setup/companies", icon: Building2, permission: 'setup.manage' },
       { title: "Activity Logs", href: "/activity-logs", icon: ClipboardList, permission: null },
       { title: "Mailbox (Dev)", href: "/mailbox", icon: Mail, permission: null },
     ]
@@ -273,7 +274,7 @@ const sidebarGroups = ref<Group[]>([
     label: "Setup",
     icon: Settings,
     items: [
-      { title: "Company Info", href: "/setup/company", icon: Building2, permission: 'setup.manage' },
+      { title: "Company Info", href: "/setup/companies", icon: Building2, permission: 'setup.manage' },
       { title: "Sites", href: "/setup/sites", icon: MapPinHouse, permission: 'setup.manage' },
       { title: "Locations", href: "/setup/locations", icon: MapPin, permission: 'setup.manage' },
       { title: "Categories", href: "/setup/categories", icon: Tags, permission: 'setup.manage' },
@@ -400,7 +401,7 @@ const footerNavItems: NavItem[] = []
         <SidebarMenuItem>
           <SidebarMenuButton size="lg" as-child>
             <Link href="/dashboard">
-              <AppLogo />
+              <AppLogo variant="sidebar" />
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>

@@ -139,6 +139,7 @@ class DatabaseSeeder extends Seeder
             SupportPageSeeder::class,
             ClearanceSampleSeeder::class,
             ClearanceAndAssetsDemoSeeder::class,
+            AuditSampleSeeder::class,
         ]);
     }
 }

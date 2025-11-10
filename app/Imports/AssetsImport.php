@@ -11,8 +11,10 @@ use App\Models\Staff;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Models\AssetImportJob;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
@@ -22,9 +24,11 @@ use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\WithUpserts;
 use Maatwebsite\Excel\Concerns\WithUpsertColumns;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Validators\Failure;
 
-class AssetsImport implements ToModel, WithHeadingRow, SkipsOnFailure, SkipsOnError, WithUpserts, WithUpsertColumns
+class AssetsImport implements ToModel, WithHeadingRow, SkipsOnFailure, SkipsOnError, WithUpserts, WithUpsertColumns, WithBatchInserts, WithChunkReading
 {
     use SkipsFailures, SkipsErrors;
 
@@ -35,12 +39,25 @@ class AssetsImport implements ToModel, WithHeadingRow, SkipsOnFailure, SkipsOnEr
     protected array $options = [];
 
     protected bool $createMissingTaxonomy = true;
+    protected bool $insertOnly = false;
+    protected bool $autoGenerateTags = false;
+    protected string $tagPrefix = 'AST-';
+    protected bool $downloadPhotos = false;
+    protected bool $includeUnmappedAsCustomFields = false;
+    protected ?int $jobId = null;
+    protected int $progressCounter = 0;
 
     public function __construct(array $mapping = [], array $options = [])
     {
         $this->mapping = $mapping;
         $this->options = $options;
         $this->createMissingTaxonomy = (bool)($options['create_missing_taxonomy'] ?? true);
+        $this->insertOnly = !((bool)($options['update_existing_by_tag'] ?? true));
+        $this->autoGenerateTags = (bool)($options['auto_generate_tags'] ?? false);
+        $this->tagPrefix = (string)($options['tag_prefix'] ?? 'AST-');
+        $this->downloadPhotos = (bool)($options['download_photos'] ?? false);
+        $this->includeUnmappedAsCustomFields = (bool)($options['include_unmapped_as_custom_fields'] ?? false);
+        $this->jobId = isset($options['job_id']) && is_numeric($options['job_id']) ? (int)$options['job_id'] : null;
     }
 
     public function onFailure(Failure ...$failures)
@@ -77,6 +94,20 @@ class AssetsImport implements ToModel, WithHeadingRow, SkipsOnFailure, SkipsOnEr
         $row = $this->applyMapping($row);
         $r = $this->normalize($row);
 
+        // Auto-generate tag if missing
+        if (empty(Arr::get($r, 'asset_tag')) && $this->autoGenerateTags) {
+            $generated = $this->generateAssetTag($this->tagPrefix);
+            $r['asset_tag'] = $generated;
+        }
+
+        // Insert-only mode: skip if asset_tag already exists
+        if ($this->insertOnly && !empty(Arr::get($r, 'asset_tag'))) {
+            if (Asset::where('asset_tag', Arr::get($r, 'asset_tag'))->exists()) {
+                \Illuminate\Support\Facades\Log::info('Skipping existing asset (insert_only): '.Arr::get($r, 'asset_tag'));
+                return null; // safe: Collection::wrap(null) results in empty collection
+            }
+        }
+
         // Resolve foreign keys by name or id. Create taxonomy if missing (except staff).
         $siteId = $this->resolveSiteId(Arr::get($r, 'site_id'), Arr::get($r, 'site'));
 
@@ -103,7 +134,32 @@ class AssetsImport implements ToModel, WithHeadingRow, SkipsOnFailure, SkipsOnEr
 
         $purchaseDate = $this->parseDate(Arr::get($r, 'purchase_date'));
 
-        return new Asset([
+        // Handle photo from URL if requested
+        $photo = Arr::get($r, 'photo') ?: Arr::get($r, 'asset_photo');
+        if ($this->downloadPhotos && is_string($photo) && preg_match('/^https?:\/\//i', $photo)) {
+            try {
+                $photo = $this->downloadPhoto($photo, Arr::get($r, 'asset_tag')) ?: $photo;
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Photo download failed: '.$e->getMessage());
+            }
+        }
+
+        // Prepare custom fields from unmapped columns if enabled.
+        $customFields = null;
+        if ($this->includeUnmappedAsCustomFields) {
+            $recognized = [
+                'asset_tag','description','purchase_date','cost','currency','status','purchased_from','brand','model','serial_no','project_code','asset_condition',
+                'site','site_id','location','location_id','category','category_id','department','department_id','assigned_to','staff_id','photo','asset_photo','created_by',
+            ];
+            foreach ($row as $k => $v) {
+                $key = $this->normalizeHeading((string)$k);
+                if (!in_array($key, $recognized, true) && $v !== '' && $v !== null) {
+                    $customFields[$key] = $v;
+                }
+            }
+        }
+
+        $asset = new Asset([
             'asset_tag' => Arr::get($r, 'asset_tag'),
             'description' => Arr::get($r, 'description'),
             'purchase_date' => $purchaseDate,
@@ -121,9 +177,15 @@ class AssetsImport implements ToModel, WithHeadingRow, SkipsOnFailure, SkipsOnEr
             'department_id' => $departmentId,
             'staff_id' => $staffId,
             'status' => $this->normalizeStatus(Arr::get($r, 'status')),
-            'photo' => Arr::get($r, 'photo') ?: Arr::get($r, 'asset_photo'),
+            'photo' => $photo,
+            'custom_fields' => $customFields,
             'created_by' => Auth::id(),
         ]);
+
+        // count progress lazily
+        $this->tickProgress();
+
+        return $asset;
     }
 
     protected function normalize(array $row): array
@@ -367,5 +429,77 @@ class AssetsImport implements ToModel, WithHeadingRow, SkipsOnFailure, SkipsOnEr
         $k = preg_replace('/[^a-z0-9]+/i', '_', $k ?? '') ?? '';
         $k = trim($k, '_');
         return $k;
+    }
+
+    public function batchSize(): int
+    {
+        return 200;
+    }
+
+    public function chunkSize(): int
+    {
+        return 200;
+    }
+
+    public function __destruct()
+    {
+        // flush any remaining progress on destruct
+        if ($this->jobId && $this->progressCounter > 0) {
+            AssetImportJob::whereKey($this->jobId)->increment('processed_rows', $this->progressCounter);
+            $this->progressCounter = 0;
+        }
+    }
+
+    protected function tickProgress(): void
+    {
+        if (!$this->jobId) return;
+        $this->progressCounter++;
+        if ($this->progressCounter >= 25) {
+            $job = AssetImportJob::find($this->jobId);
+            if ($job) {
+                if ($job->cancelled) {
+                    // Flush current progress then abort
+                    AssetImportJob::whereKey($this->jobId)->increment('processed_rows', $this->progressCounter);
+                    $this->progressCounter = 0;
+                    throw new \RuntimeException('Cancelled by user');
+                }
+                AssetImportJob::whereKey($this->jobId)->increment('processed_rows', $this->progressCounter);
+            }
+            $this->progressCounter = 0;
+        }
+    }
+
+    protected function generateAssetTag(string $prefix): string
+    {
+        $base = rtrim($prefix, '-').' - ';
+        $attempts = 0;
+        do {
+            $suffix = strtoupper(Str::random(6));
+            $tag = rtrim($prefix, '-').'-'.$suffix;
+            if (strlen($tag) > 50) {
+                $tag = substr($tag, 0, 50);
+            }
+            $exists = Asset::where('asset_tag', $tag)->exists();
+            $attempts++;
+        } while ($exists && $attempts < 10);
+        if ($exists) {
+            // Fallback to time-based unique tag
+            $tag = rtrim($prefix, '-').'-'.strtoupper(dechex(time())).'-'.strtoupper(Str::random(2));
+            if (strlen($tag) > 50) {
+                $tag = substr($tag, 0, 50);
+            }
+        }
+        return $tag;
+    }
+
+    protected function downloadPhoto(string $url, ?string $tag = null): ?string
+    {
+        $contents = @file_get_contents($url);
+        if ($contents === false) return null;
+        $ext = pathinfo(parse_url($url, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION) ?: 'jpg';
+        $name = ($tag ? Str::slug($tag).'_' : '').Str::random(8).'.'.strtolower($ext);
+        $relative = 'assets/photos/'.$name;
+        Storage::disk('public')->put($relative, $contents);
+        return Storage::disk('public')->url($relative); // /storage/assets/photos/...
     }
 }

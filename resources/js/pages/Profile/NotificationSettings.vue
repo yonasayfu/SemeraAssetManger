@@ -63,7 +63,7 @@
                     </div>
 
                     <div class="mt-6 flex items-center justify-end gap-x-6">
-                        <PrimaryButton type="submit" :disabled="form.processing">Save Changes</PrimaryButton>
+                        <Button type="submit" :disabled="form.processing">Save Changes</Button>
                     </div>
                 </form>
             </GlassCard>
@@ -76,7 +76,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import ResourceToolbar from '@/Components/ResourceToolbar.vue';
 import GlassCard from '@/Components/GlassCard.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
+import Button from '@/Components/ui/button/Button.vue';
 import { Switch } from '@headlessui/vue';
 import {
     ref,

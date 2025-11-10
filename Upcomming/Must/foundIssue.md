@@ -224,3 +224,29 @@ Tell me which you prefer:
 Add a “Swap Site/Location” button now
 Or extend auto‑map synonyms for your headers
 Or both
+
+---
+
+Recent Fixes and Enhancements (current build)
+
+- ASLM-18 Vite alias/components resolution — Fixed
+  - Issue: `@/Components/*` imports failed due to alias resolving to filesystem root.
+  - Fix: `vite.config.ts` now resolves `@` to project `resources/js`; missing Breeze components were replaced with existing UI components.
+
+- ASLM-19 Import controller job classes — Fixed
+  - Issue: Several import controllers contained templated job names (parse errors on load).
+  - Fix: Replaced with the correct job classes (e.g., `ImportProductsJob`, `ImportDepartmentsJob`, `ImportSitesJob`, etc.).
+
+- ASLM-20 Galleries UX — Improved
+  - Lightbox previews on click; dedicated detail pages for images/documents.
+  - For placeholder images, “Open original” links to the Asset page instead of the placeholder file.
+
+- ASLM-21 Asset list UX — Improved
+  - Compact actions, single-line button groups, continuous row numbering across pages.
+  - Export Columns and Table Columns buttons moved next to the “Dense rows/cards” toggle.
+  - Added Clear Filters; filter dropdowns aligned to consistent height.
+
+- ASLM-22 Audits module — Stabilized + seeded
+  - Tools → Audits list with Create Audit CTA and filters.
+  - Scan/Report pages corrected (removed template `route()` errors), restyled to match assets.
+  - Seed data creates Ongoing + Completed audits for demo. See `auditflow.md`.

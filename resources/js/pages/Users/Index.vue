@@ -225,6 +225,9 @@ const statTone = (tone?: string) => {
             return 'text-indigo-600 dark:text-indigo-300';
     }
 };
+const branding = computed<any>(() => (page.props as any).branding || {})
+const printLogo = computed<string>(() => branding.value.logo_url || '/images/asset-logo.svg')
+const brandName = computed<string>(() => branding.value.name || 'Asset Management')
 </script>
 
 <template>
@@ -242,8 +245,8 @@ const statTone = (tone?: string) => {
         />
 
         <div class="hidden print:block text-center text-slate-800">
-            <img src="/images/asset-logo.svg" alt="Asset Management" class="mx-auto mb-3 h-12 w-auto print-logo" />
-            <h1 class="text-xl font-semibold">Asset Management</h1>
+            <img :src="printLogo" :alt="brandName" class="mx-auto mb-3 h-12 w-auto print-logo" />
+            <h1 class="text-xl font-semibold">{{ brandName }}</h1>
             <p class="text-sm">User Directory</p>
             <p class="text-xs text-slate-500">Printed {{ printTimestamp }}</p>
             <hr class="print-divider" />

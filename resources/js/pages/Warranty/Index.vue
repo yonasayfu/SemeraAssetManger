@@ -100,6 +100,9 @@ const tableFilters = useTableFilters({
 });
 
 const page = usePage();
+const branding = computed<any>(() => (page.props as any).branding || {})
+const printLogo = computed<string>(() => branding.value.logo_url || '/images/asset-logo.svg')
+const brandName = computed<string>(() => branding.value.name || 'Asset Management')
 const userPermissions = computed<string[]>(() => (page.props as any).auth?.permissions || []);
 const can = (perm: string) => userPermissions.value.includes(perm);
 
@@ -154,6 +157,13 @@ const resetFilters = () => {
 <template>
     <AppLayout>
         <Head title="Warranties" />
+        <div class="hidden print:block text-center text-slate-800">
+            <img :src="printLogo" :alt="brandName" class="mx-auto mb-3 h-12 w-auto print-logo" />
+            <h1 class="text-xl font-semibold">{{ brandName }}</h1>
+            <p class="text-sm">Warranties</p>
+            <p class="text-xs text-slate-500">Printed {{ new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date()) }}</p>
+            <hr class="print-divider" />
+        </div>
 
         <div class="space-y-6 p-6">
             <ResourceToolbar

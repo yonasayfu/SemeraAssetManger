@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use App\Models\Asset;
+use App\Models\AssetImportPreset;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AssetImportController extends Controller
@@ -14,7 +15,13 @@ class AssetImportController extends Controller
     public function __invoke()
     {
         $this->authorize('create', Asset::class);
-        return Inertia::render('Assets/Import');
+        $presets = AssetImportPreset::query()
+            ->where('staff_id', auth()->id())
+            ->orderBy('name')
+            ->get(['id','name','mapping','options']);
+        return Inertia::render('Assets/Import', [
+            'presets' => $presets,
+        ]);
     }
 
     /**

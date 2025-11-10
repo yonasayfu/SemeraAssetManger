@@ -11,10 +11,30 @@ class AuditController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $search = trim((string) $request->query('search', ''));
+        $status = (string) $request->query('status', '');
+
+        $allowed = ['Draft', 'Ongoing', 'Completed'];
+
+        $audits = Audit::query()
+            ->with(['site:id,name', 'location:id,name,site_id'])
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            })
+            ->when(in_array($status, $allowed, true), function ($q) use ($status) {
+                $q->where('status', $status);
+            })
+            ->latest()
+            ->get();
+
         return Inertia::render('Tools/Audits/Index', [
-            'audits' => Audit::with(['site', 'location'])->latest()->get(),
+            'audits' => $audits,
+            'filters' => [
+                'search' => $search,
+                'status' => in_array($status, $allowed, true) ? $status : null,
+            ],
         ]);
     }
 

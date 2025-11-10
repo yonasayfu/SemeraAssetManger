@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use App\Models\AssetImportPreset;
 
 class AssetImportPreviewController extends Controller
 {
@@ -47,6 +48,25 @@ class AssetImportPreviewController extends Controller
         // Suggest initial mapping by simple label matching
         $suggestions = $this->suggestMapping($headers);
 
+        // Merge user default preset (if any)
+        $user = $request->user();
+        $preset = null;
+        if ($user && is_array($user->list_preferences ?? null)) {
+            $preset = $user->list_preferences['asset_import_default'] ?? null;
+            if (is_array($preset) && is_array($preset['mapping'] ?? null)) {
+                foreach ($headers as $label) {
+                    if (isset($preset['mapping'][$label]) && !empty($preset['mapping'][$label])) {
+                        $suggestions[$label] = $preset['mapping'][$label];
+                    }
+                }
+            }
+        }
+
+        $presets = AssetImportPreset::query()
+            ->where('staff_id', $user?->getKey())
+            ->orderBy('name')
+            ->get(['id','name','mapping','options']);
+
         return Inertia::render('Assets/Import', [
             'preview' => [
                 'headers' => $headers,
@@ -54,6 +74,8 @@ class AssetImportPreviewController extends Controller
             ],
             'token' => $token,
             'suggestedMapping' => $suggestions,
+            'options' => isset($preset['options']) && is_array($preset['options']) ? $preset['options'] : null,
+            'presets' => $presets,
         ]);
     }
 
@@ -104,4 +126,3 @@ class AssetImportPreviewController extends Controller
         return trim($v, '_');
     }
 }
-

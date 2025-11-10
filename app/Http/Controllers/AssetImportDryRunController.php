@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Carbon\Carbon;
+use App\Models\AssetImportPreset;
 
 class AssetImportDryRunController extends Controller
 {
@@ -27,6 +28,10 @@ class AssetImportDryRunController extends Controller
 
         $options = isset($data['options']) ? json_decode($data['options'], true) : [];
         $createMissing = (bool)($options['create_missing_taxonomy'] ?? false);
+        $updateExisting = (bool)($options['update_existing_by_tag'] ?? true);
+        $autoGenerateTags = (bool)($options['auto_generate_tags'] ?? false);
+        $tagPrefix = (string)($options['tag_prefix'] ?? 'AST-');
+        $downloadPhotos = (bool)($options['download_photos'] ?? false);
         $token = (string) $data['token'];
         $path = $this->resolveTokenPath($token);
         if (!$path) {
@@ -82,7 +87,11 @@ class AssetImportDryRunController extends Controller
             $rowWarnings = [];
 
             if (empty($payload['asset_tag'])) {
-                $rowErrors[] = 'Missing Asset Tag';
+                if ($autoGenerateTags) {
+                    $rowWarnings[] = 'Missing Asset Tag -> will be auto-generated (prefix: '.$tagPrefix.')';
+                } else {
+                    $rowErrors[] = 'Missing Asset Tag';
+                }
             }
 
             // Status
@@ -125,6 +134,14 @@ class AssetImportDryRunController extends Controller
                 }
             }
 
+            // Photo download hint
+            if (!empty($payload['asset_photo']) && $downloadPhotos) {
+                $url = (string)$payload['asset_photo'];
+                if (preg_match('/^https?:\/\//i', $url)) {
+                    $rowWarnings[] = 'Photo would be downloaded from URL';
+                }
+            }
+
             $results['total']++;
             if (count($rowErrors) === 0) {
                 $results['ready']++;
@@ -142,12 +159,24 @@ class AssetImportDryRunController extends Controller
             }
         }
 
+        $presets = AssetImportPreset::query()
+            ->where('staff_id', $request->user()?->getKey())
+            ->orderBy('name')
+            ->get(['id','name','mapping','options']);
+
         return Inertia::render('Assets/Import', [
             'token' => $token,
             'dryRun' => $results,
             'preview' => [ 'headers' => $headers ],
             'suggestedMapping' => $data['mapping'], // persist chosen mapping on page reload
-            'options' => [ 'create_missing_taxonomy' => $createMissing ],
+            'options' => [
+                'create_missing_taxonomy' => $createMissing,
+                'update_existing_by_tag' => $updateExisting,
+                'auto_generate_tags' => $autoGenerateTags,
+                'tag_prefix' => $tagPrefix,
+                'download_photos' => $downloadPhotos,
+            ],
+            'presets' => $presets,
         ]);
     }
 

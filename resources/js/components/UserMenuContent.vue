@@ -9,7 +9,9 @@ import {
 import { logout } from '@/routes';
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
-import { LogOut, Settings } from 'lucide-vue-next';
+import { LogOut, Settings, Building2 } from 'lucide-vue-next';
+import { usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 interface Props {
     user: User;
@@ -22,6 +24,11 @@ const handleLogout = () => {
 defineProps<Props>();
 
 const profileSettingsPath = '/settings/profile';
+const page = usePage();
+const canManageSetup = computed<boolean>(() => {
+    const perms = (page.props as any)?.auth?.permissions || [];
+    return perms.includes('setup.manage');
+});
 </script>
 
 <template>
@@ -36,6 +43,12 @@ const profileSettingsPath = '/settings/profile';
             <Link class="block w-full" :href="profileSettingsPath" prefetch as="button">
                 <Settings class="mr-2 h-4 w-4" />
                 Settings
+            </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem v-if="canManageSetup" :as-child="true">
+            <Link class="block w-full" href="/setup/companies" prefetch as="button">
+                <Building2 class="mr-2 h-4 w-4" />
+                Branding
             </Link>
         </DropdownMenuItem>
     </DropdownMenuGroup>

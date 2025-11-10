@@ -23,7 +23,20 @@ class AssetsExport implements FromCollection, WithHeadings, WithMapping
     public function __construct(array $selectedLabels = [])
     {
         $this->columnMap = [
-            'Asset Photo' => fn (Asset $a) => $a->photo,
+            'Asset Photo' => function (Asset $a) {
+                $path = $a->photo;
+                if (!$path) return null;
+                if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                    return $path;
+                }
+                $url = \Illuminate\Support\Facades\Storage::disk('public')->url($path);
+                // Make absolute if returned URL is relative
+                if (str_starts_with($url, '/')) {
+                    $base = rtrim(config('app.url'), '/');
+                    return $base.$url;
+                }
+                return $url;
+            },
             'Asset Tag ID' => fn (Asset $a) => $a->asset_tag,
             'Description' => fn (Asset $a) => $a->description,
             'Purchase Date' => fn (Asset $a) => optional($a->purchase_date)->toDateString(),

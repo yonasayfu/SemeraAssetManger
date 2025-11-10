@@ -15,7 +15,7 @@
                 <form @submit.prevent="submit">
                     <div class="space-y-4">
                         <div>
-                            <InputLabel for="theme" value="Theme" />
+                            <Label for="theme">Theme</Label>
                             <select
                                 id="theme"
                                 v-model="form.theme"
@@ -29,7 +29,7 @@
                         </div>
 
                         <div>
-                            <InputLabel for="locale" value="Language" />
+                            <Label for="locale">Language</Label>
                             <select
                                 id="locale"
                                 v-model="form.locale"
@@ -43,7 +43,7 @@
                         </div>
 
                         <div>
-                            <InputLabel for="timezone" value="Timezone" />
+                            <Label for="timezone">Timezone</Label>
                             <select
                                 id="timezone"
                                 v-model="form.timezone"
@@ -58,7 +58,7 @@
                     </div>
 
                     <div class="mt-6 flex items-center justify-end gap-x-6">
-                        <PrimaryButton type="submit" :disabled="form.processing">Save Changes</PrimaryButton>
+                        <Button type="submit" :disabled="form.processing">Save Changes</Button>
                     </div>
                 </form>
             </GlassCard>
@@ -71,8 +71,8 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import ResourceToolbar from '@/Components/ResourceToolbar.vue';
 import GlassCard from '@/Components/GlassCard.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import InputLabel from '@/Components/InputLabel.vue';
+import Button from '@/Components/ui/button/Button.vue';
+import Label from '@/Components/ui/label/Label.vue';
 import InputError from '@/Components/InputError.vue';
 
 interface GeneralSettingsProps {

@@ -46,6 +46,47 @@ class AssetController extends Controller
                           ->orWhere('description', 'like', "%{$search}%");
                 });
             })
+            ->with([
+                'site:id,name',
+                'location:id,name,site_id',
+                'category:id,name',
+                'department:id,name',
+                'assignee:id,name',
+            ])
+            // Sorting for related columns and dates
+            ->when($sort === 'purchase_date', fn ($q) => $q->orderBy('purchase_date', $direction))
+            ->when($sort === 'site_name', function ($q) use ($direction) {
+                $q->leftJoin('sites as si', 'si.id', '=', 'assets.site_id')
+                  ->orderBy('si.name', $direction)
+                  ->select('assets.*');
+            })
+            ->when($sort === 'location_name', function ($q) use ($direction) {
+                $q->leftJoin('locations as l', 'l.id', '=', 'assets.location_id')
+                  ->orderBy('l.name', $direction)
+                  ->select('assets.*');
+            })
+            ->when($sort === 'category_name', function ($q) use ($direction) {
+                $q->leftJoin('categories as c', 'c.id', '=', 'assets.category_id')
+                  ->orderBy('c.name', $direction)
+                  ->select('assets.*');
+            })
+            ->when($sort === 'department_name', function ($q) use ($direction) {
+                $q->leftJoin('departments as d', 'd.id', '=', 'assets.department_id')
+                  ->orderBy('d.name', $direction)
+                  ->select('assets.*');
+            })
+            ->when($sort === 'assignee_name', function ($q) use ($direction) {
+                $q->leftJoin('staff as s', 's.id', '=', 'assets.staff_id')
+                  ->orderBy('s.name', $direction)
+                  ->select('assets.*');
+            })
+            ->when($request->filled('status'), function ($q) use ($request) {
+                $status = (string) $request->query('status');
+                $allowed = ['Available','Checked Out','Under Repair','Leased','Disposed','Lost','Donated','Sold'];
+                if (in_array($status, $allowed, true)) {
+                    $q->where('status', $status);
+                }
+            })
             ->when($request->filled('vendor_id'), fn ($q) => $q->where('vendor_id', $request->integer('vendor_id')))
             ->when($request->filled('product_id'), fn ($q) => $q->where('product_id', $request->integer('product_id')))
             ->when($request->filled('staff_id'), fn ($q) => $q->where('staff_id', $request->integer('staff_id')))

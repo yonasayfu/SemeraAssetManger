@@ -43,9 +43,47 @@ class HandleInertiaRequests extends Middleware
         $impersonator = $isImpersonating ? $impersonateManager->getImpersonator() : null;
         $impersonatedUser = $isImpersonating ? $request->user() : null;
 
+        $company = \App\Models\Company::first();
+        $logoUrl = null;
+        $sidebarLogoUrl = null;
+        if ($company && !empty($company->logo)) {
+            try {
+                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($company->logo)) {
+                    $logoUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($company->logo);
+                }
+            } catch (\Throwable $_) {
+                // ignore storage errors
+            }
+        }
+        if ($company && !empty($company->sidebar_logo)) {
+            try {
+                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($company->sidebar_logo)) {
+                    $sidebarLogoUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($company->sidebar_logo);
+                }
+            } catch (\Throwable $_) {
+                // ignore storage errors
+            }
+        }
+
         return [
             ...parent::share($request),
-            'name' => config('app.name'),
+            // App display name prefers company name when available
+            'name' => $company?->name ?: config('app.name'),
+            // Branding shared to the frontend
+            'branding' => [
+                'name' => $company?->name ?: config('app.name'),
+                'logo_url' => $logoUrl ?: '/images/asset-logo.svg',
+                'sidebar_logo_url' => $sidebarLogoUrl ?: null,
+                'color' => $company?->brand_color,
+                'secondary' => $company?->secondary_color,
+                'logo_padding' => $company?->brand_logo_padding ?? 0,
+                'logo_fit' => $company?->brand_logo_fit ?? 'contain',
+                'logo_scale' => $company?->brand_logo_scale ?? 100,
+                'logo_offset_x' => $company?->brand_logo_offset_x ?? 0,
+                'logo_offset_y' => $company?->brand_logo_offset_y ?? 0,
+                'sidebar_logo_height' => $company?->sidebar_logo_height,
+                'sidebar_logo_width' => $company?->sidebar_logo_width,
+            ],
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'staff' => $request->user(),

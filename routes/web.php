@@ -254,6 +254,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/setup', function () {
             return redirect()->route('setup.companies.index');
         })->name('setup.index');
+        // Legacy singular path redirect
+        Route::get('/setup/company', function () {
+            return redirect()->route('setup.companies.index');
+        })->name('setup.company.legacy');
 
         // Asset Base Routes
         Route::prefix('assets')->name('assets.')->middleware('permission:assets.view')->group(function () {
@@ -266,6 +270,12 @@ Route::middleware('auth')->group(function () {
             Route::get('/import/template', [AssetImportController::class, 'template'])->name('import.template');
             Route::post('/import/preview', AssetImportPreviewController::class)->name('import.preview');
             Route::post('/import/dry-run', AssetImportDryRunController::class)->name('import.dry-run');
+            Route::get('/import/report/{token}', \App\Http\Controllers\AssetImportReportController::class)->name('import.report');
+            Route::post('/import/presets', [\App\Http\Controllers\AssetImportPresetController::class, 'store'])->name('import.presets.store');
+            Route::delete('/import/presets/{preset}', [\App\Http\Controllers\AssetImportPresetController::class, 'destroy'])->name('import.presets.destroy');
+            Route::post('/import/jobs', [\App\Http\Controllers\AssetImportJobController::class, 'store'])->name('import.jobs.store');
+            Route::get('/import/jobs/{job}', [\App\Http\Controllers\AssetImportJobController::class, 'show'])->name('import.jobs.show');
+            Route::post('/import/jobs/{job}/cancel', [\App\Http\Controllers\AssetImportJobController::class, 'cancel'])->name('import.jobs.cancel');
             // UX fallback: visiting these endpoints by GET should redirect back to the import page
             Route::get('/import/preview', function () {
                 return redirect()->route('assets.import');
@@ -439,6 +449,7 @@ Route::middleware('auth')->group(function () {
         // Tools Module
         Route::prefix('tools')->name('tools.')->middleware('permission:tools.view')->group(function () {
             Route::get('import', [ToolsController::class, 'import'])->name('import')->middleware('role:Admin');
+            Route::post('import/preview', \App\Http\Controllers\ToolsImportPreviewController::class)->name('import.preview')->middleware('role:Admin');
             Route::get('export', [ToolsController::class, 'export'])->name('export')->middleware('role:Admin');
             Route::post('import/staff', StaffImportController::class)->name('import.staff')->middleware('role:Admin');
             Route::post('import/sites', SiteImportController::class)->name('import.sites')->middleware('role:Admin');
@@ -458,6 +469,15 @@ Route::middleware('auth')->group(function () {
                 ->middleware('permission:assets.view');
             Route::get('images', ImageGalleryController::class)
                 ->name('images')
+                ->withoutMiddleware('permission:tools.view')
+                ->middleware('permission:assets.view');
+            // Gallery detail pages
+            Route::get('documents/{document}', \App\Http\Controllers\DocumentDetailController::class)
+                ->name('documents.show')
+                ->withoutMiddleware('permission:tools.view')
+                ->middleware('permission:assets.view');
+            Route::get('images/{asset}', \App\Http\Controllers\ImageDetailController::class)
+                ->name('images.show')
                 ->withoutMiddleware('permission:tools.view')
                 ->middleware('permission:assets.view');
             Route::resource('audits', AuditController::class);

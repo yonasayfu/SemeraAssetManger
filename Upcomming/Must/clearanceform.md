@@ -122,6 +122,12 @@ Indexes:
 6. Optional automation: auto-check-in tasks on approval
 7. Seeders + sample data
 
+---
+
+Note (current build)
+
+- No changes were required in the latest iteration for the clearance flow itself. The surrounding UI improvements (compact buttons, consistent filters) have been applied globally, so the Clearances screens inherit the updated table/button styling where applicable.
+
 ## Acceptance Criteria
 - Staff can view their assets and print list
 - Staff can create a clearance request prefilled with their items
@@ -133,4 +139,3 @@ Indexes:
 - Do we auto-check-in assets on approval or require explicit check-ins?
 - Should staff e-sign in-app, or is typed name sufficient?
 - HR email: global default vs per-department?
-

@@ -16,6 +16,13 @@ const printCurrent = () => {
 <template>
   <Head title="Contracts Board" />
   <AppLayout title="Contracts Board">
+    <div class="hidden print:block text-center text-slate-800">
+      <img :src="(usePage().props as any).branding?.logo_url || '/images/asset-logo.svg'" :alt="(usePage().props as any).branding?.name || 'Asset Management'" class="mx-auto mb-3 h-12 w-auto print-logo" />
+      <h1 class="text-xl font-semibold">{{ (usePage().props as any).branding?.name || 'Asset Management' }}</h1>
+      <p class="text-sm">Contracts Board</p>
+      <p class="text-xs text-slate-500">Printed {{ new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date()) }}</p>
+      <hr class="print-divider" />
+    </div>
     <ResourceToolbar title="Contracts Board" description="Unified view across all contract types." :show-export="false" :show-print="true" @print="printCurrent" />
 
     <div class="hidden print:block text-center text-slate-800">

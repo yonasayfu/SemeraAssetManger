@@ -319,3 +319,31 @@ Each controller follows the same Sanctum guard, so the authentication and testin
 - [ ] Laravel logs are clean (no unexpected warnings or errors).  
 
 With this playbook you can confidently validate the Staff API end-to-end, whether you are new to HTTP clients or building advanced automated checks.
+
+---
+
+## 11. Additional Endpoints (Audits & Galleries)
+
+While the above focuses on the Staff API, the UI now exposes additional, permission‑guarded endpoints useful for QA:
+
+### Audits
+
+- GET `/tools/audits` — list audits with filters
+  - Query: `search`, `status` in `Draft|Ongoing|Completed`
+- GET `/audits/wizard`, POST `/audits/wizard` — create/start audit
+  - Body: `{ name, site_id, location_id?, category_ids?:[], asset_ids?:[] }`
+- GET `/audits/{audit}/scan` — scan UI (preloaded `audit_assets.asset`)
+- GET `/audits/{audit}/scan/search?query=...` — JSON list of matching audit assets
+- POST `/audits/{audit}/scan/assets/{auditAsset}` — update row `{ found?:bool, notes?:string }`
+- POST `/audits/{audit}/scan/complete` — mark audit completed
+- GET `/audits/{audit}/report` — summary + details
+- GET `/audits/{audit}/report/export` — CSV stream
+
+### Galleries
+
+- GET `/tools/images` — image gallery index (lightbox preview)
+- GET `/tools/images/{asset}` — image detail page
+- GET `/tools/documents` — document gallery index (images/PDF preview)
+- GET `/tools/documents/{document}` — document detail page
+
+Permissions: typically require `assets.view`. All endpoints use session auth via the web guard.

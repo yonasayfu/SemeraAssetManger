@@ -50,7 +50,7 @@ const handlePrint = () => {
                 </p>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2 md:flex-nowrap">
                 <slot name="actions" v-if="customActions" />
 
                 <GlassButton

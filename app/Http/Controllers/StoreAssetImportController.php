@@ -68,7 +68,26 @@ class StoreAssetImportController extends Controller
         $failures = $assetsImport->failures();
         $errors = method_exists($assetsImport, 'errors') ? $assetsImport->errors() : collect();
 
+        // Write issue report if any
+        $reportToken = ($validated['token'] ?? null) ?: ($token ?? 'no_token');
+        $reportPath = "imports/reports/{$reportToken}.csv";
+        if ((count($failures) > 0 || count($errors) > 0)) {
+            $lines = [];
+            $lines[] = 'row,type,message,values';
+            foreach ($failures as $f) {
+                $msg = str_replace(["\r","\n"], ' ', implode('; ', $f->errors()));
+                $vals = str_replace([",","\r","\n"], ' ', implode(' | ', $f->values()));
+                $lines[] = $f->row().',validation,'.str_replace(',', ' ', $msg).','.str_replace(',', ' ', $vals);
+            }
+            foreach ($errors as $e) {
+                $msg = get_class($e).': '.$e->getMessage();
+                $lines[] = ',error,'.str_replace(',', ' ', $msg).',';
+            }
+            \Illuminate\Support\Facades\Storage::disk('local')->put($reportPath, implode("\n", $lines));
+        }
+
         if (count($failures) > 0 || count($errors) > 0) {
+            $reportLink = (count($failures) + count($errors)) > 0 ? route('assets.import.report', ['token' => $reportToken]) : null;
             $failureMessages = $failures->map(function ($failure) {
                 return 'Row ' . $failure->row() . ': ' . implode(', ', $failure->errors()) . ' (Value: ' . implode(', ', $failure->values()) . ')';
             });
@@ -84,9 +103,10 @@ class StoreAssetImportController extends Controller
                 $successMessage = 'Import completed (existing assets updated where tags matched). ';
             }
 
+            $downloadNote = $reportLink ? ('<br><a href="'.$reportLink.'" class="underline text-indigo-600">Download issue report</a>') : '';
             return redirect()
                 ->route('assets.index')
-                ->with('flash.banner', $successMessage . 'Import completed with ' . (count($failures) + count($errors)) . ' issue(s):<br>' . $allMessages)
+                ->with('flash.banner', $successMessage . 'Import completed with ' . (count($failures) + count($errors)) . ' issue(s):<br>' . $allMessages . $downloadNote)
                 ->with('flash.bannerStyle', 'warning');
         }
 

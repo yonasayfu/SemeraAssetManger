@@ -1,5 +1,12 @@
 <template>
-    <AppLayout :breadcrumbs="[{ title: 'Audits', href: route('audits.index') }, { title: 'Audit Report', href: route('audits.report', audit.id) }]">
+    <AppLayout :breadcrumbs="[{ title: 'Audits', href: '/tools/audits' }, { title: 'Audit Report', href: `/audits/${audit.id}/report` }]">
+        <div class="hidden print:block text-center text-slate-800">
+            <img :src="(usePage().props as any).branding?.logo_url || '/images/asset-logo.svg'" :alt="(usePage().props as any).branding?.name || 'Asset Management'" class="mx-auto mb-3 h-12 w-auto print-logo" />
+            <h1 class="text-xl font-semibold">{{ (usePage().props as any).branding?.name || 'Asset Management' }}</h1>
+            <p class="text-sm">Audit Report: {{ audit.name }}</p>
+            <p class="text-xs text-slate-500">Printed {{ new Date().toLocaleString() }}</p>
+            <hr class="print-divider" />
+        </div>
         <Head :title="`Audit Report · ${audit.name}`" />
 
         <div class="space-y-6 p-6">

@@ -86,6 +86,11 @@ const props = defineProps<{
     print?: boolean;
 }>();
 
+const page2 = usePage();
+const branding = computed<any>(() => (page2.props as any).branding || {})
+const printLogo = computed<string>(() => branding.value.logo_url || '/images/asset-logo.svg')
+const brandName = computed<string>(() => branding.value.name || 'Asset Management')
+
 const isActive = ref<string | null>(props.filters?.is_active ?? null);
 const provider = ref<string | null>(props.filters?.provider ?? null);
 const site = ref<string | null>(props.filters?.site ?? null);
@@ -324,6 +329,13 @@ const paginationLinks = computed(() => props.warranties.links ?? []);
 <template>
     <Head title="Warranty Tracker" />
     <AppLayout title="Warranty Tracker">
+        <div class="hidden print:block text-center text-slate-800">
+            <img :src="printLogo" :alt="brandName" class="mx-auto mb-3 h-12 w-auto print-logo" />
+            <h1 class="text-xl font-semibold">{{ brandName }}</h1>
+            <p class="text-sm">Warranties (List)</p>
+            <p class="text-xs text-slate-500">Printed {{ new Date().toLocaleString() }}</p>
+            <hr class="print-divider" />
+        </div>
         <ResourceToolbar
             title="Warranty Tracker"
             description="Monitor warranty coverage and upcoming expirations."

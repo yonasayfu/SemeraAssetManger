@@ -193,6 +193,25 @@
 }
 
 @layer components {
+    /* Ensure sidebar header respects sidebar logo variables; fallback to brand */
+    [data-sidebar="header"] {
+        --brand-logo-size: var(--sidebar-logo-size, var(--brand-logo-size));
+        --brand-logo-width: var(--sidebar-logo-width, var(--brand-logo-width, var(--brand-logo-size)));
+    }
+    [data-sidebar="header"] [data-slot="sidebar-menu-button"] {
+        height: var(--sidebar-logo-size, var(--brand-logo-size, 32px)) !important;
+        padding: 0 !important;
+    }
+    /* Force the clickable area to inherit height */
+    [data-sidebar="header"] [data-slot="sidebar-menu-button"] > a,
+    [data-sidebar="header"] [data-slot="sidebar-menu-button"] > button {
+        height: inherit !important;
+        padding: 0 !important;
+    }
+    /* In icon-collapsed state, also control width explicitly */
+    [data-slot="sidebar"][data-collapsible="icon"] [data-sidebar="header"] [data-slot="sidebar-menu-button"] {
+        width: var(--sidebar-logo-width, var(--brand-logo-width, var(--brand-logo-size, 32px))) !important;
+    }
     .app-sidebar {
         -webkit-backdrop-filter: blur(14px) saturate(150%);
         backdrop-filter: blur(14px) saturate(150%);

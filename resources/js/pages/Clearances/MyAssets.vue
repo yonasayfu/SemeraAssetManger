@@ -29,8 +29,8 @@ const requestClearance = () => router.post('/clearances', { asset_ids: selected.
     <div class="mx-auto mt-6 w-full max-w-5xl px-4 pb-12">
       <!-- Print header for consistency -->
       <div class="hidden print:block text-center text-slate-800">
-        <img src="/images/asset-logo.svg" alt="Asset Management" class="mx-auto mb-3 h-12 w-auto print-logo" />
-        <h1 class="text-xl font-semibold">Asset Management</h1>
+        <img :src="(usePage().props as any).branding?.logo_url || '/images/asset-logo.svg'" :alt="(usePage().props as any).branding?.name || 'Asset Management'" class="mx-auto mb-3 h-12 w-auto print-logo" />
+        <h1 class="text-xl font-semibold">{{ (usePage().props as any).branding?.name || 'Asset Management' }}</h1>
         <p class="text-sm">My Assets</p>
         <hr class="print-divider" />
       </div>

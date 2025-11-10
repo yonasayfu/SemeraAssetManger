@@ -18,6 +18,14 @@ class AuditScanController extends Controller
     public function show(Audit $audit)
     {
         $this->authorize('view', $audit);
+        $audit->load([
+            'site:id,name',
+            'location:id,name,site_id',
+            'auditAssets.asset' => function ($q) {
+                $q->with(['site:id,name', 'location:id,name,site_id']);
+            },
+        ]);
+
         return Inertia::render('Audits/Scan', [
             'audit' => $audit,
         ]);

@@ -11,7 +11,10 @@ class SiteImportController extends Controller
     {
         $path = $request->file('file')->store('imports');
 
-        ImportSitesJob::dispatch($path, $request->user());
+        $mapping = (array) $request->input('mapping', []);
+        $options = (array) json_decode((string) $request->input('options', '[]'), true);
+
+        ImportSitesJob::dispatch($path, $request->user(), $mapping, $options);
 
         return redirect()->back()->with('success', 'Your import has been queued.');
     }
