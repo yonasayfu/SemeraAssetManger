@@ -204,14 +204,17 @@ class AssetController extends Controller
             'status' => 'required|in:Available,Checked Out,Under Repair,Leased,Disposed,Lost,Donated,Sold',
             'photo' => 'nullable|image|max:2048',
             'custom_fields' => 'nullable|array',
+            'in_service_date' => 'nullable|date',
+            'useful_life_months' => 'nullable|integer|min:1|max:600',
         ]);
 
-        $asset = Asset::create(
-            array_merge(
-                $request->except('photo'),
-                ['created_by' => Auth::id()]
-            )
-        );
+        $data = $request->except('photo');
+        $base = $request->date('in_service_date') ?: $request->date('purchase_date');
+        $months = (int) $request->input('useful_life_months', 0);
+        if ($base && $months > 0) {
+            $data['refresh_due_at'] = $base->copy()->addMonths($months)->toDateString();
+        }
+        $asset = Asset::create(array_merge($data, ['created_by' => Auth::id()]));
 
         if ($request->hasFile('photo')) {
             $asset->photo = $request->file('photo')->store('assets', 'public');
@@ -338,9 +341,19 @@ class AssetController extends Controller
             'status' => 'required|in:Available,Checked Out,Under Repair,Leased,Disposed,Lost,Donated,Sold',
             'photo' => 'nullable|image|max:2048',
             'custom_fields' => 'nullable|array',
+            'in_service_date' => 'nullable|date',
+            'useful_life_months' => 'nullable|integer|min:1|max:600',
         ]);
 
-        $asset->update($request->except('photo'));
+        $data = $request->except('photo');
+        $base = $request->date('in_service_date') ?: $request->date('purchase_date');
+        $months = (int) $request->input('useful_life_months', 0);
+        $data['refresh_due_at'] = null;
+        if ($base && $months > 0) {
+            $data['refresh_due_at'] = $base->copy()->addMonths($months)->toDateString();
+        }
+
+        $asset->update($data);
 
         if ($request->hasFile('photo')) {
             if ($asset->photo) {

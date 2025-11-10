@@ -26,6 +26,8 @@ const form = useForm({
     asset_tag: '',
     description: '',
     purchase_date: '',
+    in_service_date: '',
+    useful_life_months: null as number | null,
     cost: null,
     currency: '',
     purchased_from: '',
@@ -174,9 +176,9 @@ watch(customFieldEntries, syncCustomFields, { deep: true });
                         ></textarea>
                         <InputError :message="form.errors.description" class="mt-2" />
                     </div>
-                </div>
+            </div>
 
-                <div class="grid gap-4 md:grid-cols-2">
+            <div class="grid gap-4 md:grid-cols-2">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-200" for="vendor_id">Vendor</label>
                         <select
@@ -188,7 +190,38 @@ watch(customFieldEntries, syncCustomFields, { deep: true });
                             <option v-for="v in vendors" :key="v.id" :value="v.id">{{ v.name }}</option>
                         </select>
                         <InputError :message="form.errors.vendor_id" class="mt-2" />
-                    </div>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-3">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-200" for="in_service_date">In Service Date</label>
+                    <input
+                        id="in_service_date"
+                        type="date"
+                        v-model="(form as any).in_service_date"
+                        class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                    />
+                    <InputError :message="(form.errors as any).in_service_date" class="mt-2" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-200" for="useful_life_months">Expected Use (months)</label>
+                    <input
+                        id="useful_life_months"
+                        type="number"
+                        min="1"
+                        max="600"
+                        placeholder="e.g. 48 for 4 years"
+                        v-model.number="(form as any).useful_life_months"
+                        class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/40 dark:border-slate-700 dark:bg-slate-900/40"
+                    />
+                    <InputError :message="(form.errors as any).useful_life_months" class="mt-2" />
+                </div>
+                <div v-if="(form as any).useful_life_months && ((form.in_service_date || form.purchase_date))" class="self-end">
+                    <p class="text-xs text-slate-600 dark:text-slate-300">
+                        Refresh date will be set automatically from base date + months.
+                    </p>
+                </div>
+            </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-200" for="product_id">Product</label>
                         <select

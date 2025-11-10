@@ -143,10 +143,21 @@ class SampleDataSeeder extends Seeder
                 'status' => $status,
                 'photo' => null,
                 'created_by' => $admin->id,
+                // Expected life: laptops 4y, vehicles 7y, furniture 8y, machinery 10y (demo)
+                'in_service_date' => Carbon::now()->subDays(rand(30, 730))->toDateString(),
+                'useful_life_months' => match ($base['cat']) {
+                    'Computers' => 48,
+                    'Vehicles' => 84,
+                    'Furniture' => 96,
+                    'Machinery' => 120,
+                    default => 60,
+                },
             ];
 
             // Randomize created_at within last 12 months for better dashboard trends
             $created = Carbon::now()->subDays(rand(0, 365));
+            $baseDate = Carbon::parse($row['in_service_date'] ?? $row['purchase_date']);
+            $row['refresh_due_at'] = $baseDate->copy()->addMonths((int) $row['useful_life_months']);
             $asset = Asset::create(array_merge($row, ['created_at' => $created, 'updated_at' => $created]));
             $assets[] = $asset;
         }
@@ -303,6 +314,7 @@ class SampleDataSeeder extends Seeder
         $alertService->checkAssetsDue();
         $alertService->checkAssetsPastDue();
         $alertService->checkLeasesExpiring();
+        $alertService->checkRefreshDue();
         $alertService->checkMaintenanceDue($admin->id);
         $alertService->checkMaintenanceOverdue();
         $alertService->checkOverdueCheckouts();

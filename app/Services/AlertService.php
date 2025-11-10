@@ -312,5 +312,77 @@ class AlertService
                 ]
             );
         }
+    
+
+    /**
+     * Check for assets approaching end-of-life based on useful life and in-service/purchase date.
+     */
+    public function checkRefreshDue(int $daysSoon = 60): void
+    {
+        $now = Carbon::now();
+        $soon = $now->copy()->addDays($daysSoon);
+
+        // Due soon
+        $dueSoon = Asset::query()
+            ->whereNotNull('useful_life_months')
+            ->where(function ($q) {
+                $q->whereNotNull('in_service_date')->orWhereNotNull('purchase_date');
+            })
+            ->get()
+            ->filter(function (Asset $a) use ($now, $soon) {
+                $base = $a->in_service_date ?: $a->purchase_date;
+                if (!$base) return false;
+                $due = $a->refresh_due_at ?: $base->copy()->addMonths((int) $a->useful_life_months);
+                return $due && $due->between($now, $soon);
+            });
+
+        foreach ($dueSoon as $asset) {
+            $base = $asset->in_service_date ?: $asset->purchase_date;
+            $due = $asset->refresh_due_at ?: $base->copy()->addMonths((int) $asset->useful_life_months);
+            Alert::firstOrCreate(
+                [
+                    'type' => 'Refresh Due Soon',
+                    'asset_id' => $asset->id,
+                    'source_id' => $asset->id,
+                    'source_type' => Asset::class,
+                ],
+                [
+                    'due_date' => $due,
+                    'message' => 'Asset ' . $asset->asset_tag . ' is due for refresh on ' . $due->format('Y-m-d') . '.',
+                ]
+            );
+        }
+
+        // Overdue
+        $overdue = Asset::query()
+            ->whereNotNull('useful_life_months')
+            ->where(function ($q) {
+                $q->whereNotNull('in_service_date')->orWhereNotNull('purchase_date');
+            })
+            ->get()
+            ->filter(function (Asset $a) use ($now) {
+                $base = $a->in_service_date ?: $a->purchase_date;
+                if (!$base) return false;
+                $due = $a->refresh_due_at ?: $base->copy()->addMonths((int) $a->useful_life_months);
+                return $due && $due->lt($now);
+            });
+
+        foreach ($overdue as $asset) {
+            $base = $asset->in_service_date ?: $asset->purchase_date;
+            $due = $asset->refresh_due_at ?: $base->copy()->addMonths((int) $asset->useful_life_months);
+            Alert::firstOrCreate(
+                [
+                    'type' => 'Refresh Overdue',
+                    'asset_id' => $asset->id,
+                    'source_id' => $asset->id,
+                    'source_type' => Asset::class,
+                ],
+                [
+                    'due_date' => $due,
+                    'message' => 'Asset ' . $asset->asset_tag . ' is past its expected life since ' . $due->format('Y-m-d') . '.',
+                ]
+            );
+        }
     }
+
 }

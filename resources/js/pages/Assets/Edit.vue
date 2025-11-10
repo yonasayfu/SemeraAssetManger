@@ -23,6 +23,8 @@ const form = useForm({
     asset_tag: props.asset.asset_tag,
     description: props.asset.description,
     purchase_date: props.asset.purchase_date,
+    in_service_date: (props.asset as any).in_service_date ?? '',
+    useful_life_months: (props.asset as any).useful_life_months ?? null,
     cost: props.asset.cost,
     currency: props.asset.currency,
     purchased_from: props.asset.purchased_from,
@@ -186,6 +188,14 @@ watch(customFieldEntries, syncCustomFields, { deep: true });
                 <p v-if="selectedProduct && suggestedWarrantyExpiry" class="mt-1 text-xs text-slate-600 dark:text-slate-300">
                     Warranty ({{ selectedProduct?.warranty_months }} mo) likely expires: {{ suggestedWarrantyExpiry }}
                 </p>
+            </div>
+            <div>
+                <label for="in_service_date">In Service Date</label>
+                <input id="in_service_date" type="date" v-model="(form as any).in_service_date" class="w-full" />
+            </div>
+            <div>
+                <label for="useful_life_months">Expected Use (months)</label>
+                <input id="useful_life_months" type="number" min="1" max="600" placeholder="e.g. 48 for 4 years" v-model.number="(form as any).useful_life_months" class="w-full" />
             </div>
             <div>
                 <label for="cost">Cost</label>

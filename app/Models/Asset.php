@@ -37,10 +37,15 @@ class Asset extends Model
         'photo',
         'custom_fields',
         'created_by',
+        'in_service_date',
+        'useful_life_months',
+        'refresh_due_at',
     ];
 
     protected $casts = [
         'purchase_date' => 'date',
+        'in_service_date' => 'date',
+        'refresh_due_at' => 'date',
         'custom_fields' => 'array',
     ];
 

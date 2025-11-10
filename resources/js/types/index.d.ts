@@ -129,6 +129,9 @@ export type Asset = {
     asset_tag: string;
     description: string;
     purchase_date: string;
+    in_service_date?: string | null;
+    useful_life_months?: number | null;
+    refresh_due_at?: string | null;
     cost: number;
     currency: string;
     purchased_from: string;
